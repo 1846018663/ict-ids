@@ -4,5 +4,5 @@ import com.hnu.ict.ids.entity.OrderInfo;
 
 public interface OrderInfoService {
 
-    OrderInfo getSmsByOrderNo(String orderNo);
+    OrderInfo getByOrderNo(String orderNo);
 }

@@ -20,9 +20,9 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     OrderInfoMapper orderMapper;
 
     @Override
-    public OrderInfo getSmsByOrderNo(String orderNo) {
+    public OrderInfo getByOrderNo(String orderNo) {
 
-        return orderMapper.getSmsByOrder(orderNo);
+        return orderMapper.getByOrderNo(orderNo);
     }
 
 }

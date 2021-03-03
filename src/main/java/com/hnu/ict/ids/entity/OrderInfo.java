@@ -164,4 +164,21 @@ public class OrderInfo {
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
     }
+
+    @Override
+    public String toString() {
+        return "OrderInfo{" +
+                "id=" + id +
+                ", orderSurce='" + orderSurce + '\'' +
+                ", sourceOrderId='" + sourceOrderId + '\'' +
+                ", orderNo='" + orderNo + '\'' +
+                ", beginStationId=" + beginStationId +
+                ", endStationId=" + endStationId +
+                ", ticketNumber=" + ticketNumber +
+                ", buyUid=" + buyUid +
+                ", startTime=" + startTime +
+                ", travelId=" + travelId +
+                ", createTime=" + createTime +
+                '}';
+    }
 }
