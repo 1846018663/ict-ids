@@ -16,5 +16,5 @@ public interface IvsAppCityMapper extends BaseMapper<IvsAppCityInfo> {
      * @return
      */
     @Select("select * from ivs_app_city_info where c_code = #{CitCode}")
-    OrderInfo getByCitCode(@Param("CitCode") String CitCode);
+    IvsAppCityInfo getByCitCode(@Param("CitCode") String CitCode);
 }

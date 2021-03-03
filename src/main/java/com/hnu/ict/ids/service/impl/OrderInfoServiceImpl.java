@@ -25,4 +25,14 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         return orderMapper.getByOrderNo(orderNo);
     }
 
+    @Override
+    public void insertOrder(OrderInfo orderInfo){
+        orderMapper.insertOrderInfo(orderInfo);
+    }
+
+    @Override
+    public int deleteSourceOrderId(String sourceOrderId){
+        return  orderMapper.deleteBySourceOrderId(sourceOrderId);
+    }
+
 }
