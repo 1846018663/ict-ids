@@ -9,6 +9,11 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
+    /**
+     * 根据订单号查询
+     * @param orderNo
+     * @return
+     */
     @Select("select * from order_info where order_no = #{orderNo}")
     OrderInfo getByOrderNo(@Param("orderNo") String orderNo);
 }

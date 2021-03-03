@@ -10,6 +10,11 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface IvsAppCityMapper extends BaseMapper<IvsAppCityInfo> {
 
-    @Select("select * from order_info where order_no = #{orderNo}")
-    OrderInfo getByOrderNo(@Param("orderNo") String orderNo);
+    /**
+     * 根据城市编号查询
+     * @param CitCode
+     * @return
+     */
+    @Select("select * from ivs_app_city_info where c_code = #{CitCode}")
+    OrderInfo getByCitCode(@Param("CitCode") String CitCode);
 }

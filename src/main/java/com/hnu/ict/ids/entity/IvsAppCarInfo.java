@@ -45,51 +45,5 @@ public class IvsAppCarInfo {
     private String cStatus;
 
 
-    public int getId() {
-        return id;
-    }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getCatType() {
-        return catType;
-    }
-
-    public void setCatType(int catType) {
-        this.catType = catType;
-    }
-
-    public int getCarSeatNumber() {
-        return carSeatNumber;
-    }
-
-    public void setCarSeatNumber(int carSeatNumber) {
-        this.carSeatNumber = carSeatNumber;
-    }
-
-    public String getLicenseNumber() {
-        return licenseNumber;
-    }
-
-    public void setLicenseNumber(String licenseNumber) {
-        this.licenseNumber = licenseNumber;
-    }
-
-    public String getcCoed() {
-        return cCoed;
-    }
-
-    public void setcCoed(String cCoed) {
-        this.cCoed = cCoed;
-    }
-
-    public String getcStatus() {
-        return cStatus;
-    }
-
-    public void setcStatus(String cStatus) {
-        this.cStatus = cStatus;
-    }
 }
