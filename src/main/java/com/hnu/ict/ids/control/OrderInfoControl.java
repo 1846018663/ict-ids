@@ -85,4 +85,14 @@ public class OrderInfoControl {
     }
 
 
+
+    @ResponseBody
+    @RequestMapping("/findOrderNo")
+    @ParamsNotNull(str = "sourceOrderId")
+    public ResultEntity findOrderNo(String sourceOrderId ) {
+        ResultEntity result = new ResultEntity();
+        return result;
+    }
+
+
 }
