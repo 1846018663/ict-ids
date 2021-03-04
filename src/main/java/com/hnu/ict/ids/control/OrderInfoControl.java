@@ -7,6 +7,7 @@ import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.ParamsNotNull;
 import com.hnu.ict.ids.utils.UtilConf;
+import com.mysql.cj.x.protobuf.MysqlxDatatypes;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +92,7 @@ public class OrderInfoControl {
     @ParamsNotNull(str = "sourceOrderId")
     public ResultEntity findOrderNo(String sourceOrderId ) {
         ResultEntity result = new ResultEntity();
-
+        result.setCode(ResultEntity.Type.SUCCESS.value());
         //测试
         return result;
     }
