@@ -19,10 +19,11 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     @Autowired
     OrderInfoMapper orderMapper;
 
-    @Override
-    public OrderInfo getByOrderNo(String orderNo) {
 
-        return orderMapper.getByOrderNo(orderNo);
+    @Override
+    public OrderInfo getBySourceOrderId(String sourceOrderId) {
+
+        return orderMapper.getBySourceOrderId(sourceOrderId);
     }
 
     @Override

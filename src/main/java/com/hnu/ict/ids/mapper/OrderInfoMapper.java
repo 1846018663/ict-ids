@@ -9,11 +9,12 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
     /**
      * 根据订单号查询
-     * @param orderNo
+     * @param sourceOrderId
      * @return
      */
-    @Select("select * from order_info where order_no = #{orderNo}")
-    OrderInfo getByOrderNo(@Param("orderNo") String orderNo);
+    @Select("select * from order_info where source_order_id = #{sourceOrderId}")
+    OrderInfo getBySourceOrderId(@Param("sourceOrderId") String sourceOrderId);
+
 
     @Insert("insert into order_info(order_source,source_order_id,order_no,begin_station_id,end_station_id,ticket_number,buy_uid,start_time,travel_id,create_time) values(#{orderSource},#{sourceOrderId},#{orderNo},#{beginStationId},#{endStationId},#{ticketNumber},#{buyUid},#{startTime},#{travelId},#{createTime})")
     int insertOrderInfo(OrderInfo orderInfo);

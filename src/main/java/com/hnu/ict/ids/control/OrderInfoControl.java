@@ -2,31 +2,32 @@ package com.hnu.ict.ids.control;
 
 
 import com.hnu.ict.ids.entity.OrderInfo;
-import com.hnu.ict.ids.entity.ResultEntity;
+import com.hnu.ict.ids.exception.ResultEntity;
+import com.hnu.ict.ids.exception.ResutlMessage;
 import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.ParamsNotNull;
 import com.hnu.ict.ids.utils.UtilConf;
-import com.mysql.cj.x.protobuf.MysqlxDatatypes;
+import com.mysql.cj.protocol.x.ResultMessageListener;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.math.BigInteger;
 
-@Api(tags = "订单API")
+@Api(tags = "订单行程API")
 @RestController
 @RequestMapping("/order")
 public class OrderInfoControl {
 
     Logger logger= LoggerFactory.getLogger(OrderInfoControl.class);
 
-    @Autowired
+    @Resource
     OrderInfoService orderInfoService;
 
 
@@ -48,18 +49,18 @@ public class OrderInfoControl {
         order.setCreateTime(DateUtil.millisecondToDate(createTime));
         order.setOrderNo(UtilConf.getUUID());
         order.setOrderSurce("乘客服务系统");
+
+
         //操作数据库
-
-
         try {
             orderInfoService.insertOrder(order);
-            resultEntity.setCode(ResultEntity.Type.SUCCESS.value());
-            resultEntity.setMessage("操作成功");
+            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
+            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
             return resultEntity;
         } catch (Exception e) {
             e.printStackTrace();
-            resultEntity.setCode(ResultEntity.Type.FAIL.value());
-            resultEntity.setMessage("操作失败");
+            resultEntity.setCode(ResutlMessage.FAIL.getName());
+            resultEntity.setMessage(ResutlMessage.FAIL.getValue());
             return resultEntity;
         }
 
@@ -75,11 +76,11 @@ public class OrderInfoControl {
         ResultEntity result = new ResultEntity();
         int i = orderInfoService.deleteSourceOrderId(sourceOrderId);
         if (i > 0) {
-            result.setCode(ResultEntity.Type.SUCCESS.value());
-            result.setMessage("操作成功");
+            result.setCode(ResutlMessage.SUCCESS.getName());
+            result.setMessage(ResutlMessage.SUCCESS.getValue());
         } else {
-            result.setCode(ResultEntity.Type.FAIL.value());
-            result.setMessage("操作失败");
+            result.setCode(ResutlMessage.FAIL.getName());
+            result.setMessage(ResutlMessage.FAIL.getValue());
             return result;
         }
         return result;
@@ -92,7 +93,9 @@ public class OrderInfoControl {
     @ParamsNotNull(str = "sourceOrderId")
     public ResultEntity findOrderNo(String sourceOrderId ) {
         ResultEntity result = new ResultEntity();
-        result.setCode(ResultEntity.Type.SUCCESS.value());
+        result.setCode(ResutlMessage.SUCCESS.getName());
+        OrderInfo order=orderInfoService.getBySourceOrderId(sourceOrderId);
+        logger.info("测试数据"+order.toString());
         //测试
         return result;
     }

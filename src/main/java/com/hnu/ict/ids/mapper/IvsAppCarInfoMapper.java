@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface IvsAppCarInfoMapper extends BaseMapper<IvsAppCarInfo> {
 
@@ -17,4 +19,28 @@ public interface IvsAppCarInfoMapper extends BaseMapper<IvsAppCarInfo> {
      */
     @Select("select * from ivs_app_car_info where license_number = #{licenseNumber}")
     IvsAppCarInfo getByLicenseNumber(@Param("licenseNumber") String licenseNumber);
+
+    @Select("select * from ivs_app_car_info")
+    List<IvsAppCarInfo> findAll();
+
+
+    /**
+     * 查询所有车辆总数
+     * @return
+     */
+    @Select("select  count(c_id) from ivs_app_car_info")
+    int getTotal();
+
+
+    /**
+     * 查询所有离线状态
+     * @return
+     */
+    @Select("select  count(c_id) from ivs_app_car_info where c_status=0" )
+    int getOffLine();
+
+
+    @Select("select  count(c_id) from ivs_app_car_info where c_status=1" )
+    int getOnLine();
+
 }
