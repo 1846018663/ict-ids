@@ -48,7 +48,7 @@ public class CheckParamsInterceptor extends HandlerInterceptorAdapter  {
                 return true;
             } else {
                 ResultEntity result = new ResultEntity();
-                result.setCode(ResutlMessage.SUCCESS.getName());
+                result.setCode(ResutlMessage.FAIL.getName());
                 result.setMessage("参数不完整");
                 httpServletResponse.setHeader("content-type", "text/html;charset=utf-8");
                 httpServletResponse.getWriter().write(JSON.toJSONString(result));

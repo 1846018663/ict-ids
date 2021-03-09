@@ -3,6 +3,8 @@ package com.hnu.ict.ids.control;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.hnu.common.respone.BaseResponse;
+import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.entity.IvsAppCarInfo;
 import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.exception.ResutlMessage;
@@ -27,22 +29,22 @@ public class CarControl {
 
     @ResponseBody
     @RequestMapping("/getCarStatus")
-    public ResultEntity getCarStatus(String licenseNumber){
-        ResultEntity resultEntity=new ResultEntity();
+    public PojoBaseResponse getCarStatus(String licenseNumber){
+        PojoBaseResponse result=new PojoBaseResponse();
         if(StringUtils.hasText(licenseNumber)){
             IvsAppCarInfo car=ivsAppCarInfoService.getByLicenseNumber(licenseNumber);
             JSONObject obj = (JSONObject) JSONObject.toJSON(car);
-            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
-            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
-            resultEntity.setResult(obj);
-            return resultEntity;
+            result.setErrorCode(ResutlMessage.SUCCESS.getName());
+            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
+            result.setData(obj);
+            return result;
         }else{
            List<IvsAppCarInfo> catList= ivsAppCarInfoService.findAll();
             JSONArray obj = (JSONArray) JSONArray.toJSON(catList);
-            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
-            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
-            resultEntity.setResult(obj);
-            return resultEntity;
+            result.setErrorCode(ResutlMessage.SUCCESS.getName());
+            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
+            result.setData(obj);
+            return result;
         }
 
     }
@@ -50,49 +52,50 @@ public class CarControl {
 
     @ResponseBody
     @RequestMapping("/getTotal")
-    public ResultEntity getTotal(){
-        ResultEntity resultEntity=new ResultEntity();
+    public PojoBaseResponse getTotal(){
+        PojoBaseResponse response=new PojoBaseResponse();
         int total= 0;
         try {
             total = ivsAppCarInfoService.getTotal();
-            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
-            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
-            resultEntity.setResult(total);
+            response.setErrorCode(ResutlMessage.SUCCESS.getValue());
+            response.setErrorMessage(ResutlMessage.SUCCESS.getValue());
+            response.setData(total);
         } catch (Exception e) {
             e.printStackTrace();
-            resultEntity.setCode(ResutlMessage.ERROR.getName());
-            resultEntity.setMessage(ResutlMessage.ERROR.getValue());
+            response.setErrorCode(ResutlMessage.ERROR.getName());
+            response.setErrorMessage(ResutlMessage.ERROR.getValue());
         }
 
-        return resultEntity;
+        return response;
 
     }
 
 
     @ResponseBody
     @RequestMapping("/getOffLine")
-    public ResultEntity getOffLine(){
-        ResultEntity resultEntity=new ResultEntity();
+    public PojoBaseResponse getOffLine(){
+        PojoBaseResponse result=new PojoBaseResponse();
         int total= 0;
         try {
             total = ivsAppCarInfoService.getOffLine();
-            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
-            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
-            resultEntity.setResult(total);
+            result.setErrorCode(ResutlMessage.SUCCESS.getName());
+            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
+            result.setData(total);
+
         } catch (Exception e) {
             e.printStackTrace();
-            resultEntity.setCode(ResutlMessage.ERROR.getName());
-            resultEntity.setMessage(ResutlMessage.ERROR.getValue());
+            result.setErrorCode(ResutlMessage.ERROR.getName());
+            result.setErrorMessage(ResutlMessage.ERROR.getValue());
         }
 
-        return resultEntity;
+        return result;
 
     }
 
 
     @ResponseBody
     @RequestMapping("/getOnLine")
-    public ResultEntity getOnLine(){
+    public BaseResponse getOnLine(){
         ResultEntity resultEntity=new ResultEntity();
         int total= 0;
         try {
@@ -106,7 +109,7 @@ public class CarControl {
             resultEntity.setMessage(ResutlMessage.ERROR.getValue());
         }
 
-        return resultEntity;
+        return new BaseResponse();
 
     }
 

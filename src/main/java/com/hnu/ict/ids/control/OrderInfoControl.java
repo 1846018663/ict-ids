@@ -1,6 +1,7 @@
 package com.hnu.ict.ids.control;
 
 
+import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.entity.OrderInfo;
 import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.exception.ResultEntity;
@@ -35,17 +36,14 @@ public class OrderInfoControl {
     @Autowired
     TravelInfoService travelInfoService;
 
-//    @Resource
-//    private RedisTemplate<String, Object> redisTemplate;
-
 
     @ResponseBody
     @RequestMapping("/add")
     @ParamsNotNull(str = "sourceOrderId,beginStationId,endStationId,ticketNumber,buyUid,startTime,uIds,createTime")
-    public ResultEntity addOrder( String sourceOrderId, int beginStationId,
-                                 int endStationId, int ticketNumber, BigInteger buyUid,
-                                  Long startTime, String uIds, Long createTime){
-        ResultEntity resultEntity=new ResultEntity();
+    public PojoBaseResponse addOrder(String sourceOrderId, int beginStationId,
+                                     int endStationId, int ticketNumber, BigInteger buyUid,
+                                     Long startTime, String uIds, Long createTime){
+        PojoBaseResponse result=new PojoBaseResponse();
         //创建数据对象
         OrderInfo order=new OrderInfo();
         order.setSourceOrderId(sourceOrderId);
@@ -56,20 +54,20 @@ public class OrderInfoControl {
         order.setStartTime(DateUtil.millisecondToDate(startTime));
         order.setCreateTime(DateUtil.millisecondToDate(createTime));
         order.setOrderNo(UtilConf.getUUID());
-        order.setOrderSurce("乘客服务系统");
+        order.setOrderSource("乘客服务系统");
 
 
         //操作数据库
         try {
             orderInfoService.insertOrder(order);
-            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
-            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
-            return resultEntity;
+            result.setErrorCode(ResutlMessage.SUCCESS.getName());
+            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
-            resultEntity.setCode(ResutlMessage.FAIL.getName());
-            resultEntity.setMessage(ResutlMessage.FAIL.getValue());
-            return resultEntity;
+            result.setErrorCode(ResutlMessage.FAIL.getName());
+            result.setErrorMessage(ResutlMessage.FAIL.getValue());
+            return result;
         }
 
 
@@ -80,15 +78,15 @@ public class OrderInfoControl {
     @ResponseBody
     @RequestMapping("/deleteOrderNo")
     @ParamsNotNull(str = "sourceOrderId")
-    public ResultEntity deleteOrderNo(String sourceOrderId ) {
-        ResultEntity result = new ResultEntity();
+    public PojoBaseResponse deleteOrderNo(String sourceOrderId ) {
+        PojoBaseResponse result = new PojoBaseResponse();
         int i = orderInfoService.deleteSourceOrderId(sourceOrderId);
         if (i > 0) {
-            result.setCode(ResutlMessage.SUCCESS.getName());
-            result.setMessage(ResutlMessage.SUCCESS.getValue());
+            result.setErrorCode(ResutlMessage.SUCCESS.getName());
+            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
         } else {
-            result.setCode(ResutlMessage.FAIL.getName());
-            result.setMessage(ResutlMessage.FAIL.getValue());
+            result.setErrorCode(ResutlMessage.FAIL.getName());
+            result.setErrorMessage(ResutlMessage.FAIL.getValue());
             return result;
         }
         return result;
@@ -98,16 +96,16 @@ public class OrderInfoControl {
     @ResponseBody
     @RequestMapping("/addExistence")
     @ParamsNotNull(str = "sourceOrderId,travelId,ticketNumber,buyUid,uIds,createTime")
-    public ResultEntity addExistence( String sourceOrderId,int ticketNumber,Long travelId, BigInteger buyUid,
+    public PojoBaseResponse addExistence( String sourceOrderId,int ticketNumber,Long travelId, BigInteger buyUid,
                                  String uIds, Long createTime){
-        ResultEntity resultEntity=new ResultEntity();
+        PojoBaseResponse result=new PojoBaseResponse();
 
         //根据行程id查询订单信息   并创建订单数据
        TravelInfo travelInfo= travelInfoService.getById(BigInteger.valueOf(travelId));
        if(travelInfo==null){
-           resultEntity.setCode(ResutlMessage.WARN.getName());
-           resultEntity.setMessage(ResutlMessage.WARN.getValue());
-           return resultEntity;
+           result.setErrorCode(ResutlMessage.WARN.getName());
+           result.setErrorMessage(ResutlMessage.WARN.getValue());
+           return result;
        }
 
         //创建数据对象
@@ -120,7 +118,7 @@ public class OrderInfoControl {
         order.setStartTime(travelInfo.getStartTime());
         order.setCreateTime(DateUtil.millisecondToDate(createTime));
         order.setOrderNo(UtilConf.getUUID());
-        order.setOrderSurce("乘客服务系统");
+        order.setOrderSource("乘客服务系统");
 
 
         //操作数据库
@@ -128,14 +126,15 @@ public class OrderInfoControl {
             orderInfoService.insertOrder(order);
             //后续调入算法生成行程数据
 
-            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
-            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
-            return resultEntity;
+
+            result.setErrorCode(ResutlMessage.SUCCESS.getName());
+            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
-            resultEntity.setCode(ResutlMessage.FAIL.getName());
-            resultEntity.setMessage(ResutlMessage.FAIL.getValue());
-            return resultEntity;
+            result.setErrorCode(ResutlMessage.FAIL.getName());
+            result.setErrorMessage(ResutlMessage.FAIL.getValue());
+            return result;
         }
 
 
@@ -146,9 +145,9 @@ public class OrderInfoControl {
     @ResponseBody
     @RequestMapping("/findOrderNo")
     @ParamsNotNull(str = "sourceOrderId")
-    public ResultEntity findOrderNo(String sourceOrderId ) {
-        ResultEntity result = new ResultEntity();
-        result.setCode(ResutlMessage.SUCCESS.getName());
+    public PojoBaseResponse findOrderNo(String sourceOrderId ) {
+        PojoBaseResponse result = new PojoBaseResponse();
+        result.setErrorCode(ResutlMessage.SUCCESS.getName());
         OrderInfo order=orderInfoService.getBySourceOrderId(sourceOrderId);
         logger.info("测试数据"+order.toString());
 

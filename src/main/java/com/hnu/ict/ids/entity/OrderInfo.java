@@ -20,7 +20,7 @@ public class OrderInfo {
     /**
      * 订单来源
      */
-    private String orderSurce;
+    private String orderSource;
 
 
     /**
@@ -83,7 +83,7 @@ public class OrderInfo {
     public String toString() {
         return "OrderInfo{" +
                 "id=" + id +
-                ", orderSurce='" + orderSurce + '\'' +
+                ", orderSurce='" + orderSource + '\'' +
                 ", sourceOrderId='" + sourceOrderId + '\'' +
                 ", orderNo='" + orderNo + '\'' +
                 ", beginStationId=" + beginStationId +
