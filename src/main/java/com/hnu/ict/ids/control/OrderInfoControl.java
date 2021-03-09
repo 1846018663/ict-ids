@@ -102,11 +102,6 @@ public class OrderInfoControl {
 
         //根据行程id查询订单信息   并创建订单数据
        TravelInfo travelInfo= travelInfoService.getById(BigInteger.valueOf(travelId));
-       if(travelInfo==null){
-           result.setErrorCode(ResutlMessage.WARN.getName());
-           result.setErrorMessage(ResutlMessage.WARN.getValue());
-           return result;
-       }
 
         //创建数据对象
         OrderInfo order=new OrderInfo();
