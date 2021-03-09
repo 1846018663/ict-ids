@@ -1,6 +1,7 @@
 package com.hnu.ict.ids.control;
 
 
+import com.hnu.common.exception.BaseBusinessException;
 import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.exception.ResutlMessage;
@@ -37,19 +38,10 @@ public class StatisticsControl {
         String startTime=time+" 00:00:00";
         String endTime=time+" 23:59:59";
 
-        int total= 0;
-        try {
-            total = travelInfoService.finDateTraveTotal(DateUtil.strToDate(startTime),DateUtil.strToDate(endTime));
-            result.setErrorCode(ResutlMessage.SUCCESS.getName());
-            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
-            result.setData(total);
-        } catch (Exception e) {
-            e.printStackTrace();
-            result.setErrorCode(ResutlMessage.ERROR.getName());
-            result.setErrorMessage(ResutlMessage.ERROR.getValue());
+        int total = travelInfoService.finDateTraveTotal(DateUtil.strToDate(startTime),DateUtil.strToDate(endTime));
+        result.setData(total);
 
-        }
-        return result;
+         return result;
 
 
     }
@@ -62,26 +54,12 @@ public class StatisticsControl {
     public PojoBaseResponse getWeekTraveTotal(String time){
         PojoBaseResponse result=new PojoBaseResponse();
         Date date=DateUtil.strToDayDate(time);
-        if(date==null){
-            result.setErrorCode(ResutlMessage.WARN.getName());
-            result.setErrorMessage(ResutlMessage.WARN.getValue());
-            return  result;
-        }
-
+        //对时间进行校验格式
         String endTime=DateUtil.getDateByString(date);
         String startTime=DateUtil.getServen(date);
 
-        int total= 0;
-        try {
-            total = travelInfoService.finDateTraveTotal(DateUtil.strToDayDate(startTime),DateUtil.strToDayDate(endTime));
-            result.setErrorCode(ResutlMessage.SUCCESS.getName());
-            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
-            result.setData(total);
-        } catch (Exception e) {
-            e.printStackTrace();
-            result.setErrorCode(ResutlMessage.ERROR.getName());
-            result.setErrorMessage(ResutlMessage.ERROR.getValue());
-        }
+        int total = travelInfoService.finDateTraveTotal(DateUtil.strToDayDate(startTime),DateUtil.strToDayDate(endTime));
+        result.setData(total);
 
         return result;
 

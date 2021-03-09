@@ -33,17 +33,11 @@ public class CarControl {
         PojoBaseResponse result=new PojoBaseResponse();
         if(StringUtils.hasText(licenseNumber)){
             IvsAppCarInfo car=ivsAppCarInfoService.getByLicenseNumber(licenseNumber);
-            JSONObject obj = (JSONObject) JSONObject.toJSON(car);
-            result.setErrorCode(ResutlMessage.SUCCESS.getName());
-            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
-            result.setData(obj);
+            result.setData(car);
             return result;
         }else{
-           List<IvsAppCarInfo> catList= ivsAppCarInfoService.findAll();
-            JSONArray obj = (JSONArray) JSONArray.toJSON(catList);
-            result.setErrorCode(ResutlMessage.SUCCESS.getName());
-            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
-            result.setData(obj);
+            List<IvsAppCarInfo> catList= ivsAppCarInfoService.findAll();
+            result.setData(catList);
             return result;
         }
 
@@ -54,17 +48,8 @@ public class CarControl {
     @RequestMapping("/getTotal")
     public PojoBaseResponse getTotal(){
         PojoBaseResponse response=new PojoBaseResponse();
-        int total= 0;
-        try {
-            total = ivsAppCarInfoService.getTotal();
-            response.setErrorCode(ResutlMessage.SUCCESS.getValue());
-            response.setErrorMessage(ResutlMessage.SUCCESS.getValue());
-            response.setData(total);
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.setErrorCode(ResutlMessage.ERROR.getName());
-            response.setErrorMessage(ResutlMessage.ERROR.getValue());
-        }
+        int total= ivsAppCarInfoService.getTotal();
+        response.setData(total);
 
         return response;
 
@@ -75,18 +60,8 @@ public class CarControl {
     @RequestMapping("/getOffLine")
     public PojoBaseResponse getOffLine(){
         PojoBaseResponse result=new PojoBaseResponse();
-        int total= 0;
-        try {
-            total = ivsAppCarInfoService.getOffLine();
-            result.setErrorCode(ResutlMessage.SUCCESS.getName());
-            result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
-            result.setData(total);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            result.setErrorCode(ResutlMessage.ERROR.getName());
-            result.setErrorMessage(ResutlMessage.ERROR.getValue());
-        }
+        int total=  ivsAppCarInfoService.getOffLine();
+        result.setData(total);
 
         return result;
 
@@ -97,17 +72,8 @@ public class CarControl {
     @RequestMapping("/getOnLine")
     public BaseResponse getOnLine(){
         ResultEntity resultEntity=new ResultEntity();
-        int total= 0;
-        try {
-            total = ivsAppCarInfoService.getOnLine();
-            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
-            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
-            resultEntity.setResult(total);
-        } catch (Exception e) {
-            e.printStackTrace();
-            resultEntity.setCode(ResutlMessage.ERROR.getName());
-            resultEntity.setMessage(ResutlMessage.ERROR.getValue());
-        }
+        int total= ivsAppCarInfoService.getOnLine();
+        resultEntity.setResult(total);
 
         return new BaseResponse();
 
