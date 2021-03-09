@@ -14,7 +14,7 @@ import java.util.Date;
 
 @Data
 @TableName(value = "travel_info") //行程信息表
-public class travelInfo {
+public class TravelInfo {
 
     /** 主键ID **/
     @TableId(type = IdType.AUTO)

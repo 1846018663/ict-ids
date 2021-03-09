@@ -2,10 +2,15 @@ package com.hnu.ict.ids.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
 import java.math.BigInteger;
 
-public class travelTicketInfo {
+
+@Data
+@TableName(value = "travel_info")
+public class TravelTicketInfo {
 
     /** 主键ID **/
     @TableId(type = IdType.AUTO)

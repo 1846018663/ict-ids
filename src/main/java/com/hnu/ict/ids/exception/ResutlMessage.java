@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 public enum ResutlMessage {
     SUCCESS("200", "操作成功"),
     FAIL("300", "操作失败"),
-    WARN("301", "非法警告"),
+    WARN("301", "非法操作"),
     ERROR("500", "操作失败");
 
     private String name;

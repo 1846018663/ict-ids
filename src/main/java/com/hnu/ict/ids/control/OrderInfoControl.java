@@ -2,9 +2,11 @@ package com.hnu.ict.ids.control;
 
 
 import com.hnu.ict.ids.entity.OrderInfo;
+import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.exception.ResutlMessage;
 import com.hnu.ict.ids.service.OrderInfoService;
+import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.ParamsNotNull;
 import com.hnu.ict.ids.utils.UtilConf;
@@ -29,6 +31,12 @@ public class OrderInfoControl {
 
     @Resource
     OrderInfoService orderInfoService;
+
+    @Autowired
+    TravelInfoService travelInfoService;
+
+//    @Resource
+//    private RedisTemplate<String, Object> redisTemplate;
 
 
     @ResponseBody
@@ -87,6 +95,53 @@ public class OrderInfoControl {
     }
 
 
+    @ResponseBody
+    @RequestMapping("/addExistence")
+    @ParamsNotNull(str = "sourceOrderId,travelId,ticketNumber,buyUid,uIds,createTime")
+    public ResultEntity addExistence( String sourceOrderId,int ticketNumber,Long travelId, BigInteger buyUid,
+                                 String uIds, Long createTime){
+        ResultEntity resultEntity=new ResultEntity();
+
+        //根据行程id查询订单信息   并创建订单数据
+       TravelInfo travelInfo= travelInfoService.getById(BigInteger.valueOf(travelId));
+       if(travelInfo==null){
+           resultEntity.setCode(ResutlMessage.WARN.getName());
+           resultEntity.setMessage(ResutlMessage.WARN.getValue());
+           return resultEntity;
+       }
+
+        //创建数据对象
+        OrderInfo order=new OrderInfo();
+        order.setSourceOrderId(sourceOrderId);
+        order.setBeginStationId(travelInfo.getBeginStationId());
+        order.setEndStationId(travelInfo.getEndStationId());
+        order.setTicketNumber(ticketNumber);
+        order.setBuyUid(buyUid);
+        order.setStartTime(travelInfo.getStartTime());
+        order.setCreateTime(DateUtil.millisecondToDate(createTime));
+        order.setOrderNo(UtilConf.getUUID());
+        order.setOrderSurce("乘客服务系统");
+
+
+        //操作数据库
+        try {
+            orderInfoService.insertOrder(order);
+            //后续调入算法生成行程数据
+
+            resultEntity.setCode(ResutlMessage.SUCCESS.getName());
+            resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
+            return resultEntity;
+        } catch (Exception e) {
+            e.printStackTrace();
+            resultEntity.setCode(ResutlMessage.FAIL.getName());
+            resultEntity.setMessage(ResutlMessage.FAIL.getValue());
+            return resultEntity;
+        }
+
+
+
+    }
+
 
     @ResponseBody
     @RequestMapping("/findOrderNo")
@@ -96,6 +151,10 @@ public class OrderInfoControl {
         result.setCode(ResutlMessage.SUCCESS.getName());
         OrderInfo order=orderInfoService.getBySourceOrderId(sourceOrderId);
         logger.info("测试数据"+order.toString());
+
+
+//        String value = (String) redisTemplate.opsForValue().get("carLocateInfo");
+//        logger.info("key 为 a 的值是：{}",value);
         //测试
         return result;
     }
