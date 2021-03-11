@@ -13,7 +13,7 @@ public class IvsAppPlatformInfo {
 
     /** 主键ID **/
     @TableId(type = IdType.AUTO)
-    private int id;
+    private int pId;
 
     /**
      * 所属城市统一编码

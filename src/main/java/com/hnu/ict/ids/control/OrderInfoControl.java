@@ -16,12 +16,18 @@ import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ListOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Api(tags = "订单行程API")
 @RestController
@@ -36,6 +42,44 @@ public class OrderInfoControl {
     @Autowired
     TravelInfoService travelInfoService;
 
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @RequestMapping("/test")
+    public PojoBaseResponse test() {
+        PojoBaseResponse response=new PojoBaseResponse();
+
+        List<Object> hashList = redisTemplate.opsForHash().values("carLocateInfo::*");
+        System.out.println("通过values(H key)方法获取变量中的hashMap值:" + hashList);
+
+        Map<Object,Object> map = redisTemplate.opsForHash().entries("carLocateInfo::*");
+        System.out.println("通过entries(H key)方法获取变量中的键值对:" + map);
+
+        Set<Object> keySet = redisTemplate.opsForHash().keys("carLocateInfo::*");
+        System.out.println("通过keys(H key)方法获取变量中的键:" + keySet);
+
+
+        long hashLength = redisTemplate.opsForHash().size("carLocateInfo::*");
+        System.out.println("通过size(H key)方法获取变量的长度:" + hashLength);
+
+
+        // *号 必须要加，否则无法模糊查询
+        String prefix = "carLocateInfo::*";
+        // 获取所有的key
+        Set<String> keys = stringRedisTemplate.keys(prefix);
+        System.out.println(keys);
+        for(String key : keys){
+            System.out.println(key);
+        }
+        // 批量获取数据
+        List<String> myObjectListRedis = stringRedisTemplate.opsForValue().multiGet(keys);
+        System.out.println("myObjectListRedis"+myObjectListRedis);
+
+        return response;
+    }
 
     @ResponseBody
     @RequestMapping("/add")
@@ -144,11 +188,13 @@ public class OrderInfoControl {
         PojoBaseResponse result = new PojoBaseResponse();
         result.setErrorCode(ResutlMessage.SUCCESS.getName());
         OrderInfo order=orderInfoService.getBySourceOrderId(sourceOrderId);
-        logger.info("测试数据"+order.toString());
 
+//        logger.info("list大小", redisTemplate.opsForList().size("carLocateInfo::"));
 
-//        String value = (String) redisTemplate.opsForValue().get("carLocateInfo");
+//        String value = (String) redisTemplate.opsForValue().get("carLocateInfo::101_202");
+
 //        logger.info("key 为 a 的值是：{}",value);
+
         //测试
         return result;
     }

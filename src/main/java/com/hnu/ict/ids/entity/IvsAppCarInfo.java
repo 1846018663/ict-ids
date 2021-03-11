@@ -18,7 +18,7 @@ public class IvsAppCarInfo {
     /**
      * 车辆类型
      */
-    private int catType;
+    private int carType;
 
 
     /**
@@ -36,7 +36,7 @@ public class IvsAppCarInfo {
     /**
      * 城市编码
      */
-    private String cCoed;
+    private String cCode;
 
 
     /**
