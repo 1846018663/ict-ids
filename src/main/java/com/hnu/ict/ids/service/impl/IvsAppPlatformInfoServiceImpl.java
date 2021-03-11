@@ -16,18 +16,23 @@ public class IvsAppPlatformInfoServiceImpl implements IvsAppPlatformInfoService 
     IvsAppPlatformInfoMapper ivsAppPlatformInfoMapper;
 
     @Override
-    public int findAllTotal(){
-        return ivsAppPlatformInfoMapper.findAllTotal();
+    public int findAllTotal(String cityCode){
+        return ivsAppPlatformInfoMapper.findAllTotal(cityCode);
     }
 
 
     @Override
-    public int findbyStatusTotal(String status){
-        return ivsAppPlatformInfoMapper.findbyStatusTotal(status);
+    public int findbyStatusTotal(String status,String cityCode){
+        return ivsAppPlatformInfoMapper.findbyStatusTotal(status,cityCode);
     }
 
     @Override
-    public List<PlatformInfoFrom> getPlatformAll(){
-        return ivsAppPlatformInfoMapper.getPlatformAll();
+    public List<PlatformInfoFrom> getPlatformAll(String cityCode){
+        return ivsAppPlatformInfoMapper.getPlatformAll(cityCode);
+    }
+
+    @Override
+    public IvsAppPlatformInfo getByPlatformId(int platforId){
+        return ivsAppPlatformInfoMapper.getByPlatformId(platforId);
     }
 }

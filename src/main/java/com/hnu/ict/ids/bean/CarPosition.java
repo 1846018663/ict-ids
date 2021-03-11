@@ -1,14 +1,12 @@
 package com.hnu.ict.ids.bean;
 
+
 import lombok.Data;
 
 @Data
-public class PlatformInfoFrom {
+public class CarPosition {
 
-    int id;
-    String name;
+    String id;
     String longitude;
     String latitude;
-    String roadSide;
-
 }

@@ -10,4 +10,9 @@ public interface TravelInfoService {
     TravelInfo getById(BigInteger id);
 
     int finDateTraveTotal(Date startDate, Date endDate);
+
+
+    TravelInfo getCarTime(int carId,Date timeDate);
+
+
 }

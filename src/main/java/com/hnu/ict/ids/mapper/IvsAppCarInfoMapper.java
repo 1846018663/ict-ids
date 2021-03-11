@@ -19,34 +19,45 @@ public interface IvsAppCarInfoMapper extends BaseMapper<IvsAppCarInfo> {
      * @param licenseNumber
      * @return
      */
-    @Select("select * from ivs_app_car_info where license_number = #{licenseNumber}")
-    IvsAppCarInfo getByLicenseNumber(@Param("licenseNumber") String licenseNumber);
+    @Select("select * from ivs_app_car_info where license_number = #{licenseNumber} and c_code=#{cityCode}")
+    IvsAppCarInfo getByLicenseNumber(@Param("licenseNumber") String licenseNumber,@Param("cityCode")String cityCode);
 
-    @Select("select * from ivs_app_car_info")
-    List<IvsAppCarInfo> findAll();
+
+    /**
+     * 根据车牌号查询
+     * @param licenseNumber
+     * @return
+     */
+    @Select("select * from ivs_app_car_info where c_id = #{carId} ")
+    IvsAppCarInfo getByCarId(@Param("carId")int carId);
+
+
+
+    @Select("select * from ivs_app_car_info where c_code=#{cityCode}")
+    List<IvsAppCarInfo> findAll(@Param("cityCode") String cityCode);
 
 
     /**
      * 查询所有车辆总数
      * @return
      */
-    @Select("select  count(c_id) from ivs_app_car_info")
-    int getTotal();
+    @Select("select  count(c_id) from ivs_app_car_info where c_code=#{cityCode}")
+    int getTotal(@Param("cityCode") String cityCode);
 
 
     /**
      * 查询所有离线状态
      * @return
      */
-    @Select("select  count(c_id) from ivs_app_car_info where c_status=0" )
-    int getOffLine();
+    @Select("select  count(c_id) from ivs_app_car_info where c_status=0 and c_code=#{cityCode}" )
+    int getOffLine(@Param("cityCode") String cityCode);
 
 
-    @Select("select  count(c_id) from ivs_app_car_info where c_status=1" )
-    int getOnLine();
+    @Select("select  count(c_id) from ivs_app_car_info where c_status=1 and c_code=#{cityCode}" )
+    int getOnLine(@Param("cityCode") String cityCode);
 
 
-    @Select("select car_type as type ,COUNT(c_id) as total,c_status as status,car_seat_number as onIdlerStatusCount from ivs_app_car_info  GROUP by car_type ,c_status")
-    List<CarTypeTotal> getCarTypeTotal();
+    @Select("select car_type as type ,COUNT(c_id) as total,c_status as status,car_seat_number as onIdlerStatusCount from ivs_app_car_info where c_code=#{cityCode}  GROUP by car_type ,c_status")
+    List<CarTypeTotal> getCarTypeTotal(@Param("cityCode") String cityCode);
 
 }

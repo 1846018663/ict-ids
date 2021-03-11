@@ -17,33 +17,38 @@ public class IvsAppCarInfoServiceImpl implements IvsAppCarInfoService {
     IvsAppCarInfoMapper ivsAppCarInfoMapper;
 
     @Override
-    public IvsAppCarInfo getByLicenseNumber(String licenseNumber){
-        return ivsAppCarInfoMapper.getByLicenseNumber(licenseNumber);
+    public IvsAppCarInfo getByCarId(int carId){
+       return ivsAppCarInfoMapper.getByCarId(carId);
     }
 
     @Override
-    public List<IvsAppCarInfo> findAll(){
-        return ivsAppCarInfoMapper.findAll();
+    public IvsAppCarInfo getByLicenseNumber(String licenseNumber,String cityCode){
+        return ivsAppCarInfoMapper.getByLicenseNumber(licenseNumber,cityCode);
     }
 
     @Override
-    public int getTotal(){
-        return ivsAppCarInfoMapper.getTotal();
+    public List<IvsAppCarInfo> findAll(String cityCode){
+        return ivsAppCarInfoMapper.findAll(cityCode);
     }
 
     @Override
-    public int getOffLine() {
-        return ivsAppCarInfoMapper.getOffLine();
+    public int getTotal(String cityCode){
+        return ivsAppCarInfoMapper.getTotal(cityCode);
+    }
+
+    @Override
+    public int getOffLine(String cityCode) {
+        return ivsAppCarInfoMapper.getOffLine(cityCode);
     }
 
 
     @Override
-    public int getOnLine(){
-        return ivsAppCarInfoMapper.getOnLine();
+    public int getOnLine(String cityCode){
+        return ivsAppCarInfoMapper.getOnLine(cityCode);
     }
 
-
-    public List<CarTypeTotal> getCarTypeTotal(){
-        return ivsAppCarInfoMapper.getCarTypeTotal();
+    @Override
+    public List<CarTypeTotal> getCarTypeTotal(String cityCode){
+        return ivsAppCarInfoMapper.getCarTypeTotal(cityCode);
     }
 }

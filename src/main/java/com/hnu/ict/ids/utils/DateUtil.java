@@ -28,10 +28,9 @@ public class DateUtil {
      *
      * @return 2019-08-27 14:12:40
      */
-    public static String getCurrentTime() {
+    public static String getCurrentTime(Date date) {
         // 小写的hh取得12小时，大写的HH取的是24小时
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date date = new Date();
         return df.format(date);
     }
 

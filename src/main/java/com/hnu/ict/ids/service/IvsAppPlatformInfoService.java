@@ -8,11 +8,13 @@ import java.util.List;
 
 public interface IvsAppPlatformInfoService {
 
-    int findAllTotal();
+    int findAllTotal(String cityCode);
 
 
-    int findbyStatusTotal(String status);
+    int findbyStatusTotal(String status,String cityCode);
 
 
-    List<PlatformInfoFrom> getPlatformAll();
+    List<PlatformInfoFrom> getPlatformAll(String cityCode);
+
+    IvsAppPlatformInfo getByPlatformId(int platforId);
 }

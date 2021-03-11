@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.hnu.ict.ids.entity.OrderInfo;
 import org.apache.ibatis.annotations.*;
 
+import java.util.Date;
+import java.util.List;
+
 @Mapper
 public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
@@ -23,5 +26,12 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
     @Delete("delete from order_info where source_order_id = #{sourceOrderId}")
     int deleteBySourceOrderId(@Param("sourceOrderId")String  sourceOrderId);
+
+
+    /**
+     * 查询未生成行程订单数据
+     */
+  //  @Select("select * from order_info where travel_id is null and start_time>#{statDate} and start_time<=#{endDate}")
+    List<OrderInfo> findNotTrave(@Param("statDate")String statDate,@Param("endDate")String endDate);
 
 }

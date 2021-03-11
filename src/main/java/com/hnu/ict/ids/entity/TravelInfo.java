@@ -4,6 +4,7 @@ package com.hnu.ict.ids.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.validation.constraints.DecimalMin;
@@ -48,6 +49,7 @@ public class TravelInfo {
     /**
      * 行程开始时间
      */
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private Date startTime;
 
 
@@ -91,12 +93,14 @@ public class TravelInfo {
     /**
      * 行程创建时间
      */
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private Date createTime;
 
 
     /**
      * 行程更新时间
      */
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private Date updateTime;
 
 

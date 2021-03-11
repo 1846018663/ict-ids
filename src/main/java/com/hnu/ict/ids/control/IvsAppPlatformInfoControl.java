@@ -4,6 +4,7 @@ import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.bean.PlatformInfoFrom;
 import com.hnu.ict.ids.entity.IvsAppPlatformInfo;
 import com.hnu.ict.ids.service.IvsAppPlatformInfoService;
+import com.hnu.ict.ids.utils.ParamsNotNull;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,9 +27,10 @@ public class IvsAppPlatformInfoControl {
 
 
     @RequestMapping("/getPlatformAllInfo")
-    public PojoBaseResponse getPlatformAllInfo(){
+    @ParamsNotNull(str ="cityCode")
+    public PojoBaseResponse getPlatformAllInfo(String cityCode){
         PojoBaseResponse result=new PojoBaseResponse();
-        List<PlatformInfoFrom> list=ivsAppPlatformInfoService.getPlatformAll();
+        List<PlatformInfoFrom> list=ivsAppPlatformInfoService.getPlatformAll(cityCode);
         result.setData(list);
         return result;
 

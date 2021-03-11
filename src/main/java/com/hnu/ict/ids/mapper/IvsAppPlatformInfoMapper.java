@@ -13,6 +13,15 @@ import java.util.List;
 @Mapper
 public interface IvsAppPlatformInfoMapper extends BaseMapper<IvsAppPlatformInfo> {
 
+
+    /**
+     * 根据站台id查询
+     * @param platforId
+     * @return
+     */
+    @Select("select * from ivs_app_platform_info where p_id = #{platforId}")
+    IvsAppPlatformInfo getByPlatformId(@Param("platforId") int platforId);
+
     /**
      * 根据站台名称查询
      * @param PlatformName
@@ -22,8 +31,8 @@ public interface IvsAppPlatformInfoMapper extends BaseMapper<IvsAppPlatformInfo>
     IvsAppPlatformInfo getByPlatformName(@Param("PlatformName") String PlatformName);
 
 
-    @Select("select p_id as id ,p_name as name ,longitude as longitude,latitude as latitude from ivs_app_platform_info ")
-    List<PlatformInfoFrom> getPlatformAll();
+    @Select("select p_id as id ,p_name as name ,longitude as longitude,latitude as latitude, p_road_side as roadSide  from ivs_app_platform_info  where c_code=#{code}")
+    List<PlatformInfoFrom> getPlatformAll(@Param("code") String code);
 
 
     /**
@@ -31,8 +40,8 @@ public interface IvsAppPlatformInfoMapper extends BaseMapper<IvsAppPlatformInfo>
      * @param status
      * @return
      */
-    @Select("select COUNT(p_id) from ivs_app_platform_info where p_status = #{status}")
-    int findbyStatusTotal(@Param("status") String status);
+    @Select("select COUNT(p_id) from ivs_app_platform_info where p_status = #{status} and c_code=#{code}")
+    int findbyStatusTotal(@Param("status") String status,@Param("code") String code);
 
 
 
@@ -41,6 +50,6 @@ public interface IvsAppPlatformInfoMapper extends BaseMapper<IvsAppPlatformInfo>
      * @param
      * @return
      */
-    @Select("select COUNT(p_id) from ivs_app_platform_info")
-    int findAllTotal();
+    @Select("select COUNT(p_id) from ivs_app_platform_info where c_code=#{code}")
+    int findAllTotal(@Param("code") String code);
 }

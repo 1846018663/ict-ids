@@ -7,6 +7,9 @@ import com.hnu.ict.ids.service.OrderInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.List;
+
 /**
  * @description: 业务实现
  * @author: yuanhx
@@ -19,6 +22,10 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     @Autowired
     OrderInfoMapper orderMapper;
 
+
+    public List<OrderInfo> findNotTrave(String statDate, String endDate){
+        return orderMapper.findNotTrave(statDate,endDate);
+    }
 
     @Override
     public OrderInfo getBySourceOrderId(String sourceOrderId) {

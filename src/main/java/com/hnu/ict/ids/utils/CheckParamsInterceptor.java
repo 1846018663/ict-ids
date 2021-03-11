@@ -1,6 +1,8 @@
 package com.hnu.ict.ids.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.hnu.common.respone.BaseResponse;
+import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.exception.ResutlMessage;
 import org.slf4j.Logger;
@@ -47,9 +49,10 @@ public class CheckParamsInterceptor extends HandlerInterceptorAdapter  {
             if (bool) {
                 return true;
             } else {
-                ResultEntity result = new ResultEntity();
-                result.setCode(ResutlMessage.FAIL.getName());
-                result.setMessage("参数不完整");
+                PojoBaseResponse result = new PojoBaseResponse();
+                result.setErrorCode(ResutlMessage.FAIL.getName());
+                result.setErrorMessage("参数不完整");
+                result.setStatus(BaseResponse.Status.FAILED);
                 httpServletResponse.setHeader("content-type", "text/html;charset=utf-8");
                 httpServletResponse.getWriter().write(JSON.toJSONString(result));
                 return false;

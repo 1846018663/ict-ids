@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.math.BigInteger;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -196,6 +197,25 @@ public class OrderInfoControl {
 //        logger.info("key 为 a 的值是：{}",value);
 
         //测试
+        return result;
+    }
+
+
+    @ResponseBody
+    @RequestMapping("/findNotTrave")
+    public PojoBaseResponse findNotTrave() {
+        PojoBaseResponse result = new PojoBaseResponse();
+        //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
+        Date stateDate=new Date();
+        //30分钟毫秒
+        long time=1000*60*30+stateDate.getTime();
+        Date endDate=DateUtil.millisecondToDate(time);
+        ;
+
+        logger.info("开始时间"+DateUtil.getCurrentTime(stateDate)+"结束时间"+DateUtil.getCurrentTime(endDate));
+        List<OrderInfo>  listOrder=orderInfoService.findNotTrave(DateUtil.getCurrentTime(stateDate),DateUtil.getCurrentTime(endDate));
+
+        result.setData(listOrder);
         return result;
     }
 

@@ -12,7 +12,7 @@ public class IvsAppCarInfo {
 
     /** 主键ID **/
     @TableId(type = IdType.AUTO)
-    private int id;
+    private int cid;
 
 
     /**

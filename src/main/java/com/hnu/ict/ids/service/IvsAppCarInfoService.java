@@ -8,20 +8,22 @@ import java.util.Map;
 
 public interface IvsAppCarInfoService {
 
-    IvsAppCarInfo getByLicenseNumber(String licenseNumber);
+    IvsAppCarInfo getByLicenseNumber(String licenseNumber,String cityCode);
+
+    IvsAppCarInfo getByCarId(int carId);
 
 
-    List<IvsAppCarInfo> findAll();
+    List<IvsAppCarInfo> findAll(String cityCode);
 
 
-    int getTotal();
+    int getTotal(String cityCode);
 
 
-    int getOffLine();
+    int getOffLine(String cityCode);
 
 
-    int getOnLine();
+    int getOnLine(String cityCode);
 
 
-    List<CarTypeTotal> getCarTypeTotal();
+    List<CarTypeTotal> getCarTypeTotal(String cityCode);
 }

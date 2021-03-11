@@ -5,21 +5,30 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.common.respone.BaseResponse;
 import com.hnu.common.respone.PojoBaseResponse;
+import com.hnu.ict.ids.bean.CarTrave;
 import com.hnu.ict.ids.bean.CarTypeTotal;
 import com.hnu.ict.ids.bean.CarTypeTotalFrom;
 import com.hnu.ict.ids.entity.IvsAppCarInfo;
+import com.hnu.ict.ids.entity.IvsAppPlatformInfo;
+import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.exception.ResutlMessage;
 import com.hnu.ict.ids.service.IvsAppCarInfoService;
 import com.hnu.ict.ids.service.IvsAppPlatformInfoService;
+import com.hnu.ict.ids.service.TravelInfoService;
+import com.hnu.ict.ids.utils.ParamsNotNull;
 import io.swagger.annotations.Api;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.schema.Entry;
 
+import javax.annotation.Resource;
 import java.util.*;
 
 @Api(tags = "车辆信息API")
@@ -27,23 +36,65 @@ import java.util.*;
 @RequestMapping("/car")
 public class CarControl {
 
+    Logger logger= LoggerFactory.getLogger(CarControl.class);
+
     @Autowired
     IvsAppCarInfoService ivsAppCarInfoService;
 
     @Autowired
     IvsAppPlatformInfoService ivsAppPlatformInfoService;
 
+    @Resource
+    TravelInfoService travelInfoService;
 
+    /**
+     * 通过车牌查询该车行程信息（该车调度信息）
+     */
     @ResponseBody
-    @RequestMapping("/getCarStatus")
-    public PojoBaseResponse getCarStatus(String licenseNumber){
+    @RequestMapping(value="/getCarTraveInfo" ,method = RequestMethod.POST)
+    @ParamsNotNull(str ="carId")
+    public PojoBaseResponse getCarTraveInfo(String carId){
+        PojoBaseResponse result=new PojoBaseResponse();
+        CarTrave carTrave=new CarTrave();
+        //根据车牌查询车辆
+        IvsAppCarInfo carinfo=ivsAppCarInfoService.getByCarId(Integer.parseInt(carId));
+        carTrave.setCarNo(carinfo.getLicenseNumber());
+        carTrave.setCarType(carinfo.getCarType());
+        carTrave.setCarStatus(carinfo.getCStatus());
+        carTrave.setNuclear(carinfo.getCarSeatNumber());
+
+
+        //根据车辆id查询当前时间
+        Date time= new Date();
+        TravelInfo travelInfo= travelInfoService.getCarTime(carinfo.getCid(),time);
+        IvsAppPlatformInfo startPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getBeginStationId());
+        IvsAppPlatformInfo  endPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getEndStationId());
+        carTrave.setStartStationName(startPlatform.getPName());
+        carTrave.setEndStationName(endPlatform.getPName());
+
+        result.setData(carTrave);
+        return result;
+
+
+    }
+
+
+    /**
+     * 车辆信息状态
+     * @param licenseNumber   cityCode 城市编号
+     * @return
+     */
+    @ResponseBody
+    @RequestMapping(value="/getCarStatus", method = RequestMethod.POST)
+    @ParamsNotNull(str ="cityCode")
+    public PojoBaseResponse getCarStatus(String licenseNumber,String cityCode){
         PojoBaseResponse result=new PojoBaseResponse();
         if(StringUtils.hasText(licenseNumber)){
-            IvsAppCarInfo car=ivsAppCarInfoService.getByLicenseNumber(licenseNumber);
+            IvsAppCarInfo car=ivsAppCarInfoService.getByLicenseNumber(licenseNumber,cityCode);
             result.setData(car);
             return result;
         }else{
-            List<IvsAppCarInfo> catList= ivsAppCarInfoService.findAll();
+            List<IvsAppCarInfo> catList= ivsAppCarInfoService.findAll(cityCode);
             result.setData(catList);
             return result;
         }
@@ -51,23 +102,34 @@ public class CarControl {
     }
 
 
+    /**
+     * 统计所有车辆信息    传入城市编号
+     * @param cityCode
+     * @return
+     */
     @ResponseBody
-    @RequestMapping("/getTotal")
-    public PojoBaseResponse getTotal(){
+    @RequestMapping(value="/getTotal",method = RequestMethod.POST)
+    @ParamsNotNull(str ="cityCode")
+    public PojoBaseResponse getTotal(String cityCode){
         PojoBaseResponse response=new PojoBaseResponse();
-        int total= ivsAppCarInfoService.getTotal();
+        int total= ivsAppCarInfoService.getTotal(cityCode);
         response.setData(total);
 
         return response;
 
     }
 
-
+    /**
+     * 统计离线车辆信息    传入城市编号
+     * @param cityCode
+     * @return
+     */
     @ResponseBody
-    @RequestMapping("/getOffLine")
-    public PojoBaseResponse getOffLine(){
+    @RequestMapping(value="/getOffLine",method = RequestMethod.POST)
+    @ParamsNotNull(str ="cityCode")
+    public PojoBaseResponse getOffLine(String cityCode){
         PojoBaseResponse result=new PojoBaseResponse();
-        int total=  ivsAppCarInfoService.getOffLine();
+        int total=  ivsAppCarInfoService.getOffLine(cityCode);
         result.setData(total);
 
         return result;
@@ -75,27 +137,39 @@ public class CarControl {
     }
 
 
+    /**
+     * 统计在线车辆信息    传入城市编号
+     * @param cityCode
+     * @return
+     */
     @ResponseBody
-    @RequestMapping("/getOnLine")
-    public PojoBaseResponse getOnLine(){
+    @RequestMapping(value="/getOnLine",method = RequestMethod.POST)
+    @ParamsNotNull(str ="cityCode")
+    public PojoBaseResponse getOnLine(String cityCode){
         PojoBaseResponse result=new PojoBaseResponse();
-        int carCount= ivsAppCarInfoService.getOnLine();
+        int carCount= ivsAppCarInfoService.getOnLine(cityCode);
         result.setData(carCount);
         return result;
 
     }
 
 
+    /**
+     * 统计站台总数与车辆总数   传入城市编号
+     * @param cityCode
+     * @return
+     */
     @ResponseBody
-    @RequestMapping("/getCarCountAndStationCount")
-    public PojoBaseResponse getCarCountAndStationCount(String status){
+    @RequestMapping(value="/getCarCountAndStationCount", method = RequestMethod.POST)
+    @ParamsNotNull(str ="cityCode")
+    public PojoBaseResponse getCarCountAndStationCount(String status,String cityCode){
         PojoBaseResponse result=new PojoBaseResponse();
-        int carCount= ivsAppCarInfoService.getOnLine();
+        int carCount= ivsAppCarInfoService.getOnLine(cityCode);
         int stationCount=0;
         if(StringUtils.hasText(status)){
-            stationCount=ivsAppPlatformInfoService.findbyStatusTotal(status);
+            stationCount=ivsAppPlatformInfoService.findbyStatusTotal(status,cityCode);
         }else{
-            stationCount=ivsAppPlatformInfoService.findAllTotal();
+            stationCount=ivsAppPlatformInfoService.findAllTotal(cityCode);
         }
         JSONObject json=new JSONObject();
         json.put("carCount",carCount);
@@ -107,11 +181,17 @@ public class CarControl {
     }
 
 
+    /**
+     * 统计站车辆类型总数   传入城市编号
+     * @param cityCode
+     * @return
+     */
     @ResponseBody
-    @RequestMapping("/getCarTypeTotal")
-    public PojoBaseResponse getCarTypeTotal(){
+    @RequestMapping(value="/getCarTypeTotal", method = RequestMethod.POST)
+    @ParamsNotNull(str ="cityCode")
+    public PojoBaseResponse getCarTypeTotal(String cityCode){
         PojoBaseResponse result=new PojoBaseResponse();
-        List<CarTypeTotal> list=ivsAppCarInfoService.getCarTypeTotal();
+        List<CarTypeTotal> list=ivsAppCarInfoService.getCarTypeTotal(cityCode);
 
         CarTypeTotalFrom from1=new CarTypeTotalFrom();
         CarTypeTotalFrom from2=new CarTypeTotalFrom();

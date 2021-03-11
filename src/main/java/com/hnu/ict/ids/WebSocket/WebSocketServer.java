@@ -1,7 +1,7 @@
 package com.hnu.ict.ids.WebSocket;
 
 import java.io.IOException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -14,12 +14,16 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.hnu.ict.ids.bean.CarPosition;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 
 @Slf4j
@@ -34,7 +38,13 @@ public class WebSocketServer {
     private Session session;
 
     @Resource
+    private RedisTemplate redisTemplate;
+
+    @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+
+
 
     /**
      * 连接建立成功调用的方法
@@ -50,13 +60,50 @@ public class WebSocketServer {
         webSocketSetMap.put(appId, webSocketSet);
         addOnlineCount();
         log.info("有新连接加入,门店号:{}, sessionId:{}, 当前在线人数为:{}", appId, session.getId(), getOnlineCount());
+        List<CarPosition> list=new ArrayList<>();
+
+        Map<String, String> map = new HashMap<>();
+        map.put("1","31.343375,121.280737");
+        map.put("22","31.335508,121.281756");
+        map.put("7","31.371762,121.255854");
 
 
-//        try {
-//            sendMessage("连接成功");
-//        } catch (IOException e) {
-//            log.error("websocket IO异常");
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            CarPosition car=new CarPosition();
+            car.setId(entry.getKey());
+            String[] arr=entry.getValue().split(",");
+            car.setLongitude(arr[1]);
+            car.setLatitude(arr[0]);
+            list.add(car);
+        }
+
+        String str= JSON.toJSONString(list);
+
+
+//        String prefix = "carLocateInfo::*";
+//        // *号 必须要加，否则无法模糊查询
+//
+//        // 获取所有的key
+//        Set<String> keys = redisTemplate.keys(prefix);
+//        System.out.println(keys);
+//        JSONObject json=new JSONObject();
+//        Map<String, Object> map = new HashMap<>();
+//        for(String key : keys){
+//
+//            String str=key.replace("carLocateInfo::","");
+//            String[] keyStr=str.split("_");
+//
+//            String[] position =stringRedisTemplate.opsForValue().get(key).split(",");
+//            map.put(keyStr[0], position[0]+","+position[1]);
 //        }
+
+
+
+        try {
+            sendMessage(str);
+        } catch (IOException e) {
+            log.error("websocket IO异常");
+        }
     }
 
     /**
@@ -64,12 +111,15 @@ public class WebSocketServer {
      */
     @OnClose
     public void onClose(@PathParam("shopId") String shopId) {
-        CopyOnWriteArraySet<WebSocketServer> webSocketSet = webSocketSetMap.get(shopId);
-        if (!CollectionUtils.isEmpty(webSocketSet)) {
-            webSocketSet.remove(this);
+        if(StringUtils.hasText(shopId)){
+            CopyOnWriteArraySet<WebSocketServer> webSocketSet = webSocketSetMap.get(shopId);
+            if (!CollectionUtils.isEmpty(webSocketSet)) {
+                webSocketSet.remove(this);
+            }
+            subOnlineCount();
+            log.info("有一连接关闭,门店号:{}, sessionId:{},当前在线人数为", shopId, this.session.getId(), getOnlineCount());
+
         }
-        subOnlineCount();
-        log.info("有一连接关闭,门店号:{}, sessionId:{},当前在线人数为", shopId, this.session.getId(), getOnlineCount());
 
     }
 
@@ -95,7 +145,10 @@ public class WebSocketServer {
 
 
     public void sendMessage(String message) throws IOException {
-        this.session.getBasicRemote().sendText(message);
+        if(StringUtils.hasText(message)){
+            this.session.getBasicRemote().sendText(message);
+        }
+
     }
 
 
