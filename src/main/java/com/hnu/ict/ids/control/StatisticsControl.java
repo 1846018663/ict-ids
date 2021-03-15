@@ -10,10 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Calendar;
 import java.util.Date;
 
 @Api(tags = "综合统计API")
@@ -27,8 +27,12 @@ public class StatisticsControl {
     TravelInfoService travelInfoService;
 
 
+    /**
+     * 汇总当天总行程数
+     * @return
+     */
     @ResponseBody
-    @RequestMapping("/getToDayTraveTotal")
+    @RequestMapping(value = "/getToDayTraveTotal",method = RequestMethod.GET)
     public PojoBaseResponse getToDayTraveTotal(){
         PojoBaseResponse result=new PojoBaseResponse();
         String time=DateUtil.getDateByString(new Date());
@@ -46,7 +50,7 @@ public class StatisticsControl {
 
 
     @ResponseBody
-    @RequestMapping("/getWeekTraveTotal")
+    @RequestMapping(value = "/getWeekTraveTotal" ,method = RequestMethod.POST)
     @ParamsNotNull(str = "time")
     public PojoBaseResponse getWeekTraveTotal(String time){
         PojoBaseResponse result=new PojoBaseResponse();

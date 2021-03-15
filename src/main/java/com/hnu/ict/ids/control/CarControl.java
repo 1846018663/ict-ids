@@ -50,7 +50,6 @@ public class CarControl {
     /**
      * 通过车牌查询该车行程信息（该车调度信息）
      */
-    @ResponseBody
     @RequestMapping(value="/getCarTraveInfo" ,method = RequestMethod.POST)
     @ParamsNotNull(str ="carId")
     public PojoBaseResponse getCarTraveInfo(String carId){
@@ -84,7 +83,6 @@ public class CarControl {
      * @param licenseNumber   cityCode 城市编号
      * @return
      */
-    @ResponseBody
     @RequestMapping(value="/getCarStatus", method = RequestMethod.POST)
     @ParamsNotNull(str ="cityCode")
     public PojoBaseResponse getCarStatus(String licenseNumber,String cityCode){
@@ -107,7 +105,6 @@ public class CarControl {
      * @param cityCode
      * @return
      */
-    @ResponseBody
     @RequestMapping(value="/getTotal",method = RequestMethod.POST)
     @ParamsNotNull(str ="cityCode")
     public PojoBaseResponse getTotal(String cityCode){
@@ -124,7 +121,6 @@ public class CarControl {
      * @param cityCode
      * @return
      */
-    @ResponseBody
     @RequestMapping(value="/getOffLine",method = RequestMethod.POST)
     @ParamsNotNull(str ="cityCode")
     public PojoBaseResponse getOffLine(String cityCode){
@@ -142,7 +138,6 @@ public class CarControl {
      * @param cityCode
      * @return
      */
-    @ResponseBody
     @RequestMapping(value="/getOnLine",method = RequestMethod.POST)
     @ParamsNotNull(str ="cityCode")
     public PojoBaseResponse getOnLine(String cityCode){
@@ -159,7 +154,6 @@ public class CarControl {
      * @param cityCode
      * @return
      */
-    @ResponseBody
     @RequestMapping(value="/getCarCountAndStationCount", method = RequestMethod.POST)
     @ParamsNotNull(str ="cityCode")
     public PojoBaseResponse getCarCountAndStationCount(String status,String cityCode){
@@ -186,7 +180,6 @@ public class CarControl {
      * @param cityCode
      * @return
      */
-    @ResponseBody
     @RequestMapping(value="/getCarTypeTotal", method = RequestMethod.POST)
     @ParamsNotNull(str ="cityCode")
     public PojoBaseResponse getCarTypeTotal(String cityCode){

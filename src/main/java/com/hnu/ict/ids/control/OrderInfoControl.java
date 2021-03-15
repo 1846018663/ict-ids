@@ -20,15 +20,13 @@ import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Api(tags = "订单行程API")
 @RestController
@@ -49,41 +47,8 @@ public class OrderInfoControl {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @RequestMapping("/test")
-    public PojoBaseResponse test() {
-        PojoBaseResponse response=new PojoBaseResponse();
 
-        List<Object> hashList = redisTemplate.opsForHash().values("carLocateInfo::*");
-        System.out.println("通过values(H key)方法获取变量中的hashMap值:" + hashList);
-
-        Map<Object,Object> map = redisTemplate.opsForHash().entries("carLocateInfo::*");
-        System.out.println("通过entries(H key)方法获取变量中的键值对:" + map);
-
-        Set<Object> keySet = redisTemplate.opsForHash().keys("carLocateInfo::*");
-        System.out.println("通过keys(H key)方法获取变量中的键:" + keySet);
-
-
-        long hashLength = redisTemplate.opsForHash().size("carLocateInfo::*");
-        System.out.println("通过size(H key)方法获取变量的长度:" + hashLength);
-
-
-        // *号 必须要加，否则无法模糊查询
-        String prefix = "carLocateInfo::*";
-        // 获取所有的key
-        Set<String> keys = stringRedisTemplate.keys(prefix);
-        System.out.println(keys);
-        for(String key : keys){
-            System.out.println(key);
-        }
-        // 批量获取数据
-        List<String> myObjectListRedis = stringRedisTemplate.opsForValue().multiGet(keys);
-        System.out.println("myObjectListRedis"+myObjectListRedis);
-
-        return response;
-    }
-
-    @ResponseBody
-    @RequestMapping("/add")
+    @RequestMapping(value="/add" , method = RequestMethod.POST)
     @ParamsNotNull(str = "sourceOrderId,beginStationId,endStationId,ticketNumber,buyUid,startTime,uIds,createTime")
     public PojoBaseResponse addOrder(String sourceOrderId, int beginStationId,
                                      int endStationId, int ticketNumber, BigInteger buyUid,
@@ -120,8 +85,7 @@ public class OrderInfoControl {
     }
 
 
-    @ResponseBody
-    @RequestMapping("/deleteOrderNo")
+    @RequestMapping(value="/deleteOrderNo" ,method = RequestMethod.POST)
     @ParamsNotNull(str = "sourceOrderId")
     public PojoBaseResponse deleteOrderNo(String sourceOrderId ) {
         PojoBaseResponse result = new PojoBaseResponse();
@@ -138,8 +102,7 @@ public class OrderInfoControl {
     }
 
 
-    @ResponseBody
-    @RequestMapping("/addExistence")
+    @RequestMapping(value="/addExistence" ,method = RequestMethod.POST)
     @ParamsNotNull(str = "sourceOrderId,travelId,ticketNumber,buyUid,uIds,createTime")
     public PojoBaseResponse addExistence( String sourceOrderId,int ticketNumber,Long travelId, BigInteger buyUid,
                                  String uIds, Long createTime){
@@ -164,8 +127,6 @@ public class OrderInfoControl {
         //操作数据库
         try {
             orderInfoService.insertOrder(order);
-            //后续调入算法生成行程数据
-
 
             result.setErrorCode(ResutlMessage.SUCCESS.getName());
             result.setErrorMessage(ResutlMessage.SUCCESS.getValue());
@@ -182,27 +143,8 @@ public class OrderInfoControl {
     }
 
 
-    @ResponseBody
-    @RequestMapping("/findOrderNo")
-    @ParamsNotNull(str = "sourceOrderId")
-    public PojoBaseResponse findOrderNo(String sourceOrderId ) {
-        PojoBaseResponse result = new PojoBaseResponse();
-        result.setErrorCode(ResutlMessage.SUCCESS.getName());
-        OrderInfo order=orderInfoService.getBySourceOrderId(sourceOrderId);
 
-//        logger.info("list大小", redisTemplate.opsForList().size("carLocateInfo::"));
-
-//        String value = (String) redisTemplate.opsForValue().get("carLocateInfo::101_202");
-
-//        logger.info("key 为 a 的值是：{}",value);
-
-        //测试
-        return result;
-    }
-
-
-    @ResponseBody
-    @RequestMapping("/findNotTrave")
+    @RequestMapping(value = "/findNotTrave" ,method = RequestMethod.GET)
     public PojoBaseResponse findNotTrave() {
         PojoBaseResponse result = new PojoBaseResponse();
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单

@@ -14,6 +14,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -38,7 +39,13 @@ public class RedisAPIController {
     @Autowired
     private WebSocketServer webSocketServer;
 
-    @RequestMapping("/getCarPosition")
+    /**
+     * 查询所有的车辆信息位置   如果carId有值查单个车辆位置信息
+     * @param carId
+     * @return
+     * @throws IOException
+     */
+    @RequestMapping(value="/getCarPosition" )
     public PojoBaseResponse getCarPosition(String carId)  throws IOException {
         PojoBaseResponse response=new PojoBaseResponse();
         String prefix = "carLocateInfo::";
@@ -69,7 +76,7 @@ public class RedisAPIController {
 
 
 
-    @RequestMapping("/getRedisCarInfo")
+    @RequestMapping(value = "/getRedisCarInfo" ,method = RequestMethod.POST)
     public PojoBaseResponse getWebSocketServer(String id,String carId)  throws IOException {
         PojoBaseResponse response=new PojoBaseResponse();
         String prefix = "carLocateInfo::";
@@ -83,12 +90,12 @@ public class RedisAPIController {
         Set<String> keys = redisTemplate.keys(prefix);
         List<CarPosition> list=new ArrayList<>();
         Map<String, String> map = new HashMap<>();
-        for(String key : keys){
-            String str=key.replace("carLocateInfo::","");
-            String[] keyStr=str.split("_");
-            map.put(keyStr[0],",121.280737");
-//            map.put(keyStr[0], stringRedisTemplate.opsForValue().get(key));
-        }
+//        for(String key : keys){
+//            String str=key.replace("carLocateInfo::","");
+//            String[] keyStr=str.split("_");
+//            map.put(keyStr[0],",121.280737");
+////            map.put(keyStr[0], stringRedisTemplate.opsForValue().get(key));
+//        }
 
         map.put("1","31.343375,121.280737");
         map.put("22","31.335508,121.281756");
