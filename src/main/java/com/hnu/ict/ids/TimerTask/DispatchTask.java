@@ -7,6 +7,7 @@ import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.webHttp.CustomerWebAPI;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -20,13 +21,17 @@ import java.util.List;
 @EnableScheduling
 public class DispatchTask {
 
+
+    @Value("${travel.algorithm.url}")
+    private String URL;
+
     @Autowired
     OrderInfoService orderInfoService;
 
     /**
      * 每隔5分钟执行一次（按照 corn 表达式规则执行）0 0/5 * * * ?    0/10 * * * * ?
      */
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = " 0 0/5 * * * ?")
     public void job1() throws Exception {
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
         Date stateDate=new Date();
@@ -37,11 +42,12 @@ public class DispatchTask {
         String body= null;
         if(listOrder.size()>0){
             List<OrderTask> list=new ArrayList<>();
+            int k=30;
             for (Iterator<OrderInfo> it = listOrder.iterator(); it.hasNext();) {
                 OrderInfo info=it.next();
                 for (int i=0;i<30;i++){
                     OrderTask task=new OrderTask();
-                    task.setO_id(i);
+                    task.setO_id(k+i);
                     task.setFrom_p_id(info.getBeginStationId());
                     task.setTo_p_id(info.getEndStationId());
                     task.setStart_time(DateUtil.getCurrentTime(info.getStartTime()));
@@ -54,11 +60,12 @@ public class DispatchTask {
             System.out.println("发送请求数据"+json);
 
 
-            String url="http://47.111.139.187:5000/algorithm";
 
             try {
                 CustomerWebAPI customerWebAPI=new CustomerWebAPI();
-                body = customerWebAPI.doPost(url,json);
+                body = customerWebAPI.doPost(URL,json);
+                System.out.println("接收数据"+body);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

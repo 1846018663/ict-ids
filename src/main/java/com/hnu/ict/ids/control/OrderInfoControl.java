@@ -1,6 +1,7 @@
 package com.hnu.ict.ids.control;
 
 
+import com.alibaba.fastjson.JSON;
 import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.entity.OrderInfo;
 import com.hnu.ict.ids.entity.TravelInfo;
@@ -11,11 +12,13 @@ import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.ParamsNotNull;
 import com.hnu.ict.ids.utils.UtilConf;
+import com.hnu.ict.ids.webHttp.CustomerWebAPI;
 import com.mysql.cj.protocol.x.ResultMessageListener;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -34,6 +37,9 @@ import java.util.List;
 public class OrderInfoControl {
 
     Logger logger= LoggerFactory.getLogger(OrderInfoControl.class);
+
+    @Value("${travel.algorithm.url}")
+    private String URL;
 
     @Resource
     OrderInfoService orderInfoService;
@@ -156,6 +162,22 @@ public class OrderInfoControl {
 
         logger.info("开始时间"+DateUtil.getCurrentTime(stateDate)+"结束时间"+DateUtil.getCurrentTime(endDate));
         List<OrderInfo>  listOrder=orderInfoService.findNotTrave(DateUtil.getCurrentTime(stateDate),DateUtil.getCurrentTime(endDate));
+
+
+        String json= JSON.toJSONString(listOrder);
+        System.out.println("发送请求数据"+json);
+
+
+
+        try {
+            CustomerWebAPI customerWebAPI=new CustomerWebAPI();
+            String body = customerWebAPI.doPost(URL,json);
+            System.out.println("接收数据"+body);
+
+            //占时先不返回   这里做行程数据解析  存储操作
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         result.setData(listOrder);
         return result;
