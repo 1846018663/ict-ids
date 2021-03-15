@@ -23,7 +23,7 @@
         <mybatis.plus.version>3.2.0</mybatis.plus.version>
         <spring.version>5.2.8.RELEASE</spring.version>
         <spring-kafka.version>2.6.2</spring-kafka.version>
-<!--        <main-class>com.hnu.ict.ids.IdsApplication</main-class>-->
+      <!--  <main-class>com.hnu.ict.ids.IdsApplication</main-class>-->
     </properties>
 
     <dependencies>
@@ -105,6 +105,8 @@
             <artifactId>hnu-common</artifactId>
             <version>1.0</version>
         </dependency>
+
+
 
         <!-- nacos -->
        <!-- <dependency>
@@ -232,17 +234,17 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
-                <!--<configuration>
-                    <mainClass>${main-class}</mainClass>
-                </configuration>
+
+                <!-- <configuration>
+                     <mainClass>${main-class}</mainClass>
+                 </configuration>-->
                 <executions>
                     <execution>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
                     </execution>
-                </executions>-->
+                </executions>
             </plugin>
         </plugins>
     </build>

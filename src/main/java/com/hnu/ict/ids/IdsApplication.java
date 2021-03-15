@@ -16,9 +16,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @EnableSwagger2Doc
 public class IdsApplication {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IdsApplication.class);
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         SpringApplication.run(IdsApplication.class);
 
     }
