@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 
 import javax.net.ssl.*;
 import java.io.*;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.cert.CertificateException;
@@ -139,26 +140,4 @@ public class CustomerWebAPI {
     }
 
 
-    public static void main(String[] args) {
-        JSONObject json=new JSONObject();
-        json.put("o_id","16125739316761591");
-        json.put("travel_id","2021020609130137877");
-        json.put("distance",4200.0);
-        json.put("expected_time",10);
-        json.put("all_travel_plat","1401,1402,1403,1404,1405,1406");
-        json.put("driver_content","请司机师傅于20210206094500前往【光电园】接上车乘客，再开往目的地【康庄】 ");
-        json.put("c_id",22);
-        json.put("driver_id",69);
-        json.put("reservation_status",1);
-        json.put("it_number",1);
-        json.put("ret_status",0);
-        JSONObject jn=new JSONObject();
-        jn.put("u_id",64);
-        jn.put("seat_number",1);
-        json.put("ticket_info",jn);
-        json.put("oper_time",69);
-        json.put("driver_id",1615270536);
-
-
-    }
 }

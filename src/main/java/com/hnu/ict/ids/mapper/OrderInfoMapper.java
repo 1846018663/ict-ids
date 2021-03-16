@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.hnu.ict.ids.entity.OrderInfo;
 import org.apache.ibatis.annotations.*;
 
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 
@@ -19,7 +20,7 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     OrderInfo getBySourceOrderId(@Param("sourceOrderId") String sourceOrderId);
 
 
-    @Insert("insert into order_info(order_source,source_order_id,order_no,begin_station_id,end_station_id,ticket_number,buy_uid,start_time,travel_id,create_time) values(#{orderSource},#{sourceOrderId},#{orderNo},#{beginStationId},#{endStationId},#{ticketNumber},#{buyUid},#{startTime},#{travelId},#{createTime})")
+    @Insert("insert into order_info(order_source,source_order_id,order_no,begin_station_id,end_station_id,ticket_number,buy_uid,start_time,travel_id,create_time,travel_source) values(#{orderSource},#{sourceOrderId},#{orderNo},#{beginStationId},#{endStationId},#{ticketNumber},#{buyUid},#{startTime},#{travelId},#{createTime},#{travelSource})")
     int insertOrderInfo(OrderInfo orderInfo);
 
 
@@ -31,7 +32,10 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     /**
      * 查询未生成行程订单数据
      */
-  //  @Select("select * from order_info where travel_id is null and start_time>#{statDate} and start_time<=#{endDate}")
     List<OrderInfo> findNotTrave(@Param("statDate")String statDate,@Param("endDate")String endDate);
+
+
+    @Select("SELECT sum(o.ticket_number) from order_info o where o.travel_id=#{travelId}")
+    int getByTravelCount(@Param("travelId")BigInteger travelId);
 
 }

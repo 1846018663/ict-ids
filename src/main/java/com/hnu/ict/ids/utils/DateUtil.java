@@ -6,6 +6,8 @@ import org.springframework.util.StringUtils;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class DateUtil {
@@ -323,6 +325,28 @@ public class DateUtil {
         Date strtodate = formatter.parse(strDate, pos);
         return strtodate;
    }
+    public static Date strToDateyyyyMMddHHmmss(String strDate) {
+
+        Date date = new Date();
+        try {
+            date = new SimpleDateFormat("yyyyMMddHHmmss").parse(strDate);//先按照原格式转换为时间
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return date;
+    }
+
+        public static String strToDateLong(String strDate) {
+            Date date = new Date();
+            try {
+                date = new SimpleDateFormat("yyyyMMddHHmmss").parse(strDate);//先按照原格式转换为时间
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            String str = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(date);//再将时间转换为对应格式字符串
+            return str;
+    }
+
 
 
 
@@ -337,6 +361,16 @@ public class DateUtil {
         ParsePosition pos = new ParsePosition(0);
         Date strtodate = formatter.parse(strDate, pos);
         return strtodate;
+    }
+
+    /**
+     * 将长时间格式字符串转换为时间 yyyyMMddHHmmss
+     *
+     date     * @return
+     */
+    public static String strToDayDate(Date date) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        return formatter.format(date);
     }
 
 

@@ -4,8 +4,8 @@ import jdk.nashorn.internal.objects.annotations.Getter;
 import lombok.AllArgsConstructor;
 
 public enum ResutlMessage {
-    SUCCESS("200", "操作成功"),
-    FAIL("300", "操作失败"),
+    SUCCESS("200", "接收成功"),
+    FAIL("300", "接收失败"),
     WARN("301", "非法操作"),
     ERROR("500", "操作失败");
 

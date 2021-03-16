@@ -11,8 +11,8 @@ import java.util.Date;
 
 
 @Data
-@TableName(value = "order_info")
-public class OrderInfo {
+@TableName(value = "order_info_histotry")
+public class OrderInfoHistotry {
     /** 主键ID **/
     @TableId(type = IdType.AUTO)
     private BigInteger id;

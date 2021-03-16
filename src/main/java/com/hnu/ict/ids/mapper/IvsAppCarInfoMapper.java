@@ -25,7 +25,7 @@ public interface IvsAppCarInfoMapper extends BaseMapper<IvsAppCarInfo> {
 
     /**
      * 根据车牌号查询
-     * @param licenseNumber
+     * @param carId
      * @return
      */
     @Select("select * from ivs_app_car_info where c_id = #{carId} ")
