@@ -36,7 +36,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "订单行程API")
 @RestController
@@ -62,9 +64,19 @@ public class OrderInfoControl {
         ResultEntity result=new ResultEntity();
         logger.info(body);
         JSONObject json=JSONObject.parseObject(body);
+        //验证o_id    SourceOrderId是否已经存在
+        String oId=json.getString("o_id");
+        OrderInfo orderInfo= orderInfoService.getBySourceOrderId(oId);
+
+        if(orderInfo!=null){
+            result.setCode(ResutlMessage.FAIL.getName());
+            result.setMessage("该订单已经存在，请勿重复提交");
+            logger.info("新增行程"+result.toString());
+            return result;
+        }
         //创建数据对象
         OrderInfo order=new OrderInfo();
-        order.setSourceOrderId(json.getString("o_id"));
+        order.setSourceOrderId(oId);
         order.setBeginStationId(json.getInteger("from_p_id"));
         order.setEndStationId(json.getInteger("to_p_id"));
         order.setTicketNumber(json.getInteger("ticket_number"));
@@ -78,12 +90,15 @@ public class OrderInfoControl {
         //操作数据库
         try {
             orderInfoService.insertOrder(order);
-
             result.setCode(ResutlMessage.SUCCESS.getName());
             result.setMessage(ResutlMessage.SUCCESS.getValue());
+            logger.info("新增行程"+result.toString());
             return result;
         } catch (Exception e) {
             e.printStackTrace();
+            result.setCode(ResutlMessage.FAIL.getName());
+            result.setMessage(ResutlMessage.FAIL.getValue());
+            logger.info("新增行程"+result.toString());
             return result;
         }
 
@@ -97,26 +112,35 @@ public class OrderInfoControl {
         ResultEntity result = new ResultEntity();
         JSONObject json=JSONObject.parseObject(body);
         Long o_id=json.getLong("o_id");
+
         String travel_id=json.getString("travel_id");
         if(StringUtils.hasText(o_id.toString())){
             OrderInfo order=orderInfoService.getBySourceOrderId(o_id.toString());
-            OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
-            BeanUtils.copyProperties(order,orderInfoHistotry);
-            orderInfoHistotry.setId(null);
-            orderInfoService.deleteSourceOrderId(o_id.toString(),orderInfoHistotry);
+            if(order==null){
+                result.setCode(ResutlMessage.FAIL.getName());
+                result.setMessage("该订单号不存在！");
+                logger.info("删除行程"+result.toString());
+            }else{
+                OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                BeanUtils.copyProperties(order,orderInfoHistotry);
+                orderInfoHistotry.setId(null);
+                orderInfoService.deleteSourceOrderId(o_id.toString(),orderInfoHistotry);
+
+            }
 
         }
 
 
         result.setCode(ResutlMessage.SUCCESS.getName());
         result.setMessage(ResutlMessage.SUCCESS.getValue());
+        logger.info("删除行程"+result.toString());
         return result;
     }
 
 
     @RequestMapping(value="/addExistence" ,method = RequestMethod.POST)
-    public ResultEntity addExistence(@RequestBody  String body){
-        ResultEntity result=new ResultEntity();
+    public Map addExistence(@RequestBody  String body){
+        Map<String,String> result=new HashMap<>();
         JSONObject json=JSONObject.parseObject(body);
 
         //判断数据操作类型   是添加  还是移除
@@ -125,6 +149,18 @@ public class OrderInfoControl {
         //根据行程id查询订单信息   并创建订单数据
         TravelInfo travelInfo= travelInfoService.getById(new BigInteger(travel_id));
         if(oper_type==1){//添加已有行程
+            //验证o_id    SourceOrderId是否已经存在
+
+            OrderInfo orderInfo= orderInfoService.getBySourceOrderId(json.getLong("o_id").toString());
+
+            if(orderInfo!=null){
+                result.put("code","00007");
+                result.put("message","该订单已经存在，请勿重复提交");
+                result.put("result","");
+                logger.info("添加已有行程"+result.toString());
+                return result;
+            }
+
             //判断车辆是否满载  根据已有行程关联所有订单   查询总票数
             int  sum=orderInfoService.getByTravelCount(new BigInteger(travel_id));
             //根据id查询车辆
@@ -146,12 +182,16 @@ public class OrderInfoControl {
                 order.setOrderSource("乘客服务系统");
                 order.setTravelSource(1);//乘客服务系统来源
                 orderInfoService.insertOrder(order);
-                result.setCode(ResutlMessage.SUCCESS.getName());
-                result.setMessage(ResutlMessage.SUCCESS.getValue());
+                result.put("code","00008");
+                result.put("message","加入成功");
+                result.put("result","");
+                logger.info("添加已有行程"+result.toString());
                 return result;
             }else{
-                result.setCode(ResutlMessage.FAIL.getName());
-                result.setMessage("本次行程车载人数以上限");
+                result.put("code","00007");
+                result.put("message","本次行程车载人数以上限");
+                result.put("result","");
+                logger.info("添加已有行程"+result.toString());
                 return result;
 
             }
@@ -160,20 +200,32 @@ public class OrderInfoControl {
 
         if(oper_type==2){//移除已有行程
             Long o_id=json.getLong("o_id");
+
             OrderInfo order=orderInfoService.getBySourceOrderId(o_id.toString());
+            if(order==null){
+                result.put("code","00007");
+                result.put("message","该订单不存在，移除操作失败");
+                result.put("result","");
+                logger.info("删除已有行程"+result.toString());
+                return result;
+            }
             OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
             BeanUtils.copyProperties(order,orderInfoHistotry);
             orderInfoHistotry.setId(null);
             orderInfoService.deleteSourceOrderId(o_id.toString(),orderInfoHistotry);
-            result.setCode(ResutlMessage.SUCCESS.getName());
-            result.setMessage(ResutlMessage.SUCCESS.getValue());
+            result.put("code","00008");
+            result.put("message","移除成功");
+            result.put("result","");
+            logger.info("移除已有行程"+result.toString());
             return  result;
         }
 
 
 
-        result.setCode(ResutlMessage.FAIL.getName());
-        result.setMessage(ResutlMessage.FAIL.getValue());
+        result.put("code","00007");
+        result.put("message","加入失败");
+        result.put("result","");
+        logger.info("添加移除已有行程"+result.toString());
         return  result;
 
     }

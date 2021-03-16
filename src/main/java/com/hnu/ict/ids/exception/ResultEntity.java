@@ -28,4 +28,11 @@ public class ResultEntity {
         this.message = message;
     }
 
+    @Override
+    public String toString() {
+        return "ResultEntity{" +
+                "code='" + code + '\'' +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

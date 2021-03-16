@@ -1,9 +1,6 @@
 package com.hnu.ict.ids.control;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.hnu.common.respone.BaseResponse;
 import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.bean.CarTrave;
 import com.hnu.ict.ids.bean.CarTypeTotal;
@@ -11,8 +8,6 @@ import com.hnu.ict.ids.bean.CarTypeTotalFrom;
 import com.hnu.ict.ids.entity.IvsAppCarInfo;
 import com.hnu.ict.ids.entity.IvsAppPlatformInfo;
 import com.hnu.ict.ids.entity.TravelInfo;
-import com.hnu.ict.ids.exception.ResultEntity;
-import com.hnu.ict.ids.exception.ResutlMessage;
 import com.hnu.ict.ids.service.IvsAppCarInfoService;
 import com.hnu.ict.ids.service.IvsAppPlatformInfoService;
 import com.hnu.ict.ids.service.TravelInfoService;
@@ -24,9 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import springfox.documentation.schema.Entry;
 
 import javax.annotation.Resource;
 import java.util.*;

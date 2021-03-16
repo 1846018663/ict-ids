@@ -43,8 +43,8 @@ public class CustomerHttpAPI {
         List<CustomerHttpAPIBean> list=new ArrayList<>();
         CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
         customerHttpAPIBean.setDistance(info.getDistance().doubleValue());
-        customerHttpAPIBean.setO_id(info.getId().longValue());
-        customerHttpAPIBean.setTravel_id(info.getSourceTravelId());
+        customerHttpAPIBean.setO_id(Long.parseLong(info.getSourceTravelId()));
+        customerHttpAPIBean.setTravel_id(info.getId().toString());
         customerHttpAPIBean.setExpected_time(Integer.parseInt(info.getExpectedTime()));
         customerHttpAPIBean.setAll_travel_plat(info.getAllTravelPlat());
         customerHttpAPIBean.setDriver_content(info.getDriverContent());
@@ -57,6 +57,7 @@ public class CustomerHttpAPI {
         List<TicketInfo> ticket_info=new ArrayList<>();
         TicketInfo ticke=new TicketInfo();
         ticke.setU_id(order.getBuyUid().intValue());
+        ticke.setSeat_number("");
         ticket_info.add(ticke);
 
         customerHttpAPIBean.setTicket_info(ticket_info);
