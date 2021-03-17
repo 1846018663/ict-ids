@@ -19,6 +19,14 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     @Select("select * from order_info where source_order_id = #{sourceOrderId}")
     OrderInfo getBySourceOrderId(@Param("sourceOrderId") String sourceOrderId);
 
+    /**
+     * 根据订单id查询
+     * @param id
+     * @return
+     */
+    @Select("select * from order_info where id = #{id}")
+    OrderInfo getById(@Param("id") int id);
+
 
     @Insert("insert into order_info(order_source,source_order_id,order_no,begin_station_id,end_station_id,ticket_number,buy_uid,start_time,travel_id,create_time,travel_source) values(#{orderSource},#{sourceOrderId},#{orderNo},#{beginStationId},#{endStationId},#{ticketNumber},#{buyUid},#{startTime},#{travelId},#{createTime},#{travelSource})")
     int insertOrderInfo(OrderInfo orderInfo);
@@ -38,4 +46,7 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     @Select("SELECT sum(o.ticket_number) from order_info o where o.travel_id=#{travelId}")
     int getByTravelCount(@Param("travelId")BigInteger travelId);
 
+
+    @Update("update order_info set ticket_number=ticket_number-#{sum}  where id =#{id}")
+    void updateOrderNumber(@Param("sum")int sum,@Param("id")BigInteger id);
 }

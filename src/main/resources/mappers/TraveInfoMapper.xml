@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hnu.ict.ids.mapper.TravelInfoMapper">
+    <insert id="addTravelInfo">
+        insert into travel_info(source_travel_id,begin_station_id,end_station_id,travel_status,start_time,
+           distance,expected_time,all_travel_plat,driver_content,car_id,driver_id,create_time) VALUES
+        <foreach collection="persons" item="person" separator=",">
+            (#{person.sourceTravelId},#{person.beginStationId},#{person.endStationId},
+             #{person.travelStatus},#{person.startTime},#{person.distance},#{person.expectedTime},
+             #{person.allTravelPlat},#{person.driverContent},#{person.carId},#{person.driverId},
+             #{createTime})
+        </foreach>
+    </insert>
+</mapper>

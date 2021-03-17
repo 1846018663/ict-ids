@@ -22,5 +22,7 @@ public class OrderUserLink {
 
   private BigInteger orderId;
 
+  private int state;
+
 
 }

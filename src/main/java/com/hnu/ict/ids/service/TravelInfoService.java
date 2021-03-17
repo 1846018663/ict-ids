@@ -4,6 +4,8 @@ import com.hnu.ict.ids.entity.TravelInfo;
 
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 public interface TravelInfoService {
 
@@ -15,4 +17,5 @@ public interface TravelInfoService {
     TravelInfo getCarTime(int carId,Date timeDate);
 
 
+    void addTravelInfoList(List<TravelInfo> list, Map<String,Integer> map);
 }

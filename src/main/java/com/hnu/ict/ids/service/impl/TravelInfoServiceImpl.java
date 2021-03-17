@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class TravelInfoServiceImpl implements TravelInfoService {
@@ -32,5 +34,14 @@ public class TravelInfoServiceImpl implements TravelInfoService {
     @Override
     public int finDateTraveTotal(Date startDate, Date endDate){
         return travelInfoMapper.finDateTraveTotal(startDate,endDate);
+    }
+
+
+    public void addTravelInfoList(List<TravelInfo> list, Map<String,Integer> map){
+        //添加行程数据
+        travelInfoMapper.addTravelInfo(list);
+        //修改订单与行程对应关系
+
+
     }
 }

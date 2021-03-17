@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Select;
 
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.List;
 
 @Mapper
 public interface TravelInfoMapper extends BaseMapper<TravelInfo> {
@@ -30,4 +31,6 @@ public interface TravelInfoMapper extends BaseMapper<TravelInfo> {
     @Select("select * from travel_info where travel_status=1 and car_id=#{carId} ")
     TravelInfo getCarTime(@Param("carId")int carId,@Param("startTime")Date startTime);
 
+
+    int addTravelInfo(@Param("persons") List<TravelInfo> persons);//接口
 }

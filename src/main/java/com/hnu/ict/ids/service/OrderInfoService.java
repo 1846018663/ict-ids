@@ -12,13 +12,15 @@ public interface OrderInfoService {
 
     OrderInfo getBySourceOrderId(String sourceOrderId);
 
-    void insertOrder(OrderInfo order);
+    void insertOrder(OrderInfo order,String uIds);
 
 
-    void deleteSourceOrderId(String sourceOrderId, OrderInfoHistotry orderInfoHistotry);
+    void deleteSourceOrderId(OrderInfo order, OrderInfoHistotry orderInfoHistotry,String uIds);
 
     List<OrderInfo> findNotTrave(String statDate, String endDate);
 
     int getByTravelCount(BigInteger travelId);
+
+    OrderInfo getById(int id);
 
 }

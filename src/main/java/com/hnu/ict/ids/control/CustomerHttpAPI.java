@@ -10,9 +10,11 @@ import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.ParamsNotNull;
 import com.hnu.ict.ids.webHttp.CustomerWebAPI;
+import com.hnu.ict.ids.webHttp.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +31,9 @@ import java.util.List;
 public class CustomerHttpAPI {
 
     Logger logger= LoggerFactory.getLogger(CustomerHttpAPI.class);
+
+    @Value("${passenger.service.callback.url}")
+    private String callback_URL;
 
     @Resource
     TravelInfoService travelInfoService;
@@ -66,10 +71,10 @@ public class CustomerHttpAPI {
 
         System.out.println("行程预约成功后的返回传参内容"+json);
         CustomerWebAPI web=new CustomerWebAPI();
-        String Url="https://applets.dxzhcl.com/order/updateorder";
+
         String body="";
         try {
-            body=web.doHttpsPost(Url,json);
+            body= HttpClientUtil.doPostJson(callback_URL,json);
             System.out.println("行程预约成功后的返回结果:"+body);
         } catch (Exception e) {
             e.printStackTrace();

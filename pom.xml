@@ -184,7 +184,10 @@
             <artifactId>gson</artifactId>
         </dependency>
 
-
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
 
 
 
@@ -225,6 +228,8 @@
                 <artifactId>spring-web</artifactId>
                 <version>${spring.version}</version>
             </dependency>
+
+
 
         </dependencies>
     </dependencyManagement>

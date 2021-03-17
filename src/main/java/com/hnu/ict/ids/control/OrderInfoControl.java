@@ -14,19 +14,15 @@ import com.hnu.ict.ids.service.IvsAppCarInfoService;
 import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
-import com.hnu.ict.ids.utils.ParamsNotNull;
 import com.hnu.ict.ids.utils.UtilConf;
 import com.hnu.ict.ids.webHttp.CustomerWebAPI;
-import com.mysql.cj.protocol.x.ResultMessageListener;
+import com.hnu.ict.ids.webHttp.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.ListOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -86,10 +82,10 @@ public class OrderInfoControl {
         order.setOrderNo(UtilConf.getUUID());
         order.setOrderSource("乘客服务系统");
 
-
+        String u_ids=json.getString("u_ids");
         //操作数据库
         try {
-            orderInfoService.insertOrder(order);
+            orderInfoService.insertOrder(order,u_ids);
             result.setCode(ResutlMessage.SUCCESS.getName());
             result.setMessage(ResutlMessage.SUCCESS.getValue());
             logger.info("新增行程"+result.toString());
@@ -112,7 +108,7 @@ public class OrderInfoControl {
         ResultEntity result = new ResultEntity();
         JSONObject json=JSONObject.parseObject(body);
         Long o_id=json.getLong("o_id");
-
+        logger.info(o_id+"删除行程o_id"+body);
         String travel_id=json.getString("travel_id");
         if(StringUtils.hasText(o_id.toString())){
             OrderInfo order=orderInfoService.getBySourceOrderId(o_id.toString());
@@ -120,11 +116,14 @@ public class OrderInfoControl {
                 result.setCode(ResutlMessage.FAIL.getName());
                 result.setMessage("该订单号不存在！");
                 logger.info("删除行程"+result.toString());
+                return result;
             }else{
                 OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
                 BeanUtils.copyProperties(order,orderInfoHistotry);
                 orderInfoHistotry.setId(null);
-                orderInfoService.deleteSourceOrderId(o_id.toString(),orderInfoHistotry);
+                //判断删除指定用户
+                String uIds=json.getString("u_ids");
+                orderInfoService.deleteSourceOrderId(order,orderInfoHistotry,uIds);
 
             }
 
@@ -142,7 +141,16 @@ public class OrderInfoControl {
     public Map addExistence(@RequestBody  String body){
         Map<String,String> result=new HashMap<>();
         JSONObject json=JSONObject.parseObject(body);
+        logger.info("添加已有行程"+body);
 
+        String u_ids=json.getString("u_ids");
+        if(!StringUtils.hasText(u_ids)){
+            result.put("code","00007");
+            result.put("message","该订单对应信息用户组u_ids为空");
+            result.put("result","");
+            logger.info("已有行程"+result.toString());
+            return result;
+        }
         //判断数据操作类型   是添加  还是移除
         int oper_type=json.getInteger("oper_type");
         String travel_id=json.getString("travel_id");
@@ -181,7 +189,10 @@ public class OrderInfoControl {
                 order.setOrderNo(UtilConf.getUUID());
                 order.setOrderSource("乘客服务系统");
                 order.setTravelSource(1);//乘客服务系统来源
-                orderInfoService.insertOrder(order);
+                String travelId =json.getString("travel_id");
+                order.setTravelId(new BigInteger(travelId));
+                logger.info("行程id"+travelId);
+                orderInfoService.insertOrder(order,json.getString("u_ids"));
                 result.put("code","00008");
                 result.put("message","加入成功");
                 result.put("result","");
@@ -189,7 +200,7 @@ public class OrderInfoControl {
                 return result;
             }else{
                 result.put("code","00007");
-                result.put("message","本次行程车载人数以上限");
+                result.put("message","本次行程车载人数已上限");
                 result.put("result","");
                 logger.info("添加已有行程"+result.toString());
                 return result;
@@ -212,7 +223,7 @@ public class OrderInfoControl {
             OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
             BeanUtils.copyProperties(order,orderInfoHistotry);
             orderInfoHistotry.setId(null);
-            orderInfoService.deleteSourceOrderId(o_id.toString(),orderInfoHistotry);
+            orderInfoService.deleteSourceOrderId(order,orderInfoHistotry,u_ids);
             result.put("code","00008");
             result.put("message","移除成功");
             result.put("result","");
@@ -232,7 +243,7 @@ public class OrderInfoControl {
 
 
 
-    @RequestMapping(value = "/findNotTrave" ,method = RequestMethod.GET)
+    @RequestMapping("/findNotTrave")
     public PojoBaseResponse findNotTrave() {
         PojoBaseResponse result = new PojoBaseResponse();
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
@@ -240,7 +251,6 @@ public class OrderInfoControl {
         //30分钟毫秒
         long time=1000*60*30+stateDate.getTime();
         Date endDate=DateUtil.millisecondToDate(time);
-        ;
 
         logger.info("开始时间"+DateUtil.getCurrentTime(stateDate)+"结束时间"+DateUtil.getCurrentTime(endDate));
         List<OrderInfo>  listOrder=orderInfoService.findNotTrave(DateUtil.getCurrentTime(stateDate),DateUtil.getCurrentTime(endDate));
@@ -252,11 +262,11 @@ public class OrderInfoControl {
 
 
         try {
-            CustomerWebAPI customerWebAPI=new CustomerWebAPI();
-            String body = customerWebAPI.doPost(URL,json);
+            String body = HttpClientUtil.doPostJson(URL,json);
             System.out.println("接收数据"+body);
 
             //占时先不返回   这里做行程数据解析  存储操作
+
         } catch (Exception e) {
             e.printStackTrace();
         }
