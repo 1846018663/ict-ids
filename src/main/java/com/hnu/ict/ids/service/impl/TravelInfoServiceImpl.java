@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -37,6 +38,8 @@ public class TravelInfoServiceImpl implements TravelInfoService {
     }
 
 
+    @Transactional
+    @Override
     public void addTravelInfoList(List<TravelInfo> list, Map<String,Integer> map){
         //添加行程数据
         travelInfoMapper.addTravelInfo(list);

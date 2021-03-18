@@ -28,10 +28,6 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     OrderInfo getById(@Param("id") int id);
 
 
-    @Insert("insert into order_info(order_source,source_order_id,order_no,begin_station_id,end_station_id,ticket_number,buy_uid,start_time,travel_id,create_time,travel_source) values(#{orderSource},#{sourceOrderId},#{orderNo},#{beginStationId},#{endStationId},#{ticketNumber},#{buyUid},#{startTime},#{travelId},#{createTime},#{travelSource})")
-    int insertOrderInfo(OrderInfo orderInfo);
-
-
 
     @Delete("delete from order_info where source_order_id = #{sourceOrderId}")
     int deleteBySourceOrderId(@Param("sourceOrderId")String  sourceOrderId);

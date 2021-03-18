@@ -9,15 +9,12 @@ import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
-import com.hnu.ict.ids.webHttp.CustomerWebAPI;
 import com.hnu.ict.ids.webHttp.HttpClientUtil;
-import netscape.javascript.JSObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import sun.net.www.http.HttpClient;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

@@ -20,7 +20,7 @@ public class OrderUserLink {
   private BigInteger userId;
 
 
-  private BigInteger orderId;
+  private String orderNo;
 
   private int state;
 

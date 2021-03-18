@@ -15,8 +15,6 @@ import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.UtilConf;
-import com.hnu.ict.ids.webHttp.CustomerWebAPI;
-import com.hnu.ict.ids.webHttp.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +79,7 @@ public class OrderInfoControl {
         order.setCreateTime(DateUtil.strToDateyyyyMMddHHmmss(json.getString("create_time")));
         order.setOrderNo(UtilConf.getUUID());
         order.setOrderSource("乘客服务系统");
-
+        order.setTravelSource(null);
         String u_ids=json.getString("u_ids");
         //操作数据库
         try {
@@ -262,8 +260,8 @@ public class OrderInfoControl {
 
 
         try {
-            String body = HttpClientUtil.doPostJson(URL,json);
-            System.out.println("接收数据"+body);
+//            String body = HttpClientUtil.doPostJson(URL,json);
+//            System.out.println("接收数据"+body);
 
             //占时先不返回   这里做行程数据解析  存储操作
 

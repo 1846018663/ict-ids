@@ -106,7 +106,7 @@ public class HttpClientUtil {
 
             @Override
             public long getRetryInterval() {
-                return 10000L;
+                return 5000L;
             }
         };
 

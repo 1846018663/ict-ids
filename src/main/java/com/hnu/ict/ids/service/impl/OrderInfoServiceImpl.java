@@ -49,16 +49,15 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     @Override
     @Transactional
     public void insertOrder(OrderInfo orderInfo,String uIds){
-        orderMapper.insertOrderInfo(orderInfo);
-        OrderInfo order=orderMapper.getBySourceOrderId(orderInfo.getSourceOrderId());
+        orderMapper.insert(orderInfo);
         //对关联   表进行添加
         String[]  ids=uIds.split(",");
         for (int i=0;i<ids.length;i++){
             OrderUserLink orderUserLink=new OrderUserLink();
-            orderUserLink.setOrderId(order.getId());
+            orderUserLink.setOrderNo(orderInfo.getOrderNo());
             orderUserLink.setUserId(new BigInteger(ids[i]));
             orderUserLink.setState(1);
-            orderUserLinkMapper.insertOrderUserLink(orderUserLink);
+            orderUserLinkMapper.insert(orderUserLink);
         }
     }
 
@@ -68,17 +67,23 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         String[] ids=uIds.split(",");
         for (int i=0;i< ids.length;i++){
             System.out.println(new BigInteger(ids[i])+"end of input integer"+order.getId());
-            orderUserLinkMapper.updateOrderUserLinkState(new BigInteger(ids[i]),order.getId());
+            orderUserLinkMapper.updateOrderUserLinkState(new BigInteger(ids[i]),order.getOrderNo());
         }
 
         //修改订单表座位数
         orderMapper.updateOrderNumber(ids.length,order.getId());
+        OrderInfoHistotry orderInfoHistotryRes= orderInfoHistotryMapper.getBySourceOrderId(order.getSourceOrderId());
+
+
+        //如果订单历史表未创建  新增操作
+        if(orderInfoHistotryRes==null){
+            orderInfoHistotryMapper.insert(orderInfoHistotry);
+        }
 
         //判断订单所属成功是否全部移除
-        int count=orderUserLinkMapper.findRemove(order.getId());
+        int count=orderUserLinkMapper.findRemove(order.getOrderNo());
         if(count==0){
             orderMapper.deleteBySourceOrderId(order.getSourceOrderId());
-            orderInfoHistotryMapper.insertOrderInfoHistotry(orderInfoHistotry);
         }
 
     }

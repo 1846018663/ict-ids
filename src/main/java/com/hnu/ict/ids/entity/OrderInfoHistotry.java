@@ -77,7 +77,7 @@ public class OrderInfoHistotry {
     /**
      * 行程来源   0 算法   1 乘客服务
      */
-    private int travelSource;
+    private Integer travelSource;
     /**
      * 创建时间
      */

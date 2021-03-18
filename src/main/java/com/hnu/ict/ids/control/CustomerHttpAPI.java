@@ -8,8 +8,6 @@ import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
-import com.hnu.ict.ids.utils.ParamsNotNull;
-import com.hnu.ict.ids.webHttp.CustomerWebAPI;
 import com.hnu.ict.ids.webHttp.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
@@ -70,8 +68,6 @@ public class CustomerHttpAPI {
         String json=JSON.toJSONString(list);
 
         System.out.println("行程预约成功后的返回传参内容"+json);
-        CustomerWebAPI web=new CustomerWebAPI();
-
         String body="";
         try {
             body= HttpClientUtil.doPostJson(callback_URL,json);

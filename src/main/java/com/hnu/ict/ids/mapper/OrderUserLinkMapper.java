@@ -10,13 +10,11 @@ import java.math.BigInteger;
 @Mapper
 public interface OrderUserLinkMapper  extends BaseMapper<OrderUserLink> {
 
-    @Insert("insert into order_user_link(user_id,order_id,state) values(#{userId},#{orderId},#{state})")
-    int insertOrderUserLink(OrderUserLink orderUserLink);
 
-    @Update("update order_user_link set state=2  where user_id =#{userId} and order_id=#{orderId} and state=1" )
-    void updateOrderUserLinkState(@Param("userId")BigInteger userId,@Param("orderId") BigInteger orderId);
+    @Update("update order_user_link set state=2  where user_id =#{userId} and order_no=#{orderNo} and state=1" )
+    void updateOrderUserLinkState(@Param("userId")BigInteger userId,@Param("orderNo") String orderNo);
 
-    @Select("Select count(id)  from  order_user_link where order_id=#{orderId} and  state=1")
-    int findRemove(@Param("orderId") BigInteger orderId);
+    @Select("Select count(id)  from  order_user_link where order_no=#{orderNo} and  state=1")
+    int findRemove(@Param("orderNo") String orderNo);
 
 }
