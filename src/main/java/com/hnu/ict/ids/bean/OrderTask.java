@@ -22,6 +22,9 @@ public class OrderTask {
     int ticket_number;//车票数量
     @JSONField(ordinal=6)
     String order_time;//下单时间
+    @JSONField(ordinal=7)
+    Integer set_time;
+
 
 
 }

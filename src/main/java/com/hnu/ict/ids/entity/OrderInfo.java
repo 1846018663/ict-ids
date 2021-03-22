@@ -71,7 +71,7 @@ public class OrderInfo {
     /**
      * 行程id
      */
-    private BigInteger travelId;
+    private String travelId;
 
 
     /**

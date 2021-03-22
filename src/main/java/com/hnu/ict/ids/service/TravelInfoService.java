@@ -17,5 +17,5 @@ public interface TravelInfoService {
     TravelInfo getCarTime(int carId,Date timeDate);
 
 
-    void addTravelInfoList(List<TravelInfo> list, Map<String,Integer> map);
+    void addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map);
 }

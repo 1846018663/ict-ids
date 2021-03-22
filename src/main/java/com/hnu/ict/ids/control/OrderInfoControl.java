@@ -188,7 +188,7 @@ public class OrderInfoControl {
                 order.setOrderSource("乘客服务系统");
                 order.setTravelSource(1);//乘客服务系统来源
                 String travelId =json.getString("travel_id");
-                order.setTravelId(new BigInteger(travelId));
+                order.setTravelId(travelId);
                 logger.info("行程id"+travelId);
                 orderInfoService.insertOrder(order,json.getString("u_ids"));
                 result.put("code","00008");

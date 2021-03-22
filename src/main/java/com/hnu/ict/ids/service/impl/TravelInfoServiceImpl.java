@@ -1,6 +1,8 @@
 package com.hnu.ict.ids.service.impl;
 
+import com.hnu.ict.ids.entity.OrderInfo;
 import com.hnu.ict.ids.entity.TravelInfo;
+import com.hnu.ict.ids.mapper.OrderInfoMapper;
 import com.hnu.ict.ids.mapper.TravelInfoMapper;
 import com.hnu.ict.ids.service.TravelInfoService;
 import org.slf4j.Logger;
@@ -21,6 +23,8 @@ public class TravelInfoServiceImpl implements TravelInfoService {
 
     @Autowired
     TravelInfoMapper travelInfoMapper;
+    @Autowired
+    OrderInfoMapper orderInfoMapper;
 
     @Override
     public TravelInfo getCarTime(int carId,Date timeDate){
@@ -40,10 +44,17 @@ public class TravelInfoServiceImpl implements TravelInfoService {
 
     @Transactional
     @Override
-    public void addTravelInfoList(List<TravelInfo> list, Map<String,Integer> map){
+    public void addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map){
         //添加行程数据
         travelInfoMapper.addTravelInfo(list);
         //修改订单与行程对应关系
+        for(Map.Entry<Integer,String> entry : map.entrySet()){
+            //key为订单id    value为行程
+            OrderInfo order= orderInfoMapper.getById(entry.getKey());
+            order.setTravelId(entry.getValue());
+            orderInfoMapper.updateById(order);
+
+        }
 
 
     }
