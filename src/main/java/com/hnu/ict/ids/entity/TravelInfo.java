@@ -103,6 +103,11 @@ public class TravelInfo {
     @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private Date updateTime;
 
+    /**
+     * 行程id
+     */
+    private String  travelId;
+
 
 
 

@@ -19,7 +19,7 @@ public class OrderTask {
     @JSONField(ordinal=4)
     String start_time;//出发时间
     @JSONField(ordinal=5)
-    int ticet_number;//车票数量
+    int ticket_number;//车票数量
     @JSONField(ordinal=6)
     String order_time;//下单时间
 

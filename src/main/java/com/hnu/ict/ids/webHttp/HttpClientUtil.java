@@ -52,7 +52,7 @@ public class HttpClientUtil {
     static {
 
         try {
-            log.info("初始自定义HttpClient......开始");
+          //  log.info("初始自定义HttpClient......开始");
             SSLContextBuilder builder = new SSLContextBuilder();
             builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
             SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
@@ -79,7 +79,7 @@ public class HttpClientUtil {
             requestConfig = RequestConfig.custom().setConnectionRequestTimeout(
                     connectionRequestTimeout).setSocketTimeout(socketTimeout).setConnectTimeout(
                     connectTimeout).build();
-            log.info("初始自定义HttpClient......结束");
+          //  log.info("初始自定义HttpClient......结束");
         } catch (Exception e) {
             log.error("初始自定义HttpClient......失败");
         }
@@ -98,7 +98,7 @@ public class HttpClientUtil {
             @Override
             public boolean retryRequest(HttpResponse httpResponse, int i, HttpContext httpContext) {
                 if (i < 3) {
-                    log.info("ServiceUnavailableRetryStrategy========================"+i);
+                    //log.info("ServiceUnavailableRetryStrategy========================"+i);
                     return true;
                 }
                 return false;

@@ -17,10 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @Component
 @EnableScheduling
@@ -42,7 +39,7 @@ public class DispatchTask {
     /**
      * 每隔5分钟执行一次（按照 corn 表达式规则执行）0 0/5 * * * ?    0/10 * * * * ?
      */
-    @Scheduled(cron = " 0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ? ")
     public void job1() throws Exception {
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
         Date stateDate=new Date();
@@ -62,7 +59,7 @@ public class DispatchTask {
                     task.setTo_p_id(info.getEndStationId());
                     task.setStart_time(DateUtil.getCurrentTime(info.getStartTime()));
                     task.setOrder_time(DateUtil.getCurrentTime(info.getCreateTime()));
-                    task.setTicet_number(info.getTicketNumber());
+                    task.setTicket_number(info.getTicketNumber());
                     list.add(task);
             }
             String json=JSON.toJSONString(list);
@@ -72,30 +69,44 @@ public class DispatchTask {
             try {
                 body=HttpClientUtil.doPostJson(URL,json);
                 System.out.println("接收数据"+body);
-                JSONArray array=JSON.parseArray(body);
-                List<TravelInfo> travelInfoList=new ArrayList<>();
-                List<OrderInfo> orderInfoList=new ArrayList<>();
-                for (int i=0;i<array.size();i++){
-                    JSONObject object=array.getJSONObject(i);
-                    OrderInfo orderInfo=orderInfoService.getById(object.getInteger("i_id"));
-                    TravelInfo info=new TravelInfo();
-                    info.setSourceTravelId(orderInfo.getSourceOrderId());
-                    info.setBeginStationId(object.getInteger("from_p_id"));
-                    info.setEndStationId(object.getInteger("to_p_id"));
-                    info.setTravelStatus(1);
-                    info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
-                    info.setDistance(new BigDecimal(object.getDouble("distance")));
-                    info.setExpectedTime(object.getInteger("expected_time").toString());
-                    info.setDriverContent(object.getString("driver_content"));
-                    info.setAllTravelPlat(object.getString("all_travel_plat"));
-                    info.setCarId(object.getInteger("car_id"));
+                JSONObject jsonObject=JSONObject.parseObject(body);
+
+                int status=jsonObject.getInteger("status");
+
+                if(status==1){//有效数据
+                    //对数据进行解析
+                    List<TravelInfo> travelInfoList=new ArrayList<>();
+                    Map<String ,Integer > map=new HashMap<>();
+
+                    List<OrderInfo> orderInfoList=new ArrayList<>();
+
+                    JSONArray array=jsonObject.getJSONArray("task");
+
+                    for (int i=0;i<array.size();i++){
+                        JSONObject object=array.getJSONObject(i);
+                        OrderInfo orderInfo=orderInfoService.getById(object.getInteger("i_id"));
+                        TravelInfo info=new TravelInfo();
+                        info.setSourceTravelId(orderInfo.getSourceOrderId());
+                        info.setBeginStationId(object.getInteger("from_p_id"));
+                        info.setEndStationId(object.getInteger("to_p_id"));
+                        info.setTravelStatus(1);
+                        info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
+                        info.setDistance(new BigDecimal(object.getDouble("distance")));
+                        info.setExpectedTime(object.getInteger("expected_time").toString());
+                        info.setDriverContent(object.getString("driver_content"));
+                        info.setAllTravelPlat(object.getString("all_travel_plat"));
+                        info.setCarId(object.getInteger("car_id"));
+                        info.setTravelId(object.getString("tasker_id"));
 //                    info.setDriverId(object.getInteger()); //司机id
-                    info.setCreateTime(new Date());
-                    travelInfoList.add(info);
+                        info.setCreateTime(new Date());
+                        travelInfoList.add(info);
+                    }
                 }
+
 
                 //解析数据封装后   service批量处理
 
+//                travelInfoService.addTravelInfoList(travelInfoList,map);
 
             } catch (Exception e) {
                 e.printStackTrace();
