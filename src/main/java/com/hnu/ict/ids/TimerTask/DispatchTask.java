@@ -46,7 +46,7 @@ public class DispatchTask {
     /**
      * 每隔5分钟执行一次（按照 corn 表达式规则执行）0 0/5 * * * ?    0/10 * * * * ?
      */
-    @Scheduled(cron = "0 0/5 * * * ?")
+//    @Scheduled(cron = "0/10 * * * * ?")
     public void job1() throws Exception {
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
         Date stateDate=new Date();
