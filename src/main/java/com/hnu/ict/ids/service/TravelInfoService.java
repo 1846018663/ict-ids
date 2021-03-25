@@ -11,11 +11,13 @@ public interface TravelInfoService {
 
     TravelInfo getById(BigInteger id);
 
+    TravelInfo findTravelId(String  travelId);
+
     int finDateTraveTotal(Date startDate, Date endDate);
 
 
     TravelInfo getCarTime(int carId,Date timeDate);
 
 
-    void addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map);
+    Boolean addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map);
 }

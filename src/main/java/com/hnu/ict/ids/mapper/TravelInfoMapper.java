@@ -32,5 +32,9 @@ public interface TravelInfoMapper extends BaseMapper<TravelInfo> {
     TravelInfo getCarTime(@Param("carId")int carId,@Param("startTime")Date startTime);
 
 
+    @Select("select * from travel_info where travel_id=#{travelId} ")
+    TravelInfo findTravelId(@Param("travelId")String  travelId);
+
+
     int addTravelInfo(@Param("persons") List<TravelInfo> persons);//接口
 }

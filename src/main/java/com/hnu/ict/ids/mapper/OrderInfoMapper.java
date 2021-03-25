@@ -45,4 +45,20 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
     @Update("update order_info set ticket_number=ticket_number-#{sum}  where id =#{id}")
     void updateOrderNumber(@Param("sum")int sum,@Param("id")BigInteger id);
+
+
+    /**
+     * 根据行程id  查询对应订单
+     * @param travelId
+     * @return
+     */
+    List<OrderInfo> findOrderTravelId(@Param("id") String travelId);
+
+
+    /**
+     * 查询所未同步通过数据
+     * @return
+     */
+    @Select("SELECT * from order_info o where o.status=2 and o.travel_id is not null")
+    List<OrderInfo> findCompensatesOrderIinfo();
 }

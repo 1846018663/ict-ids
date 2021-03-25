@@ -31,9 +31,14 @@ public class TravelInfoServiceImpl implements TravelInfoService {
         logger.info("carId"+carId+"time"+timeDate);
         return travelInfoMapper.getCarTime(carId,timeDate);
     }
-    @Override
+
     public TravelInfo getById(BigInteger id){
         return travelInfoMapper.getById(id);
+    }
+
+    @Override
+    public TravelInfo findTravelId(String  travelId){
+        return travelInfoMapper.findTravelId(travelId);
     }
 
     @Override
@@ -44,18 +49,23 @@ public class TravelInfoServiceImpl implements TravelInfoService {
 
     @Transactional
     @Override
-    public void addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map){
-        //添加行程数据
-        travelInfoMapper.addTravelInfo(list);
-        //修改订单与行程对应关系
-        for(Map.Entry<Integer,String> entry : map.entrySet()){
-            //key为订单id    value为行程
-            OrderInfo order= orderInfoMapper.getById(entry.getKey());
-            order.setTravelId(entry.getValue());
-            orderInfoMapper.updateById(order);
-
+    public Boolean addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map){
+        try {
+            //添加行程数据
+            travelInfoMapper.addTravelInfo(list);
+            //修改订单与行程对应关系
+            for(Map.Entry<Integer,String> entry : map.entrySet()){
+                //key为订单id    value为行程
+                OrderInfo order= orderInfoMapper.getById(entry.getKey());
+                order.setTravelId(entry.getValue());
+                order.setTravelSource(0);//默认算法来源  0
+                orderInfoMapper.updateById(order);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-
 
     }
 }

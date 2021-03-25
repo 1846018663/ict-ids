@@ -9,4 +9,8 @@
           and start_time <![CDATA[ <= ]]> #{endDate}
     </select>
 
+
+    <select id="findOrderTravelId" resultType="com.hnu.ict.ids.entity.OrderInfo">
+        select * from order_info where travel_id =#{id}
+    </select>
 </mapper>

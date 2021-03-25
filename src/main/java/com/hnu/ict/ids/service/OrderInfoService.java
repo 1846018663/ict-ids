@@ -23,4 +23,10 @@ public interface OrderInfoService {
 
     OrderInfo getById(int id);
 
+    void updateByIdList(List<OrderInfo> list,Integer status);
+
+
+    List<OrderInfo> findCompensatesOrderIinfo();
+
+
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.math.BigInteger;
@@ -83,6 +84,12 @@ public class OrderInfo {
      */
     @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private Date createTime;
+
+
+    /**
+     * 同步状态  0未同步  1已同步   2同步失败
+     */
+    private Integer status;
 
 
 

@@ -4,16 +4,18 @@ package com.hnu.ict.ids.control;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.hnu.common.respone.BaseResponse;
 import com.hnu.common.respone.PojoBaseResponse;
+import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
 import com.hnu.ict.ids.bean.OrderTask;
-import com.hnu.ict.ids.entity.IvsAppCarInfo;
-import com.hnu.ict.ids.entity.OrderInfo;
-import com.hnu.ict.ids.entity.OrderInfoHistotry;
-import com.hnu.ict.ids.entity.TravelInfo;
+import com.hnu.ict.ids.bean.TicketInfo;
+import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
+import com.hnu.ict.ids.exception.NetworkEnum;
 import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.exception.ResutlMessage;
 import com.hnu.ict.ids.service.IvsAppCarInfoService;
+import com.hnu.ict.ids.service.NetworkLogService;
 import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
@@ -46,6 +48,8 @@ public class OrderInfoControl {
 
     @Value("${travel.algorithm.url}")
     private String URL;
+    @Value("${passenger.service.callback.url}")
+    private String callback_URL;
 
     @Resource
     OrderInfoService orderInfoService;
@@ -58,6 +62,12 @@ public class OrderInfoControl {
 
     @Autowired
     RedisTemplate redisTemplate;
+
+    @Autowired
+    NetworkLogService networkLogServer;
+
+
+
 
     @RequestMapping(value="/add" , method = RequestMethod.POST)
     public ResultEntity addOrder(@RequestBody  String body){
@@ -249,6 +259,7 @@ public class OrderInfoControl {
 
     @RequestMapping(value = "/findNotTrave", method = RequestMethod.GET)
     public PojoBaseResponse findNotTrave() {
+        logger.info("---------------------------执行任务------------------");
         PojoBaseResponse result=new PojoBaseResponse();
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
         Date stateDate=new Date();
@@ -269,7 +280,6 @@ public class OrderInfoControl {
                 task.setStart_time(DateUtil.getCurrentTime(info.getStartTime()));
                 task.setOrder_time(DateUtil.getCurrentTime(info.getCreateTime()));
                 task.setTicket_number(info.getTicketNumber());
-                logger.info("时间"+resultMap.get(ConfigEnum.CARTIMECONFIG.getValue()).toString());
                 int DateTime=Integer.parseInt(resultMap.get(ConfigEnum.CARTIMECONFIG.getValue()).toString())*60;
                 task.setSet_time(DateTime);
                 list.add(task);
@@ -278,67 +288,148 @@ public class OrderInfoControl {
 
             //对数据进行解析
             List<TravelInfo> travelInfoList=new ArrayList<>();
-            logger.info("发送请求数据"+json);
+            logger.info("向算法发送请求数据"+json);
+
+            //接口访问日志操作
+            NetworkLog networkLog=new NetworkLog();
+            networkLog.setCreateTime(new Date());
             try {
+                networkLog.setInterfaceInfo(NetworkEnum.ALGORITHM_INRERFACE_ADD.getValue());
+                networkLog.setType(NetworkEnum.TYPE_HTTP.getValue());
+                networkLog.setMethod(NetworkEnum.METHOD_POST.getValue());
+                networkLog.setUrl(URL);
+                networkLog.setAccessContent(json);
                 body= HttpClientUtil.doPostJson(URL,json);
-                logger.info("接收数据"+body);
-                JSONObject jsonObject=JSONObject.parseObject(body);
-
-                int status = jsonObject.getInteger("status");
-
-                //有效数据
-                if(status==1){
-
-                    Map<Integer,String > map=new HashMap<>();
-
-
-                    JSONArray array=jsonObject.getJSONArray("task");
-                    for (int i=0;i<array.size();i++){
-                        JSONObject object=array.getJSONObject(i);
-                        OrderInfo orderInfo=orderInfoService.getById(object.getInteger("i_id"));
-                        TravelInfo info=new TravelInfo();
-                        info.setSourceTravelId(orderInfo.getSourceOrderId());
-                        info.setBeginStationId(object.getInteger("from_p_id"));
-                        info.setEndStationId(object.getInteger("to_p_id"));
-                        info.setTravelStatus(1);
-                        info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
-                        info.setDistance(new BigDecimal(object.getDouble("distance")));
-                        info.setExpectedTime(object.getInteger("expected_time").toString());
-                        info.setDriverContent(object.getString("driver_content"));
-                        info.setAllTravelPlat(object.getString("all_travel_plat"));
-                        info.setCarId(object.getInteger("car_id"));
-                        String taskerId=object.getString("travel_id");
-                        info.setTravelId(taskerId);
-//                    info.setDriverId(object.getInteger()); //司机id
-                        info.setCreateTime(new Date());
-                        //获取订单与行程对应数据关联
-                        String orderIds=object.getString("correspond_order_id").replace("[","").replace("]","").replace(" ","");
-                        String[] ids=orderIds.split(",");
-                        for (int k=0;k<ids.length;k++){
-                            map.put(Integer.parseInt(ids[k]),taskerId);
-                        }
-
-                        logger.info("解析车辆对应关系"+ orderIds);
-                        logger.info("封装"+ map.toString());
-                        travelInfoList.add(info);
-                    }
-
-                    //解析数据封装后   service批量处理
-                    travelInfoService.addTravelInfoList(travelInfoList,map);
-                }
-
-
-                logger.info("执行任务完毕："+ new Date());
-                result.setData(travelInfoList);
-
+                logger.info("接收算法放回数据"+body);
+                networkLog.setResponseResult(body);
+                networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
             } catch (Exception e) {
+                networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
                 e.printStackTrace();
             }
-        }
+            //保存接口日志
+            networkLogServer.insertNetworkLog(networkLog);
+            logger.info("---------------------------保存接口日志------------------");
 
+            JSONObject jsonObject=JSONObject.parseObject(body);
+            int status = jsonObject.getInteger("status");
+            logger.info("-----------------开始解析算法返回结果-------------");
+            //有效数据
+            if(status==1){
+                Map<Integer,String > map=new HashMap<>();
+
+                JSONArray array=jsonObject.getJSONArray("task");
+                for (int i=0;i<array.size();i++){
+                    JSONObject object=array.getJSONObject(i);
+                    OrderInfo orderInfo=orderInfoService.getById(object.getInteger("i_id"));
+                    TravelInfo info=new TravelInfo();
+                    info.setSourceTravelId(orderInfo.getSourceOrderId());
+                    info.setBeginStationId(object.getInteger("from_p_id"));
+                    info.setEndStationId(object.getInteger("to_p_id"));
+                    info.setTravelStatus(1);
+                    info.setItNumber(object.getInteger("it_number"));
+                    info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
+                    info.setDistance(new BigDecimal(object.getDouble("distance")));
+                    info.setExpectedTime(object.getInteger("expected_time").toString());
+                    info.setDriverContent(object.getString("driver_content"));
+                    info.setAllTravelPlat(object.getString("all_travel_plat"));
+                    info.setCarId(object.getInteger("car_id"));
+                    String taskerId=object.getString("travel_id");
+                    info.setTravelId(taskerId);
+//                    info.setDriverId(object.getInteger()); //司机id
+                    info.setCreateTime(new Date());
+                    //获取订单与行程对应数据关联
+                    String orderIds=object.getString("correspond_order_id").replace("[","").replace("]","").replace(" ","");
+                    String[] ids=orderIds.split(",");
+                    for (int k=0;k<ids.length;k++){
+                        map.put(Integer.parseInt(ids[k]),taskerId);
+                    }
+                    travelInfoList.add(info);
+                }
+                logger.info("-----------------已完成解析算法返回结果-------------");
+                //解析数据封装后   service批量处理
+                boolean bool=travelInfoService.addTravelInfoList(travelInfoList,map);
+                if(bool){
+                    //数据操作成功回调乘客服务系统
+                    logger.info("-----------------回调乘客服务系统-------------");
+                    String str=successfulTrip(map,listOrder);
+                    logger.info("回调乘客服务系统接收参数"+str);
+                    logger.info("-----------------回调乘客服务系统    结束-------------");
+                }
+            }
+
+        }
+        logger.info("执行任务完毕："+ new Date());
 
         return result;
     }
 
+
+
+    public String successfulTrip(Map<Integer,String > map,List<OrderInfo> orderInfoList){
+        ArrayList<CustomerHttpAPIBean> list=new ArrayList<>();
+        for(Map.Entry<Integer,String> entry : map.entrySet()){
+            TravelInfo info= travelInfoService.findTravelId(entry.getValue());
+            OrderInfo order= orderInfoService.getById(entry.getKey());
+            CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
+            customerHttpAPIBean.setDistance(info.getDistance().doubleValue());
+            customerHttpAPIBean.setO_id(Long.parseLong(info.getSourceTravelId()));
+            customerHttpAPIBean.setTravel_id(info.getId().toString());
+            customerHttpAPIBean.setExpected_time(Integer.parseInt(info.getExpectedTime()));
+            customerHttpAPIBean.setAll_travel_plat(info.getAllTravelPlat());
+            customerHttpAPIBean.setDriver_content(info.getDriverContent());
+            customerHttpAPIBean.setC_id(info.getCarId());
+            customerHttpAPIBean.setDriver_id(info.getDriverId());
+            customerHttpAPIBean.setReservation_status(info.getTravelStatus());
+            customerHttpAPIBean.setIt_number(order.getTicketNumber());
+            customerHttpAPIBean.setRet_status(0);
+            customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));
+            List<TicketInfo> ticket_info=new ArrayList<>();
+            TicketInfo ticke=new TicketInfo();
+            ticke.setU_id(order.getBuyUid().intValue());
+            ticke.setSeat_number("");
+            ticket_info.add(ticke);
+            customerHttpAPIBean.setTicket_info(ticket_info);
+            list.add(customerHttpAPIBean);
+
+        }
+        String json=JSON.toJSONString(list);
+        //接口访问日志操作
+        NetworkLog networkLog=new NetworkLog();
+        networkLog.setCreateTime(new Date());
+        networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
+        networkLog.setInterfaceInfo(NetworkEnum.PASSENGRT_SERVICE_CALL_BACK.getValue());
+        networkLog.setMethod(NetworkEnum.METHOD_POST.getValue());
+        networkLog.setUrl(callback_URL);
+        networkLog.setType(NetworkEnum.TYPE_HTTPS.getValue());
+        networkLog.setAccessContent(json);
+        logger.info("行程预约成功传参内容"+json);
+        String body="";
+        try {
+            body= HttpClientUtil.doPostJson(callback_URL,json);
+            networkLog.setResponseResult(body);
+            networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
+            logger.info("行程预约成功返回结果:"+body);
+            JSONObject resultJson=JSONObject.parseObject(body);
+            String code=resultJson.getString("code");
+
+            if(!code.equals("00008")){
+                //失败   数据信息做修改  失败status 为2
+                orderInfoService.updateByIdList(orderInfoList,2);
+            }else{
+                //失败   数据信息做修改  成功status 为1
+                orderInfoService.updateByIdList(orderInfoList,1);
+            }
+        } catch (Exception e) {
+            //失败   数据信息做修改  失败status 为2
+            orderInfoService.updateByIdList(orderInfoList,2);
+
+            networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
+            e.printStackTrace();
+        }
+
+        networkLogServer.insertNetworkLog(networkLog);
+        return body;
+    }
 
 }

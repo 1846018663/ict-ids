@@ -108,6 +108,17 @@ public class TravelInfo {
      */
     private String  travelId;
 
+    /**
+     * 乘车人数
+     */
+    private Integer itNumber;
+
+
+    /**
+     * 旧的行程id
+     */
+    private String modifyId;
+
 
 
 
