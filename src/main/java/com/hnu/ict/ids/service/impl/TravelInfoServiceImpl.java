@@ -68,4 +68,8 @@ public class TravelInfoServiceImpl implements TravelInfoService {
         }
 
     }
+
+    public void updateById(TravelInfo travelInfo){
+        travelInfoMapper.updateById(travelInfo);
+    }
 }

@@ -320,9 +320,9 @@ public class DateUtil {
     * @return
     */
     public static Date strToDate(String strDate) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat format =  new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         ParsePosition pos = new ParsePosition(0);
-        Date strtodate = formatter.parse(strDate, pos);
+        Date strtodate = format.parse(strDate, pos);
         return strtodate;
    }
     public static Date strToDateyyyyMMddHHmmss(String strDate) {
@@ -337,14 +337,9 @@ public class DateUtil {
     }
 
         public static String strToDateLong(String strDate) {
-            Date date = new Date();
-            try {
-                date = new SimpleDateFormat("yyyyMMddHHmmss").parse(strDate);//先按照原格式转换为时间
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            String str = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(date);//再将时间转换为对应格式字符串
-            return str;
+            String reg = "(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})";
+            String date = strDate.replaceAll(reg, "$1-$2-$3 $4:$5:$6");
+            return date;
     }
 
 

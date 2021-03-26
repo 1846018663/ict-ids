@@ -9,16 +9,16 @@ public class CustomerHttpAPIBean {
     Long o_id;
     String travel_id;
     double distance;
-    int expected_time;
+    Integer expected_time;
     String all_travel_plat;
     String driver_content;
-    int c_id;
-    int driver_id;
-    int reservation_status;
-    int it_number;
-    int ret_status;
+    Integer c_id;
+    Integer driver_id;
+    Integer reservation_status;
+    Integer it_number;
+    Integer ret_status;
     List<TicketInfo> ticket_info;
-    int waiting_space;
+    Integer waiting_space;
     String oper_time;
 
 }

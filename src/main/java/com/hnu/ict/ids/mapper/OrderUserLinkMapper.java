@@ -6,6 +6,7 @@ import com.hnu.ict.ids.entity.OrderUserLink;
 import org.apache.ibatis.annotations.*;
 
 import java.math.BigInteger;
+import java.util.List;
 
 @Mapper
 public interface OrderUserLinkMapper  extends BaseMapper<OrderUserLink> {
@@ -16,5 +17,9 @@ public interface OrderUserLinkMapper  extends BaseMapper<OrderUserLink> {
 
     @Select("Select count(id)  from  order_user_link where order_no=#{orderNo} and  state=1")
     int findRemove(@Param("orderNo") String orderNo);
+
+
+    @Select("Select *  from  order_user_link where order_no=#{orderNo} and  state=1")
+    List<OrderUserLink> findOrderNo(@Param("orderNo") String orderNo);
 
 }

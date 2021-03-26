@@ -120,6 +120,36 @@ public class TravelInfo {
     private String modifyId;
 
 
+    /**
+     * 出发站台名称
+     */
+    private String beginStationName;
+
+
+    /**
+     * 出发站台名称
+     */
+    private String endStationName;
+
+    /**
+     * 中间停靠站台
+     */
+    private  Integer parkId;
+
+
+    /**
+     * 中间停靠站台名称
+     */
+    private String parkName;
+
+
+    /**
+     * 警告
+     */
+    private String warning;
+
+
+
 
 
 }

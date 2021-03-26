@@ -9,7 +9,7 @@ import java.math.BigInteger;
 
 
 @Data
-@TableName(value = "travel_info")
+@TableName(value = "travel_ticket_info")
 public class TravelTicketInfo {
 
     /** 主键ID **/
@@ -19,7 +19,7 @@ public class TravelTicketInfo {
     /**
      * 行程id
      */
-    private BigInteger travelId;
+    private String travelId;
 
 
     /**
@@ -31,6 +31,6 @@ public class TravelTicketInfo {
     /**
      * 座位编号
      */
-    private Character seatNum;
+    private String seatNum;
 
 }

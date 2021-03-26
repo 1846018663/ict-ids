@@ -20,4 +20,6 @@ public interface TravelInfoService {
 
 
     Boolean addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map);
+
+    void updateById(TravelInfo travelInfo);
 }

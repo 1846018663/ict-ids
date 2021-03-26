@@ -3,12 +3,14 @@
 <mapper namespace="com.hnu.ict.ids.mapper.TravelInfoMapper">
     <insert id="addTravelInfo">
         insert into travel_info(source_travel_id,begin_station_id,end_station_id,travel_status,start_time,
-           distance,expected_time,all_travel_plat,driver_content,car_id,driver_id,create_time,travel_id,it_number) VALUES
+           distance,expected_time,all_travel_plat,driver_content,car_id,driver_id,create_time,travel_id,it_number,
+        begin_station_name,end_station_name,park_id,park_name,warning) VALUES
         <foreach collection="persons" item="person" separator=",">
             (#{person.sourceTravelId},#{person.beginStationId},#{person.endStationId},
              #{person.travelStatus},#{person.startTime},#{person.distance},#{person.expectedTime},
              #{person.allTravelPlat},#{person.driverContent},#{person.carId},#{person.driverId},
-             #{person.createTime},#{person.travelId},#{person.itNumber})
+             #{person.createTime},#{person.travelId},#{person.itNumber},#{person.beginStationName},
+             #{person.endStationName},#{person.parkId},#{person.parkName},#{person.warning})
         </foreach>
     </insert>
 </mapper>

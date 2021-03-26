@@ -19,7 +19,7 @@ public interface OrderInfoService {
 
     List<OrderInfo> findNotTrave(String statDate, String endDate);
 
-    int getByTravelCount(BigInteger travelId);
+
 
     OrderInfo getById(int id);
 
@@ -27,6 +27,8 @@ public interface OrderInfoService {
 
 
     List<OrderInfo> findCompensatesOrderIinfo();
+
+    List<OrderInfo> findOrderTravelId(String travelId);
 
 
 }

@@ -67,7 +67,7 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     @Override
     @Transactional
     public void insertOrder(OrderInfo orderInfo,String uIds){
-        orderMapper.insert(orderInfo);
+
         //对关联   表进行添加
         String[]  ids=uIds.split(",");
         for (int i=0;i<ids.length;i++){
@@ -77,6 +77,11 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             orderUserLink.setState(1);
             orderUserLinkMapper.insert(orderUserLink);
         }
+
+
+       orderMapper.insert(orderInfo);
+
+
     }
 
     @Transactional
@@ -84,7 +89,7 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     public void deleteSourceOrderId(OrderInfo order, OrderInfoHistotry orderInfoHistotry,String uIds){
         String[] ids=uIds.split(",");
         for (int i=0;i< ids.length;i++){
-            System.out.println(new BigInteger(ids[i])+"end of input integer"+order.getId());
+            logger.info(new BigInteger(ids[i])+"end of input integer"+order.getId());
             orderUserLinkMapper.updateOrderUserLinkState(new BigInteger(ids[i]),order.getOrderNo());
         }
 
@@ -106,15 +111,12 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
         //业务判断如果未生成行程不做一下操作    如果已经行程存在取消订单需调用算法完成行程取消流程
         if(!StringUtils.isEmpty(order.getTravelId())){
-            travelInfoCancels(order,ids.length);
+            travelInfoCancels(order,ids.length,order.getTicketNumber());
         }
 
     }
 
-    @Override
-    public int getByTravelCount(BigInteger travelId){
-        return orderMapper.getByTravelCount(travelId);
-    }
+
 
 
     @Override
@@ -123,7 +125,12 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     }
 
 
-    public void travelInfoCancels(OrderInfo order,Integer number){
+    /**
+     * 取消行程算法调用
+     * @param order
+     * @param number
+     */
+    public void travelInfoCancels(OrderInfo order,Integer number,Integer ticketNumber){
         //调用算法接口
         JSONObject json=new JSONObject();
 
@@ -133,26 +140,57 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         dl.put("from_p_id",order.getBeginStationId());
         dl.put("to_p_id",order.getEndStationId());
         dl.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
-        dl.put("ticket_number",number);
+        dl.put("ticket_number",number+"/"+ticketNumber);
         dlJSON.add(dl);
 
         JSONArray taskJson=new JSONArray();
         JSONObject task=new JSONObject();
         TravelInfo info=travelInfoMapper.findTravelId(order.getTravelId());
-        task.put("i_id",info.getTravelId());
+
         task.put("it_number",info.getItNumber());
         task.put("car_id",info.getCarId());
         task.put("from_p_id",info.getBeginStationId());
+        task.put("from_order_name",info.getBeginStationName());
         task.put("to_p_id",info.getEndStationId());
-        task.put("park_id",info.getAllTravelPlat());
+        task.put("to_order_name",info.getEndStationName());
+        if(info.getParkId()!=null){
+            task.put("park_id",info.getParkId());
+        }else{
+            task.put("park_id","");
+        }
+        if(info.getParkName()!=null){
+            task.put("park_name",info.getParkName());
+        }else{
+            task.put("park_name","");
+        }
+
+        task.put("start_time",info.getStartTime());
+        task.put("travel_id",info.getTravelId());
+        task.put("driver_content",info.getDriverContent());
+        task.put("all_travel_plat",info.getAllTravelPlat());
+        task.put("expected_time",info.getExpectedTime());
+        task.put("distance",info.getDistance());
+        if(info.getModifyId()!=null){
+            task.put("modify_id",info.getModifyId());
+        }else{
+            task.put("modify_id","");
+        }
+        if(info.getWarning()!=null){
+            task.put("warning",info.getWarning());
+        }else{
+            task.put("warning","");
+        }
+
+
         logger.info("行程id查询"+order.getTravelId()+"/");
         List<OrderInfo> orderList= orderMapper.findOrderTravelId(order.getTravelId());
-        String oIds=null;
+        String oIds="[";
         if(orderList!=null &&orderList.size()>0){
             for (int i=0;i<orderList.size();i++){
                 oIds=oIds+orderList.get(i).getId()+",";
             }
             oIds.substring(0,oIds.length()-1);
+            oIds=oIds+"]";
             task.put("correspond_order_id",oIds);
             taskJson.add(task);
         }
@@ -182,6 +220,10 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     }
 
 
+    /**
+     * 取消行程算法  返回内容入库
+     * @param jsonObject
+     */
     public  void jsonFind(JSONObject jsonObject){
         JSONArray array=jsonObject.getJSONArray("task");
         //对数据进行解析
@@ -191,10 +233,9 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             JSONObject object=array.getJSONObject(i);
             OrderInfo orderInfo=orderMapper.getById(object.getInteger("i_id"));
             TravelInfo info=new TravelInfo();
-            info.setSourceTravelId(orderInfo.getSourceOrderId());
             info.setBeginStationId(object.getInteger("from_p_id"));
             info.setEndStationId(object.getInteger("to_p_id"));
-            info.setTravelStatus(0);
+            info.setTravelStatus(1);
             info.setItNumber(object.getInteger("it_number"));
             info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
             info.setDistance(new BigDecimal(object.getDouble("distance")));
@@ -202,9 +243,14 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             info.setDriverContent(object.getString("driver_content"));
             info.setAllTravelPlat(object.getString("all_travel_plat"));
             info.setCarId(object.getInteger("car_id"));
-            String taskerId=object.getString("travel_id");
+            info.setBeginStationName(object.getString("from_order_name"));
+            info.setEndStationName(object.getString("to_order_name"));
+            info.setParkName(object.getString("park_name"));
+            info.setParkId(object.getInteger("park_id"));
+            info.setWarning(object.getString("warning"));
+            String taskerId =object.getString("travel_id");
             info.setTravelId(taskerId);
-//                      info.setDriverId(object.getInteger()); //司机id
+            //info.setDriverId(object.getInteger()); //司机id
             info.setCreateTime(new Date());
             //获取订单与行程对应数据关联
             String orderIds=object.getString("correspond_order_id").replace("[","").replace("]","").replace(" ","");
@@ -246,6 +292,10 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
     public List<OrderInfo> findCompensatesOrderIinfo(){
         return  orderMapper.findCompensatesOrderIinfo();
+    }
+
+    public List<OrderInfo> findOrderTravelId(String travelId){
+        return orderMapper.findOrderTravelId(travelId);
     }
 
 }
