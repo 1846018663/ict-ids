@@ -61,4 +61,5 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
      */
     @Select("SELECT * from order_info o where o.status=2 and o.travel_id is not null")
     List<OrderInfo> findCompensatesOrderIinfo();
+
 }

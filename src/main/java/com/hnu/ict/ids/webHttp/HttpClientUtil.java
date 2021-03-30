@@ -2,6 +2,7 @@ package com.hnu.ict.ids.webHttp;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.client.config.RequestConfig;
@@ -26,6 +27,8 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -36,7 +39,7 @@ import java.util.Map;
 
 @Slf4j
 public class HttpClientUtil {
-
+    static Logger logger= LoggerFactory.getLogger(HttpClientUtil.class);
     // utf-8字符编码
     private static final String CHARSET_UTF_8 = "utf-8";
 
@@ -70,9 +73,9 @@ public class HttpClientUtil {
             // 根据默认超时限制初始化requestConfig
 
             // 客户端从服务器读取数据的timeout
-            int socketTimeout = 5000;
+            int socketTimeout = 50000;
             // 客户端和服务器建立连接的timeout
-            int connectTimeout = 10000;
+            int connectTimeout = 100000;
             // 从连接池获取连接的timeout
             int connectionRequestTimeout = 10000;
             //设置请求超时时间
@@ -97,16 +100,19 @@ public class HttpClientUtil {
         ServiceUnavailableRetryStrategy serviceUnavailableRetryStrategy = new ServiceUnavailableRetryStrategy() {
             @Override
             public boolean retryRequest(HttpResponse httpResponse, int i, HttpContext httpContext) {
-                if (i < 3) {
-                    //log.info("ServiceUnavailableRetryStrategy========================"+i);
+                //当返回状态码不为200（成功）的情况下重试，重试次数默认设为3次
+                if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK && i <=3){
+                    logger.info("---重试-------------“+httpResponse.getStatusLine().getStatusCode()+”------------------");
                     return true;
+                }else{
+                    return false;
                 }
-                return false;
+
             }
 
             @Override
             public long getRetryInterval() {
-                return 5000L;
+                return 1000L;
             }
         };
 
@@ -217,8 +223,10 @@ public class HttpClientUtil {
             StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
             httpPost.setEntity(entity);
             // 执行http请求
+            logger.info("-----------------doPostJson请求发送------------");
             response = httpClient.execute(httpPost);
             resultString = EntityUtils.toString(response.getEntity(), CHARSET_UTF_8);
+            logger.info("-----------------doPostJson请求结束------------");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

@@ -46,7 +46,7 @@ public class CustomerHttpAPI {
         List<CustomerHttpAPIBean> list=new ArrayList<>();
         CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
         customerHttpAPIBean.setDistance(info.getDistance().doubleValue());
-        customerHttpAPIBean.setO_id(Long.parseLong(info.getSourceTravelId()));
+        customerHttpAPIBean.setO_ids(info.getSourceTravelId());
         customerHttpAPIBean.setTravel_id(info.getId().toString());
         customerHttpAPIBean.setExpected_time(Integer.parseInt(info.getExpectedTime()));
         customerHttpAPIBean.setAll_travel_plat(info.getAllTravelPlat());
@@ -57,13 +57,13 @@ public class CustomerHttpAPI {
         customerHttpAPIBean.setIt_number(order.getTicketNumber());
         customerHttpAPIBean.setRet_status(0);
         customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));
-        List<TicketInfo> ticket_info=new ArrayList<>();
-        TicketInfo ticke=new TicketInfo();
-        ticke.setU_id(order.getBuyUid().intValue());
-        ticke.setSeat_number("");
-        ticket_info.add(ticke);
+//        List<TicketInfo> ticket_info=new ArrayList<>();
+//        TicketInfo ticke=new TicketInfo();
+//        ticke.setU_id(order.getBuyUid().intValue());
+//        ticke.setSeat_number("");
+//        ticket_info.add(ticke);
 
-        customerHttpAPIBean.setTicket_info(ticket_info);
+//        customerHttpAPIBean.setTickets(ticket_info);
         list.add(customerHttpAPIBean);
         String json=JSON.toJSONString(list);
 

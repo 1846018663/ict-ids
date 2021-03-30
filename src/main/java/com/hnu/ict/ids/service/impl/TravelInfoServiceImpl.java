@@ -72,4 +72,21 @@ public class TravelInfoServiceImpl implements TravelInfoService {
     public void updateById(TravelInfo travelInfo){
         travelInfoMapper.updateById(travelInfo);
     }
+
+    @Transactional
+    public void updateByIdList(List<TravelInfo> list,Integer status){
+        for (int i=0;i<list.size();i++){
+            TravelInfo info=list.get(i);
+            TravelInfo travelInfo=travelInfoMapper.findTravelId(info.getTravelId());
+            travelInfo.setPushStatus(status);
+            travelInfo.setUpdateTime(new Date());
+            travelInfoMapper.updateById(travelInfo);
+        }
+    }
+
+
+
+    public List<TravelInfo> findeNotPushStatus(){
+        return travelInfoMapper.findeNotPushStatus();
+    }
 }

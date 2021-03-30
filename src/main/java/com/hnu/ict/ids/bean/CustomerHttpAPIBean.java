@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 public class CustomerHttpAPIBean {
-    Long o_id;
+    String o_ids;
     String travel_id;
     double distance;
     Integer expected_time;

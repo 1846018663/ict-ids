@@ -3,10 +3,15 @@ package com.hnu.ict.ids.bean;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class TicketInfo {
-    String seat_number;
-    int u_id;
+
+    List<Tickets> tickets;
+    String o_id;
+
+
 
 
 }

@@ -22,4 +22,12 @@ public interface TravelInfoService {
     Boolean addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map);
 
     void updateById(TravelInfo travelInfo);
+
+
+    void updateByIdList(List<TravelInfo> list,Integer status);
+
+
+
+    List<TravelInfo> findeNotPushStatus();
+
 }

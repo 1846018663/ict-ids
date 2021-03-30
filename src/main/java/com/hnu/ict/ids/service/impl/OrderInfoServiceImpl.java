@@ -103,15 +103,20 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             orderInfoHistotryMapper.insert(orderInfoHistotry);
         }
 
+
+
+        //业务判断如果未生成行程不做一下操作    如果已经行程存在取消订单需调用算法完成行程取消流程
+        if(!StringUtils.isEmpty(order.getTravelId())){
+            TravelInfo travelInfo=travelInfoMapper.findTravelId(order.getTravelId());
+            travelInfoCancels(order,ids.length,travelInfo.getItNumber());
+        }
+
+
         //判断订单所属成功是否全部移除
         int count=orderUserLinkMapper.findRemove(order.getOrderNo());
         if(count==0){
             orderMapper.deleteBySourceOrderId(order.getSourceOrderId());
-        }
-
-        //业务判断如果未生成行程不做一下操作    如果已经行程存在取消订单需调用算法完成行程取消流程
-        if(!StringUtils.isEmpty(order.getTravelId())){
-            travelInfoCancels(order,ids.length,order.getTicketNumber());
+            travelInfoMapper.updateTravlInfoStatus(order.getTravelId());
         }
 
     }
@@ -134,14 +139,12 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         //调用算法接口
         JSONObject json=new JSONObject();
 
-        JSONArray dlJSON=new JSONArray();
         JSONObject dl=new JSONObject();
         dl.put("o_id",order.getId());
         dl.put("from_p_id",order.getBeginStationId());
         dl.put("to_p_id",order.getEndStationId());
         dl.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
         dl.put("ticket_number",number+"/"+ticketNumber);
-        dlJSON.add(dl);
 
         JSONArray taskJson=new JSONArray();
         JSONObject task=new JSONObject();
@@ -164,7 +167,7 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             task.put("park_name","");
         }
 
-        task.put("start_time",info.getStartTime());
+        task.put("start_time",DateUtil.getCurrentTime(info.getStartTime()));
         task.put("travel_id",info.getTravelId());
         task.put("driver_content",info.getDriverContent());
         task.put("all_travel_plat",info.getAllTravelPlat());
@@ -184,32 +187,28 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
         logger.info("行程id查询"+order.getTravelId()+"/");
         List<OrderInfo> orderList= orderMapper.findOrderTravelId(order.getTravelId());
-        String oIds="[";
+        String oIds="";
         if(orderList!=null &&orderList.size()>0){
             for (int i=0;i<orderList.size();i++){
                 oIds=oIds+orderList.get(i).getId()+",";
             }
-            oIds.substring(0,oIds.length()-1);
-            oIds=oIds+"]";
+            oIds= oIds.substring(0,oIds.length()-1);
             task.put("correspond_order_id",oIds);
             taskJson.add(task);
         }
 
         //封装最后传参
-        json.put("dl_1",dlJSON);
+        json.put("dl_1",dl);
         json.put("task_record",taskJson);
         logger.info("发送请求数据"+json.toString());
         try {
             String body= HttpClientUtil.doPostJson(URL,json.toString());
             logger.info("接收请求数据"+body);
             JSONObject jsonObject=JSONObject.parseObject(body);
-
-            if(jsonObject.getInteger("status")==0){
+            //status 1为成功
+            if(jsonObject.getInteger("status")==1){
                 //解析入库
                 jsonFind(jsonObject);
-                //修改订单人数
-                order.setTicketNumber(order.getTicketNumber()-number);
-                orderMapper.updateById(order);
             }
 
 
@@ -231,56 +230,119 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         Map<Integer,String > map=new HashMap<>();
         for (int i=0;i<array.size();i++){
             JSONObject object=array.getJSONObject(i);
-            OrderInfo orderInfo=orderMapper.getById(object.getInteger("i_id"));
             TravelInfo info=new TravelInfo();
-            info.setBeginStationId(object.getInteger("from_p_id"));
-            info.setEndStationId(object.getInteger("to_p_id"));
+            if(object.getInteger("from_p_id")==null){
+                info.setBeginStationId(null);
+            }else{
+                info.setBeginStationId(object.getInteger("from_p_id"));
+            }
+
+            if(object.getInteger("to_p_id")==null){
+                info.setEndStationId(null);
+            }else{
+                info.setEndStationId(object.getInteger("to_p_id"));
+            }
+
+
             info.setTravelStatus(1);
             info.setItNumber(object.getInteger("it_number"));
             info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
-            info.setDistance(new BigDecimal(object.getDouble("distance")));
-            info.setExpectedTime(object.getInteger("expected_time").toString());
+            if(object.getDouble("distance")==null){
+                info.setDistance(null);
+            }else{
+                info.setDistance(new BigDecimal(object.getDouble("distance")));
+            }
+
+            if(object.getInteger("expected_time")==null){
+                info.setExpectedTime(null);
+            }else{
+                info.setExpectedTime(object.getInteger("expected_time").toString());
+            }
+
+
             info.setDriverContent(object.getString("driver_content"));
             info.setAllTravelPlat(object.getString("all_travel_plat"));
-            info.setCarId(object.getInteger("car_id"));
-            info.setBeginStationName(object.getString("from_order_name"));
-            info.setEndStationName(object.getString("to_order_name"));
-            info.setParkName(object.getString("park_name"));
-            info.setParkId(object.getInteger("park_id"));
+            if(object.getInteger("car_id")==null){
+                info.setCarId(null);
+            }else{
+                info.setCarId(object.getInteger("car_id"));
+            }
+
+            if (object.getString("from_order_name")==null){
+                info.setBeginStationName(null);
+            }else{
+                info.setBeginStationName(object.getString("from_order_name"));
+            }
+
+            if (object.getString("to_order_name")==null){
+                info.setEndStationName(null);
+            }else{
+                info.setEndStationName(object.getString("to_order_name"));
+            }
+
+            if (object.getInteger("park_id")==null){
+                info.setParkId(null);
+            }else{
+                info.setParkId(object.getInteger("park_id"));
+            }
+
+            if (object.getString("park_name")==null){
+                info.setParkName(null);
+            }else{
+                info.setParkName(object.getString("park_name"));
+            }
+
+
+
+
             info.setWarning(object.getString("warning"));
             String taskerId =object.getString("travel_id");
             info.setTravelId(taskerId);
             //info.setDriverId(object.getInteger()); //司机id
-            info.setCreateTime(new Date());
+            info.setUpdateTime(new Date());
             //获取订单与行程对应数据关联
-            String orderIds=object.getString("correspond_order_id").replace("[","").replace("]","").replace(" ","");
-            String[] ids=orderIds.split(",");
-            for (int k=0;k<ids.length;k++){
-                map.put(Integer.parseInt(ids[k]),taskerId);
+            if(object.getString("correspond_order_id")!=null) {
+                String orderIds=object.getString("correspond_order_id");
+                String[] ids=orderIds.split(",");
+                for (int k=0;k<ids.length;k++){
+                    map.put(Integer.parseInt(ids[k]),taskerId);
+                }
+                System.out.println("解析车辆对应关系"+ orderIds);
             }
+
+
+
             info.setModifyId(object.getString("modify_id"));
 
-
-            System.out.println("解析车辆对应关系"+ orderIds);
             System.out.println("封装"+ map.toString());
-            travelInfoList.add(info);
+            TravelInfo travelInfo=null;
+            if(info.getModifyId()!=null && info.getModifyId().length()>0){
+                //添加行程数据
+                travelInfo= travelInfoMapper.findTravelId(info.getModifyId());
+                info.setTravelId(info.getModifyId());
+            }else{
+                //添加行程数据
+                travelInfo= travelInfoMapper.findTravelId(info.getTravelId());
+            }
+
+            info.setId(travelInfo.getId());
+            travelInfoMapper.updateById(info);
         }
 
-        //添加行程数据
-        travelInfoMapper.addTravelInfo(travelInfoList);
-        //修改订单与行程对应关系
-        for(Map.Entry<Integer,String> entry : map.entrySet()){
-            //key为订单id    value为行程
-            OrderInfo order= orderMapper.getById(entry.getKey());
-            order.setTravelId(entry.getValue());
-            order.setTravelSource(0);//默认算法来源  0
-            orderMapper.updateById(order);
 
-        }
+//        //修改订单与行程对应关系
+//        for(Map.Entry<Integer,String> entry : map.entrySet()){
+//            //key为订单id    value为行程
+//            OrderInfo order= orderMapper.getById(entry.getKey());
+//            order.setTravelId(entry.getValue());
+//            order.setTravelSource(0);//默认算法来源  0
+//            orderMapper.updateById(order);
+//
+//        }
 
     }
 
-
+    @Transactional
     public void updateByIdList(List<OrderInfo> list,Integer status){
         for (int i=0;i<list.size();i++){
             OrderInfo order=list.get(i);
@@ -297,5 +359,6 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     public List<OrderInfo> findOrderTravelId(String travelId){
         return orderMapper.findOrderTravelId(travelId);
     }
+
 
 }

@@ -8,14 +8,14 @@ import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
 import com.hnu.ict.ids.bean.OrderTask;
 import com.hnu.ict.ids.bean.TicketInfo;
-import com.hnu.ict.ids.entity.NetworkLog;
-import com.hnu.ict.ids.entity.OrderInfo;
-import com.hnu.ict.ids.entity.TravelInfo;
-import com.hnu.ict.ids.entity.TravelTicketInfo;
+import com.hnu.ict.ids.bean.Tickets;
+import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
+import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
+import com.hnu.ict.ids.utils.UnicodeConvertUtils;
 import com.hnu.ict.ids.webHttp.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +45,11 @@ public class DispatchTaskControl {
     private String URL;
     @Value("${passenger.service.callback.url}")
     private String callback_URL;
+    @Value("${travel.algorithm.response.url}")
+    private String response_URL;
+
+    @Value("${passenger.service.capacity.test.url}")
+    private String capacity_url;
 
 
     @Autowired
@@ -129,14 +135,14 @@ public class DispatchTaskControl {
             //有效数据
             if(status==1){
                 Map<Integer,String > map=new HashMap<>();
-
+                Map<String,String > mapResult=new HashMap<>();
                 JSONArray array=jsonObject.getJSONArray("task");
                 for (int i=0;i<array.size();i++){
                     JSONObject object=array.getJSONObject(i);
                     TravelInfo info=new TravelInfo();
                     info.setBeginStationId(object.getInteger("from_p_id"));
                     info.setEndStationId(object.getInteger("to_p_id"));
-                    info.setTravelStatus(1);
+                    info.setTravelStatus(1);//预约成功
                     info.setItNumber(object.getInteger("it_number"));
                     info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
                     info.setDistance(new BigDecimal(object.getDouble("distance")));
@@ -148,17 +154,19 @@ public class DispatchTaskControl {
                     info.setEndStationName(object.getString("to_order_name"));
                     info.setParkName(object.getString("park_name"));
                     info.setParkId(object.getInteger("park_id"));
+//                    info.setDriverId(object.getInteger("driver_id"));
                     info.setWarning(object.getString("warning"));
                     taskerId =object.getString("travel_id");
 
                     info.setTravelId(taskerId);
-//                    info.setDriverId(object.getInteger()); //司机id
                     info.setCreateTime(new Date());
-                    //获取订单与行程对应数据关联
-                    String orderIds=object.getString("correspond_order_id").replace("[","").replace("]","").replace(" ","");
+                    //获取订单与行程对应数据关联 .replace("[","").replace("]","").replace(" ","")
+                    String orderIds=object.getString("correspond_order_id");
                     String[] ids=orderIds.split(",");
                     for (int k=0;k<ids.length;k++){
                         map.put(Integer.parseInt(ids[k]),taskerId);
+                        OrderInfo orderInfo=orderInfoService.getById(Integer.parseInt(ids[k]));
+                        mapResult.put(orderInfo.getSourceOrderId(),taskerId);
                     }
                     logger.info("-----------------已完成解析算法返回结果"+map.toString());
                     travelInfoList.add(info);
@@ -166,37 +174,12 @@ public class DispatchTaskControl {
                 logger.info("-----------------已完成解析算法返回结果-------------");
 
 
-
-
-
-
                 //解析数据封装后   service批量处理
                 boolean bool=travelInfoService.addTravelInfoList(travelInfoList,map);
-
-//                //座位编排   1获取本次行程所有对应订单   根据订单获取对应id   根据对应id  根据序号编排   保存数据库
-//                List<OrderInfo> orderList=orderInfoService.findOrderTravelId(taskerId);
-//                //循环订单获取对应userId
-//                List<TravelTicketInfo> travelTicketInfoList=new ArrayList<>();
-//                Integer k=0;
-//                for(OrderInfo info : orderList) {//其内部实质上还是调用了迭代器遍历方式，这种循环方式还有其他限制，不建议使用。
-//                    List<OrderUserLink>  userLinks=orderUserLinkService.findOrderNo(info.getOrderNo());
-//                    for (OrderUserLink userLink : userLinks){
-//                        TravelTicketInfo ticketInfo=new TravelTicketInfo();
-//                        ticketInfo.setTravelId(taskerId);
-//                        k=k+1;
-//                        ticketInfo.setSeatNum(k.toString());
-//                        ticketInfo.setUserId(userLink.getUserId());
-//                        travelTicketInfoList.add(ticketInfo);
-//                    }
-//                }
-//
-//                //数据内容添加座位表 并给与排序
-//                travelTicketInfoService.insertTravelTicketInfoList(travelTicketInfoList);
-//
                 if(bool){
                     //数据操作成功回调乘客服务系统
                     logger.info("-----------------回调乘客服务系统-------------");
-                    String str=successfulTrip(map,listOrder);
+                    String str=successfulTrip(mapResult,travelInfoList,listOrder);
                     logger.info("回调乘客服务系统接收参数"+str);
                     logger.info("-----------------回调乘客服务系统    结束-------------");
                 }
@@ -215,39 +198,59 @@ public class DispatchTaskControl {
      * @param orderInfoList
      * @return
      */
-    public String successfulTrip(Map<Integer,String > map,List<OrderInfo> orderInfoList){
-        ArrayList<CustomerHttpAPIBean> list=new ArrayList<>();
-        for(Map.Entry<Integer,String> entry : map.entrySet()){
-            TravelInfo info= travelInfoService.findTravelId(entry.getValue());
-            OrderInfo order= orderInfoService.getById(entry.getKey());
+    public String successfulTrip(Map<String,String > map,List<TravelInfo> travelInfoList,
+                                 List<OrderInfo> orderInfoList){
+        List<CustomerHttpAPIBean> customerHttpAPIBeanList=new ArrayList<>();
+        for(TravelInfo  travelInfo:travelInfoList){
             CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
-            customerHttpAPIBean.setDistance(info.getDistance().doubleValue());
-            customerHttpAPIBean.setO_id(Long.parseLong(order.getSourceOrderId()));
-            customerHttpAPIBean.setTravel_id(info.getTravelId().toString());
-            customerHttpAPIBean.setExpected_time(Integer.parseInt(info.getExpectedTime()));
-            customerHttpAPIBean.setAll_travel_plat(info.getAllTravelPlat());
-            customerHttpAPIBean.setDriver_content(info.getDriverContent());
-            customerHttpAPIBean.setC_id(info.getCarId());
-            customerHttpAPIBean.setDriver_id(info.getDriverId());
-            customerHttpAPIBean.setReservation_status(info.getTravelStatus());
-            customerHttpAPIBean.setIt_number(info.getItNumber());
-            customerHttpAPIBean.setRet_status(0);
+            customerHttpAPIBean.setDistance(travelInfo.getDistance().doubleValue());
+
+            String oIds="";
+            for(Map.Entry<String, String> entry : map.entrySet()){
+                String mapKey = entry.getKey();
+                oIds=oIds+mapKey+",";
+            }
+            oIds=oIds.substring(0,oIds.length()-1);
+            customerHttpAPIBean.setO_ids(oIds);
+            customerHttpAPIBean.setTravel_id(travelInfo.getTravelId().toString());
+            customerHttpAPIBean.setExpected_time(Integer.parseInt(travelInfo.getExpectedTime()));
+            customerHttpAPIBean.setAll_travel_plat(travelInfo.getAllTravelPlat());
+            customerHttpAPIBean.setDriver_content(travelInfo.getDriverContent());
+            customerHttpAPIBean.setC_id(travelInfo.getCarId());
+            if(travelInfo.getDriverId()==null){
+                customerHttpAPIBean.setDriver_id(0);
+            }else{
+                customerHttpAPIBean.setDriver_id(travelInfo.getDriverId());
+            }
+
+            customerHttpAPIBean.setReservation_status(travelInfo.getTravelStatus());
+            customerHttpAPIBean.setIt_number(travelInfo.getItNumber());
+            customerHttpAPIBean.setRet_status(1);
             customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));
+
             //乘客座位信息获取封装
             List<TicketInfo> ticketInfoList=new ArrayList<>();
-            List<TravelTicketInfo> ticket_info =travelTicketInfoService.findPassengerSeating(info.getTravelId());
-            for (TravelTicketInfo travelTicketInfo:ticket_info){
+            for (OrderInfo info:orderInfoList ){
+                List<OrderUserLink> ticket_info =orderUserLinkService.findOrderNo(info.getOrderNo());
                 TicketInfo ticketInfo=new TicketInfo();
-                ticketInfo.setSeat_number(travelTicketInfo.getSeatNum());
-                ticketInfo.setU_id(travelTicketInfo.getUserId().intValue());
+                ticketInfo.setO_id(info.getSourceOrderId());
+                List<Tickets> ticketsList=new ArrayList<>();
+                for (OrderUserLink user:ticket_info){
+                    Tickets tickets=new Tickets();
+                    tickets.setU_id(user.getUserId().intValue());
+                    tickets.setSeat_number("");
+                    ticketsList.add(tickets);
+                }
+                ticketInfo.setTickets(ticketsList);
                 ticketInfoList.add(ticketInfo);
             }
 
             customerHttpAPIBean.setTicket_info(ticketInfoList);
-            list.add(customerHttpAPIBean);
+            customerHttpAPIBeanList.add(customerHttpAPIBean);
 
         }
-        String json=JSON.toJSONString(list);
+
+        String json=JSON.toJSONString(customerHttpAPIBeanList);
         //接口访问日志操作
         NetworkLog networkLog=new NetworkLog();
         networkLog.setCreateTime(new Date());
@@ -269,10 +272,10 @@ public class DispatchTaskControl {
 
             if(!code.equals("00008")){
                 //失败   数据信息做修改  失败status 为2
-                orderInfoService.updateByIdList(orderInfoList,2);
+               travelInfoService.updateByIdList(travelInfoList,2);
             }else{
                 //失败   数据信息做修改  成功status 为1
-                orderInfoService.updateByIdList(orderInfoList,1);
+                travelInfoService.updateByIdList(travelInfoList,1);
             }
         } catch (Exception e) {
             //失败   数据信息做修改  失败status 为2
@@ -286,6 +289,52 @@ public class DispatchTaskControl {
         return body;
     }
 
+
+    /**
+     * 运力情况  回调乘客服务系统任务
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/quickResponse", method = RequestMethod.GET)
+    public PojoBaseResponse getQuickResponse(){
+        PojoBaseResponse result=new PojoBaseResponse();
+        Date stateDate=new Date();
+        long time=1000*60*30+stateDate.getTime();
+        Date endDate= DateUtil.millisecondToDate(time);
+        List<OrderInfo>  orderList= orderInfoService.findNotTrave(DateUtil.getCurrentTime(stateDate),DateUtil.getCurrentTime(endDate));
+
+        for (OrderInfo order:orderList){
+            JSONObject jsonObject=new JSONObject();
+            jsonObject.put("o_id",order.getId()+"");
+            jsonObject.put("from_p_id",order.getBeginStationId()+"");
+            jsonObject.put("to_p_id",order.getEndStationId()+"");
+            jsonObject.put("start_time",DateUtil.getCurrentTime(order.getStartTime()));
+            jsonObject.put("ticket_number",order.getTicketNumber());
+            logger.info("快速响应算法发送请求"+jsonObject.toJSONString());
+            String body=HttpClientUtil.doPostJson(response_URL,jsonObject.toJSONString());
+            logger.info("快速响应算法接收返回"+body);
+            if(StringUtils.hasText(body)){
+                JSONObject json=JSON.parseObject(body);
+                Integer status= json.getInteger("status");
+                Map<String,String> map=new HashMap<>();
+                map.put("o_id",order.getSourceOrderId());
+
+                map.put("message",json.getString("suggest"));
+                map.put("code",status.toString());
+                String jsonString=JSON.toJSONString(map);
+                logger.info("运力检测乘客服务系统发送参数"+jsonString);
+                String resultBody= HttpClientUtil.doPostJson(capacity_url,jsonString);
+                logger.info("运力检测乘客服务系统返回结果"+resultBody);
+            }else{
+                result.setData("");
+            }
+
+        }
+        return  result;
+
+
+
+    }
 
 
 

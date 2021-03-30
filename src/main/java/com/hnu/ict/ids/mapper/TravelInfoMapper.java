@@ -5,6 +5,7 @@ import com.hnu.ict.ids.entity.TravelInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -37,4 +38,12 @@ public interface TravelInfoMapper extends BaseMapper<TravelInfo> {
 
 
     int addTravelInfo(@Param("persons") List<TravelInfo> persons);//接口
+
+
+    @Update("update travel_info set travel_status=9  where travel_id =#{travelId}")
+    int updateTravlInfoStatus(@Param("travelId")String  travelId);
+
+
+    @Select("select * from travel_info where push_status=2 and travel_status = 0")
+    List<TravelInfo> findeNotPushStatus();
 }

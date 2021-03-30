@@ -6,13 +6,16 @@ import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
 import com.hnu.ict.ids.bean.OrderTask;
 import com.hnu.ict.ids.bean.TicketInfo;
+import com.hnu.ict.ids.bean.Tickets;
 import com.hnu.ict.ids.entity.NetworkLog;
 import com.hnu.ict.ids.entity.OrderInfo;
+import com.hnu.ict.ids.entity.OrderUserLink;
 import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
 import com.hnu.ict.ids.service.NetworkLogService;
 import com.hnu.ict.ids.service.OrderInfoService;
+import com.hnu.ict.ids.service.OrderUserLinkService;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.webHttp.HttpClientUtil;
@@ -54,6 +57,9 @@ public class DispatchTask {
 
     @Autowired
     NetworkLogService networkLogService;
+
+    @Autowired
+    OrderUserLinkService orderUserLinkService;
 
 
     /**
@@ -151,34 +157,54 @@ public class DispatchTask {
     }
 
 
-    @Scheduled(cron = "0/5 * * * * ?")
+    //@Scheduled(cron = "0/5 * * * * ?")
     public void compensates() throws Exception{
         //查询同步失败订单信息
+        List<TravelInfo>  travelInfoList=travelInfoService.findeNotPushStatus();
+
         List<OrderInfo> orderInoList=orderInfoService.findCompensatesOrderIinfo();
         ArrayList<CustomerHttpAPIBean> list=new ArrayList<>();
-        if(orderInoList!=null && orderInoList.size()>0){
-            for(OrderInfo orderInfo:orderInoList){
-                TravelInfo info= travelInfoService.findTravelId(orderInfo.getTravelId());
-                OrderInfo order= orderInfoService.getById(orderInfo.getId().intValue());
+        if(travelInfoList!=null && travelInfoList.size()>0){
+            for(TravelInfo travelInfo:travelInfoList){
                 CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
-                customerHttpAPIBean.setDistance(info.getDistance().doubleValue());
-                customerHttpAPIBean.setO_id(Long.parseLong(info.getSourceTravelId()));
-                customerHttpAPIBean.setTravel_id(info.getId().toString());
-                customerHttpAPIBean.setExpected_time(Integer.parseInt(info.getExpectedTime()));
-                customerHttpAPIBean.setAll_travel_plat(info.getAllTravelPlat());
-                customerHttpAPIBean.setDriver_content(info.getDriverContent());
-                customerHttpAPIBean.setC_id(info.getCarId());
-                customerHttpAPIBean.setDriver_id(info.getDriverId());
-                customerHttpAPIBean.setReservation_status(info.getTravelStatus());
-                customerHttpAPIBean.setIt_number(order.getTicketNumber());
-                customerHttpAPIBean.setRet_status(0);
+                List<OrderInfo> orderInfoList=orderInfoService.findOrderTravelId(travelInfo.getTravelId());
+                String ids="";
+                for (OrderInfo ordre:orderInfoList){
+                    ids=ids+ordre.getSourceOrderId()+",";
+                }
+                ids.substring(0,ids.length()-1);
+                customerHttpAPIBean.setO_ids(ids);
+
+                customerHttpAPIBean.setDistance(travelInfo.getDistance().doubleValue());
+
+                customerHttpAPIBean.setTravel_id(travelInfo.getId().toString());
+                customerHttpAPIBean.setExpected_time(Integer.parseInt(travelInfo.getExpectedTime()));
+                customerHttpAPIBean.setAll_travel_plat(travelInfo.getAllTravelPlat());
+                customerHttpAPIBean.setDriver_content(travelInfo.getDriverContent());
+                customerHttpAPIBean.setC_id(travelInfo.getCarId());
+                customerHttpAPIBean.setDriver_id(travelInfo.getDriverId());
+                customerHttpAPIBean.setReservation_status(travelInfo.getTravelStatus());
+                customerHttpAPIBean.setIt_number(travelInfo.getItNumber());
+                customerHttpAPIBean.setRet_status(1);
                 customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));
-                List<TicketInfo> ticket_info=new ArrayList<>();
-                TicketInfo ticke=new TicketInfo();
-                ticke.setU_id(order.getBuyUid().intValue());
-                ticke.setSeat_number("");
-                ticket_info.add(ticke);
-                customerHttpAPIBean.setTicket_info(ticket_info);
+
+                //乘客座位信息获取封装
+                List<TicketInfo> ticketInfoList=new ArrayList<>();
+                for (OrderInfo info:orderInfoList ){
+                    List<OrderUserLink> ticket_info =orderUserLinkService.findOrderNo(info.getOrderNo());
+                    TicketInfo ticketInfo=new TicketInfo();
+                    ticketInfo.setO_id(info.getSourceOrderId());
+                    List<Tickets> ticketsList=new ArrayList<>();
+                    for (OrderUserLink user:ticket_info){
+                        Tickets tickets=new Tickets();
+                        tickets.setU_id(user.getUserId().intValue());
+                        tickets.setSeat_number("");
+                        ticketsList.add(tickets);
+                    }
+                    ticketInfo.setTickets(ticketsList);
+                    ticketInfoList.add(ticketInfo);
+                }
+                customerHttpAPIBean.setTicket_info(ticketInfoList);
                 list.add(customerHttpAPIBean);
             }
 
@@ -221,5 +247,8 @@ public class DispatchTask {
             networkLogService.insertNetworkLog(networkLog);
         }
     }
+
+
+
 
 }

@@ -31,13 +31,13 @@ public class TravelInfo {
     /**
      * 出发站点id
      */
-    private int  beginStationId;
+    private Integer  beginStationId;
 
 
     /**
      * 终点站点id
      */
-    private int endStationId;
+    private Integer endStationId;
 
 
     /**
@@ -49,7 +49,7 @@ public class TravelInfo {
     /**
      * 行程开始时间
      */
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private Date startTime;
 
 
@@ -81,13 +81,13 @@ public class TravelInfo {
     /**
      * 车辆id
      */
-    private int carId;
+    private Integer carId;
 
 
     /**
      * 司机id
      */
-    private int driverId;
+    private Integer driverId;
 
 
     /**
@@ -147,6 +147,12 @@ public class TravelInfo {
      * 警告
      */
     private String warning;
+
+
+    /**
+     * 推送状态 0未推送  1推送成功   2推送失败
+     */
+    private Integer pushStatus;
 
 
 
