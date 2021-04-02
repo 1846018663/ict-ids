@@ -64,8 +64,8 @@ public class WebSocketServer {
 
         Map<String, String> map = new HashMap<>();
         map.put("1","31.343375,121.280737");
-        map.put("22","31.335508,121.281756");
-        map.put("7","31.371762,121.255854");
+        map.put("12","31.335508,121.281756");
+        map.put("21","31.371762,121.255854");
 
 
         for (Map.Entry<String, String> entry : map.entrySet()) {
@@ -78,26 +78,6 @@ public class WebSocketServer {
         }
 
         String str= JSON.toJSONString(list);
-
-
-//        String prefix = "carLocateInfo::*";
-//        // *号 必须要加，否则无法模糊查询
-//
-//        // 获取所有的key
-//        Set<String> keys = redisTemplate.keys(prefix);
-//        System.out.println(keys);
-//        JSONObject json=new JSONObject();
-//        Map<String, Object> map = new HashMap<>();
-//        for(String key : keys){
-//
-//            String str=key.replace("carLocateInfo::","");
-//            String[] keyStr=str.split("_");
-//
-//            String[] position =stringRedisTemplate.opsForValue().get(key).split(",");
-//            map.put(keyStr[0], position[0]+","+position[1]);
-//        }
-
-
 
         try {
             sendMessage(str);

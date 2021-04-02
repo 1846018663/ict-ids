@@ -29,7 +29,7 @@ public interface TravelInfoMapper extends BaseMapper<TravelInfo> {
     int finDateTraveTotal(@Param("startDate") Date startDate,@Param("endDate") Date endDate);
 
 
-    @Select("select * from travel_info where travel_status=1 and car_id=#{carId} ")
+    @Select("select * from travel_info where travel_status=1 and car_id=#{carId} ORDER BY start_time DESC LIMIT 1 ")
     TravelInfo getCarTime(@Param("carId")int carId,@Param("startTime")Date startTime);
 
 

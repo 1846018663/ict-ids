@@ -64,14 +64,14 @@ public class OrderInfoHistotry {
      *开始时间
      */
 
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private Date startTime;
 
 
     /**
      * 行程id
      */
-    private BigInteger travelId;
+    private String travelId;
 
 
     /**
@@ -81,9 +81,14 @@ public class OrderInfoHistotry {
     /**
      * 创建时间
      */
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
+
+    /**
+     * 同步状态  0未同步  1已同步   2同步失败
+     */
+    private Integer status;
 
 
 

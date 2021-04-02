@@ -92,12 +92,18 @@ public class DispatchTaskControl {
             for (Iterator<OrderInfo> it = listOrder.iterator(); it.hasNext();) {
                 OrderInfo info=it.next();
                 OrderTask task=new OrderTask();
+                if(info.getTicketNumber()>0){
+                    task.setTicket_number(info.getTicketNumber());
+                }else{//订单已经被需取消   中途终止该操作
+                    return null;
+                }
                 task.setO_id(info.getId().intValue());
                 task.setFrom_p_id(info.getBeginStationId());
                 task.setTo_p_id(info.getEndStationId());
                 task.setStart_time(DateUtil.getCurrentTime(info.getStartTime()));
                 task.setOrder_time(DateUtil.getCurrentTime(info.getCreateTime()));
-                task.setTicket_number(info.getTicketNumber());
+
+
                 int DateTime=Integer.parseInt(resultMap.get(ConfigEnum.CARTIMECONFIG.getValue()).toString())*60;
                 task.setSet_time(DateTime);
                 list.add(task);
@@ -137,52 +143,55 @@ public class DispatchTaskControl {
                 Map<Integer,String > map=new HashMap<>();
                 Map<String,String > mapResult=new HashMap<>();
                 JSONArray array=jsonObject.getJSONArray("task");
-                for (int i=0;i<array.size();i++){
-                    JSONObject object=array.getJSONObject(i);
-                    TravelInfo info=new TravelInfo();
-                    info.setBeginStationId(object.getInteger("from_p_id"));
-                    info.setEndStationId(object.getInteger("to_p_id"));
-                    info.setTravelStatus(1);//预约成功
-                    info.setItNumber(object.getInteger("it_number"));
-                    info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
-                    info.setDistance(new BigDecimal(object.getDouble("distance")));
-                    info.setExpectedTime(object.getInteger("expected_time").toString());
-                    info.setDriverContent(object.getString("driver_content"));
-                    info.setAllTravelPlat(object.getString("all_travel_plat"));
-                    info.setCarId(object.getInteger("car_id"));
-                    info.setBeginStationName(object.getString("from_order_name"));
-                    info.setEndStationName(object.getString("to_order_name"));
-                    info.setParkName(object.getString("park_name"));
-                    info.setParkId(object.getInteger("park_id"));
-//                    info.setDriverId(object.getInteger("driver_id"));
-                    info.setWarning(object.getString("warning"));
-                    taskerId =object.getString("travel_id");
+                if(array.size()>0){
+                    for (int i=0;i<array.size();i++){
+                        JSONObject object=array.getJSONObject(i);
+                        TravelInfo info=new TravelInfo();
+                        info.setBeginStationId(object.getInteger("from_p_id"));
+                        info.setEndStationId(object.getInteger("to_p_id"));
+                        info.setTravelStatus(1);//预约成功
+                        info.setItNumber(object.getInteger("it_number"));
+                        info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
+                        info.setDistance(new BigDecimal(object.getDouble("distance")));
+                        info.setExpectedTime(object.getInteger("expected_time").toString());
+                        info.setDriverContent(object.getString("driver_content"));
+                        info.setAllTravelPlat(object.getString("all_travel_plat"));
+                        info.setCarId(object.getInteger("car_id"));
+                        info.setBeginStationName(object.getString("from_order_name"));
+                        info.setEndStationName(object.getString("to_order_name"));
+                        info.setParkName(object.getString("park_name"));
+                        info.setParkId(object.getInteger("park_id"));
+                        info.setDriverId(object.getInteger("driver_id"));
+                        info.setWarning(object.getString("warning"));
+                        taskerId =object.getString("travel_id");
 
-                    info.setTravelId(taskerId);
-                    info.setCreateTime(new Date());
-                    //获取订单与行程对应数据关联 .replace("[","").replace("]","").replace(" ","")
-                    String orderIds=object.getString("correspond_order_id");
-                    String[] ids=orderIds.split(",");
-                    for (int k=0;k<ids.length;k++){
-                        map.put(Integer.parseInt(ids[k]),taskerId);
-                        OrderInfo orderInfo=orderInfoService.getById(Integer.parseInt(ids[k]));
-                        mapResult.put(orderInfo.getSourceOrderId(),taskerId);
+                        info.setTravelId(taskerId);
+                        info.setCreateTime(new Date());
+                        //获取订单与行程对应数据关联 .replace("[","").replace("]","").replace(" ","")
+                        String orderIds=object.getString("correspond_order_id");
+                        String[] ids=orderIds.split(",");
+                        for (int k=0;k<ids.length;k++){
+                            map.put(Integer.parseInt(ids[k]),taskerId);
+                            OrderInfo orderInfo=orderInfoService.getById(Integer.parseInt(ids[k]));
+                            mapResult.put(orderInfo.getSourceOrderId(),taskerId);
+                        }
+                        logger.info("-----------------已完成解析算法返回结果"+map.toString());
+                        travelInfoList.add(info);
                     }
-                    logger.info("-----------------已完成解析算法返回结果"+map.toString());
-                    travelInfoList.add(info);
-                }
-                logger.info("-----------------已完成解析算法返回结果-------------");
+                    logger.info("-----------------已完成解析算法返回结果-------------");
 
 
-                //解析数据封装后   service批量处理
-                boolean bool=travelInfoService.addTravelInfoList(travelInfoList,map);
-                if(bool){
-                    //数据操作成功回调乘客服务系统
-                    logger.info("-----------------回调乘客服务系统-------------");
-                    String str=successfulTrip(mapResult,travelInfoList,listOrder);
-                    logger.info("回调乘客服务系统接收参数"+str);
-                    logger.info("-----------------回调乘客服务系统    结束-------------");
+                    //解析数据封装后   service批量处理
+                    boolean bool=travelInfoService.addTravelInfoList(travelInfoList,map);
+                    if(bool){
+                        //数据操作成功回调乘客服务系统
+                        logger.info("-----------------回调乘客服务系统-------------");
+                        String str=successfulTrip(mapResult,travelInfoList,listOrder);
+                        logger.info("回调乘客服务系统接收参数"+str);
+                        logger.info("-----------------回调乘客服务系统    结束-------------");
+                    }
                 }
+
             }
 
         }
@@ -325,6 +334,8 @@ public class DispatchTaskControl {
                 logger.info("运力检测乘客服务系统发送参数"+jsonString);
                 String resultBody= HttpClientUtil.doPostJson(capacity_url,jsonString);
                 logger.info("运力检测乘客服务系统返回结果"+resultBody);
+
+
             }else{
                 result.setData("");
             }

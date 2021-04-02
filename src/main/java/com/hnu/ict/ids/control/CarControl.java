@@ -46,25 +46,29 @@ public class CarControl {
     @RequestMapping(value="/getCarTraveInfo" ,method = RequestMethod.POST)
     @ParamsNotNull(str ="carId")
     public PojoBaseResponse getCarTraveInfo(String carId){
+        logger.info("查询车辆id"+carId);
         PojoBaseResponse result=new PojoBaseResponse();
-        CarTrave carTrave=new CarTrave();
+         CarTrave carTrave=new CarTrave();
         //根据车牌查询车辆
         IvsAppCarInfo carinfo=ivsAppCarInfoService.getByCarId(Integer.parseInt(carId));
-        carTrave.setCarNo(carinfo.getLicenseNumber());
-        carTrave.setCarType(carinfo.getCarType());
-        carTrave.setCarStatus(carinfo.getCStatus());
-        carTrave.setNuclear(carinfo.getCarSeatNumber());
+         if(carinfo!=null){
+             carTrave.setCarNo(carinfo.getLicenseNumber());
+             carTrave.setCarType(carinfo.getCarType());
+             carTrave.setCarStatus(carinfo.getCStatus());
+             carTrave.setNuclear(carinfo.getCarSeatNumber());
 
 
-        //根据车辆id查询当前时间
-        Date time= new Date();
-        TravelInfo travelInfo= travelInfoService.getCarTime(carinfo.getCid(),time);
-        IvsAppPlatformInfo startPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getBeginStationId());
-        IvsAppPlatformInfo  endPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getEndStationId());
-        carTrave.setStartStationName(startPlatform.getPName());
-        carTrave.setEndStationName(endPlatform.getPName());
+             //根据车辆id查询当前时间
+             Date time= new Date();
+             TravelInfo travelInfo= travelInfoService.getCarTime(carinfo.getCid(),time);
+             IvsAppPlatformInfo startPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getBeginStationId());
+             IvsAppPlatformInfo  endPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getEndStationId());
+             carTrave.setStartStationName(startPlatform.getPName());
+             carTrave.setEndStationName(endPlatform.getPName());
 
-        result.setData(carTrave);
+             result.setData(carTrave);
+         }
+
         return result;
 
 
@@ -89,7 +93,6 @@ public class CarControl {
             result.setData(catList);
             return result;
         }
-
     }
 
 
@@ -104,7 +107,6 @@ public class CarControl {
         PojoBaseResponse response=new PojoBaseResponse();
         int total= ivsAppCarInfoService.getTotal(cityCode);
         response.setData(total);
-
         return response;
 
     }
@@ -135,8 +137,8 @@ public class CarControl {
     @ParamsNotNull(str ="cityCode")
     public PojoBaseResponse getOnLine(String cityCode){
         PojoBaseResponse result=new PojoBaseResponse();
-        int carCount= ivsAppCarInfoService.getOnLine(cityCode);
-        result.setData(carCount);
+       /** int carCount= ivsAppCarInfoService.getOnLine(cityCode);
+        result.setData(carCount);**/
         return result;
 
     }
@@ -229,7 +231,6 @@ public class CarControl {
         lists.add(from2);
         lists.add(from3);
         result.setData(lists);
-
         return result;
 
     }

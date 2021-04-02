@@ -102,7 +102,7 @@ public class HttpClientUtil {
             public boolean retryRequest(HttpResponse httpResponse, int i, HttpContext httpContext) {
                 //当返回状态码不为200（成功）的情况下重试，重试次数默认设为3次
                 if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK && i <=3){
-                    logger.info("---重试-------------“+httpResponse.getStatusLine().getStatusCode()+”------------------");
+                    logger.info("---重试-------------"+httpResponse.getStatusLine().getStatusCode()+"------------------");
                     return true;
                 }else{
                     return false;

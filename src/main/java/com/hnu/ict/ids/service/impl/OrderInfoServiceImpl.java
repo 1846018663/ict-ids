@@ -92,6 +92,8 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             logger.info(new BigInteger(ids[i])+"end of input integer"+order.getId());
             orderUserLinkMapper.updateOrderUserLinkState(new BigInteger(ids[i]),order.getOrderNo());
         }
+        //判断订单所属成功是否全部移除
+        int count=orderUserLinkMapper.findRemove(order.getOrderNo());
 
         //修改订单表座位数
         orderMapper.updateOrderNumber(ids.length,order.getId());
@@ -106,14 +108,13 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
 
         //业务判断如果未生成行程不做一下操作    如果已经行程存在取消订单需调用算法完成行程取消流程
-        if(!StringUtils.isEmpty(order.getTravelId())){
+        if(!StringUtils.isEmpty(order.getTravelId()) && order.getTicketNumber()>0){
             TravelInfo travelInfo=travelInfoMapper.findTravelId(order.getTravelId());
             travelInfoCancels(order,ids.length,travelInfo.getItNumber());
         }
 
 
-        //判断订单所属成功是否全部移除
-        int count=orderUserLinkMapper.findRemove(order.getOrderNo());
+
         if(count==0){
             orderMapper.deleteBySourceOrderId(order.getSourceOrderId());
             travelInfoMapper.updateTravlInfoStatus(order.getTravelId());
@@ -361,4 +362,18 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     }
 
 
+
+    public List<OrderInfo> findNotTransportCapacity(String statDate, String endDate){
+        return orderMapper.findNotTransportCapacity(statDate,endDate);
+    }
+
+
+   public int deleteBySourceOrderId(String  sourceOrderId){
+        return orderMapper.deleteBySourceOrderId(sourceOrderId);
+    }
+
+
+    public void updateById(OrderInfo orderInfo){
+        orderMapper.updateById(orderInfo);
+    }
 }

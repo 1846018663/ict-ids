@@ -7,20 +7,17 @@ import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
 import com.hnu.ict.ids.bean.OrderTask;
 import com.hnu.ict.ids.bean.TicketInfo;
 import com.hnu.ict.ids.bean.Tickets;
-import com.hnu.ict.ids.entity.NetworkLog;
-import com.hnu.ict.ids.entity.OrderInfo;
-import com.hnu.ict.ids.entity.OrderUserLink;
-import com.hnu.ict.ids.entity.TravelInfo;
+import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
-import com.hnu.ict.ids.service.NetworkLogService;
-import com.hnu.ict.ids.service.OrderInfoService;
-import com.hnu.ict.ids.service.OrderUserLinkService;
-import com.hnu.ict.ids.service.TravelInfoService;
+import com.hnu.ict.ids.mapper.OrderInfoHistotryMapper;
+import com.hnu.ict.ids.mapper.OrderInfoMapper;
+import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.webHttp.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -28,6 +25,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -45,6 +43,12 @@ public class DispatchTask {
     @Value("${passenger.service.callback.url}")
     private String callback_URL;
 
+    @Value("${passenger.service.capacity.test.url}")
+    private String capacity_url;
+
+    @Value("${travel.algorithm.response.url}")
+    private String response_URL;
+
     @Autowired
     OrderInfoService orderInfoService;
 
@@ -60,6 +64,11 @@ public class DispatchTask {
 
     @Autowired
     OrderUserLinkService orderUserLinkService;
+
+    @Autowired
+    OrderInfoHistotryService  orderInfoHistotryService;
+
+
 
 
     /**
@@ -249,6 +258,59 @@ public class DispatchTask {
     }
 
 
+    @Scheduled(cron = "0 0/2 * * * ?")
+    public void transportCapacity() throws Exception{
+        logger.info("运力检测开始");
+        Date stateDate=new Date();
+        long time=1000*60*30*24*7+stateDate.getTime();//一周时间
+        Date endDate= DateUtil.millisecondToDate(time);
+        List<OrderInfo>  orderList= orderInfoService.findNotTransportCapacity(DateUtil.getCurrentTime(stateDate),DateUtil.getCurrentTime(endDate));
+
+        for (OrderInfo order:orderList){
+            JSONObject jsonObject=new JSONObject();
+            jsonObject.put("o_id",order.getId()+"");
+            jsonObject.put("from_p_id",order.getBeginStationId()+"");
+            jsonObject.put("to_p_id",order.getEndStationId()+"");
+            jsonObject.put("start_time",DateUtil.getCurrentTime(order.getStartTime()));
+            jsonObject.put("ticket_number",order.getTicketNumber());
+            logger.info("快速响应算法发送请求"+jsonObject.toJSONString());
+            String body=HttpClientUtil.doPostJson(response_URL,jsonObject.toJSONString());
+            logger.info("快速响应算法接收返回"+body);
+            if(StringUtils.hasText(body)){
+                JSONObject json=JSON.parseObject(body);
+                Integer status= json.getInteger("status");
+
+                Map<String,String> map=new HashMap<>();
+                map.put("o_id",order.getSourceOrderId());
+
+                map.put("message",json.getString("suggest"));
+                map.put("code",status.toString());
+                String jsonString=JSON.toJSONString(map);
+                logger.info("运力检测乘客服务系统发送参数"+jsonString);
+                String resultBody= HttpClientUtil.doPostJson(capacity_url,jsonString);
+                logger.info("运力检测乘客服务系统返回结果"+resultBody);
+                JSONObject resulJson=JSON.parseObject(resultBody);
+                String code= resulJson.getString("code");
+                if(301==status && code.equals("00008")){
+                    logger.info("订单取消移除信息，保存订单日志");
+                    OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                    BeanUtils.copyProperties(order,orderInfoHistotry);
+                    //运力不足取消订单
+
+                    orderInfoHistotryService.insert(orderInfoHistotry);
+                    orderInfoService.deleteBySourceOrderId(order.getSourceOrderId());
+                }else if(201==status) {
+                    //代表运力检测  修改
+                    order.setStatus(1);
+                    orderInfoService.updateById(order);
+                }
+
+
+            }
+
+        }
+        logger.info("运力检测结束");
+    }
 
 
 }

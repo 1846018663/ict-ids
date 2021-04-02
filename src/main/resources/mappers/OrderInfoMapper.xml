@@ -7,10 +7,22 @@
               travel_id is null
           and start_time <![CDATA[ >= ]]> #{statDate}
           and start_time <![CDATA[ <= ]]> #{endDate}
+          for update
     </select>
 
 
     <select id="findOrderTravelId" resultType="com.hnu.ict.ids.entity.OrderInfo">
         select * from order_info where travel_id =#{id}
+    </select>
+
+
+
+    <select id="findNotTransportCapacity" resultType="com.hnu.ict.ids.entity.OrderInfo">
+        select * from order_info
+        where
+            travel_id is null
+          and start_time <![CDATA[ >= ]]> #{statDate}
+          and start_time <![CDATA[ <= ]]> #{endDate}
+          and status= 0
     </select>
 </mapper>

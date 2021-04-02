@@ -39,6 +39,9 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     List<OrderInfo> findNotTrave(@Param("statDate")String statDate,@Param("endDate")String endDate);
 
 
+    List<OrderInfo> findNotTransportCapacity(@Param("statDate")String statDate,@Param("endDate")String endDate);
+
+
     @Select("SELECT sum(o.ticket_number) from order_info o where o.travel_id=#{travelId}")
     int getByTravelCount(@Param("travelId")BigInteger travelId);
 
