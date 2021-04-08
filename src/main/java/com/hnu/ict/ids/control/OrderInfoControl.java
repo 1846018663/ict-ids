@@ -5,12 +5,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.entity.*;
+import com.hnu.ict.ids.exception.NetworkEnum;
 import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.exception.ResutlMessage;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.UtilConf;
-import com.hnu.ict.ids.webHttp.HttpClientUtil;
+import com.hnu.ict.ids.utils.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +26,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
 
 @Api(tags = "订单行程API")
@@ -95,6 +94,7 @@ public class OrderInfoControl {
         order.setCreateTime(DateUtil.strToDate(createTime));
         order.setOrderNo(UtilConf.getUUID());
         order.setOrderSource("乘客服务系统");
+        order.setStatus(0);//初始化
         order.setTravelSource(null);
         String u_ids=json.getString("u_ids");
         //操作数据库
@@ -315,7 +315,25 @@ public class OrderInfoControl {
         json.put("dl_1",dl);
         json.put("task_record",taskJson);
         logger.info("调用添加已有行程接口   发送请求数据"+json.toString());
-        String body= HttpClientUtil.doPostJson(add_URL,json.toString());
+        //保存预警信息
+        NetworkLog networkLog=new NetworkLog();
+        networkLog.setCreateTime(new Date());
+        networkLog.setInterfaceInfo(NetworkEnum.ALGORITHM_INRERFACE_UP.getValue());
+        networkLog.setType(NetworkEnum.TYPE_HTTP.getValue());
+        networkLog.setMethod(NetworkEnum.METHOD_POST.getValue());
+        networkLog.setUrl(add_URL);
+        networkLog.setAccessContent(json.toString());
+        String body= null;
+        try {
+            body = HttpClientUtil.doPostJson(add_URL,json.toString());
+            networkLog.setResponseResult(body);
+            networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
+        } catch (Exception e) {
+            networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
+            e.printStackTrace();
+        }
+        //保存接口日志
+        networkLogServer.insertNetworkLog(networkLog);
         logger.info("调用添加已有行程接口 接收请求数据"+body);
         JSONObject jsonObject= JSON.parseObject(body);
         if(jsonObject.getInteger("status")==1){

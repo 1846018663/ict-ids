@@ -91,6 +91,19 @@ public class OrderInfoHistotry {
     private Integer status;
 
 
+    /**
+     * 推送乘客服务系统次数
+     */
+    private Integer pushNumber;
+
+
+    /**
+     * 推送状态  1成功  2失败
+     */
+    private Integer pushStatus;
+
+
+
 
     @Override
     public String toString() {

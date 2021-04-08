@@ -10,26 +10,26 @@ import com.hnu.ict.ids.bean.Tickets;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
-import com.hnu.ict.ids.mapper.OrderInfoHistotryMapper;
-import com.hnu.ict.ids.mapper.OrderInfoMapper;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
-import com.hnu.ict.ids.webHttp.HttpClientUtil;
+import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
+
+/**
+ * 新增行程定时任务  回调乘客服务系统预约成功接口
+ */
 
 @Component
 @EnableScheduling
@@ -40,15 +40,6 @@ public class DispatchTask {
     @Value("${travel.algorithm.url}")
     private String URL;
 
-    @Value("${passenger.service.callback.url}")
-    private String callback_URL;
-
-    @Value("${passenger.service.capacity.test.url}")
-    private String capacity_url;
-
-    @Value("${travel.algorithm.response.url}")
-    private String response_URL;
-
     @Autowired
     OrderInfoService orderInfoService;
 
@@ -57,7 +48,6 @@ public class DispatchTask {
 
     @Autowired
     RedisTemplate redisTemplate;
-
 
     @Autowired
     NetworkLogService networkLogService;
@@ -75,9 +65,10 @@ public class DispatchTask {
      * 每隔5分钟执行一次（按照 corn 表达式规则执行）0 0/5 * * * ?    0/10 * * * * ?
      */
 
-   // @Scheduled(cron = "0/10 * * * * ?")
+   // @Scheduled(cron = "0 0/5 * * * ?")
     public void addTask() throws Exception {
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
+        logger.info("------------------- 新增行程定时任务开始 ------------------- ");
         Date stateDate=new Date();
         //30分钟毫秒
         long time=1000*60*30+stateDate.getTime();
@@ -162,155 +153,10 @@ public class DispatchTask {
             }
         }
 
-        System.out.println("执行任务job1："+ new Date());
+        logger.info("------------------- 新增行程定时任务结束 ------------------- ");
     }
 
 
-    //@Scheduled(cron = "0/5 * * * * ?")
-    public void compensates() throws Exception{
-        //查询同步失败订单信息
-        List<TravelInfo>  travelInfoList=travelInfoService.findeNotPushStatus();
-
-        List<OrderInfo> orderInoList=orderInfoService.findCompensatesOrderIinfo();
-        ArrayList<CustomerHttpAPIBean> list=new ArrayList<>();
-        if(travelInfoList!=null && travelInfoList.size()>0){
-            for(TravelInfo travelInfo:travelInfoList){
-                CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
-                List<OrderInfo> orderInfoList=orderInfoService.findOrderTravelId(travelInfo.getTravelId());
-                String ids="";
-                for (OrderInfo ordre:orderInfoList){
-                    ids=ids+ordre.getSourceOrderId()+",";
-                }
-                ids.substring(0,ids.length()-1);
-                customerHttpAPIBean.setO_ids(ids);
-
-                customerHttpAPIBean.setDistance(travelInfo.getDistance().doubleValue());
-
-                customerHttpAPIBean.setTravel_id(travelInfo.getId().toString());
-                customerHttpAPIBean.setExpected_time(Integer.parseInt(travelInfo.getExpectedTime()));
-                customerHttpAPIBean.setAll_travel_plat(travelInfo.getAllTravelPlat());
-                customerHttpAPIBean.setDriver_content(travelInfo.getDriverContent());
-                customerHttpAPIBean.setC_id(travelInfo.getCarId());
-                customerHttpAPIBean.setDriver_id(travelInfo.getDriverId());
-                customerHttpAPIBean.setReservation_status(travelInfo.getTravelStatus());
-                customerHttpAPIBean.setIt_number(travelInfo.getItNumber());
-                customerHttpAPIBean.setRet_status(1);
-                customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));
-
-                //乘客座位信息获取封装
-                List<TicketInfo> ticketInfoList=new ArrayList<>();
-                for (OrderInfo info:orderInfoList ){
-                    List<OrderUserLink> ticket_info =orderUserLinkService.findOrderNo(info.getOrderNo());
-                    TicketInfo ticketInfo=new TicketInfo();
-                    ticketInfo.setO_id(info.getSourceOrderId());
-                    List<Tickets> ticketsList=new ArrayList<>();
-                    for (OrderUserLink user:ticket_info){
-                        Tickets tickets=new Tickets();
-                        tickets.setU_id(user.getUserId().intValue());
-                        tickets.setSeat_number("");
-                        ticketsList.add(tickets);
-                    }
-                    ticketInfo.setTickets(ticketsList);
-                    ticketInfoList.add(ticketInfo);
-                }
-                customerHttpAPIBean.setTicket_info(ticketInfoList);
-                list.add(customerHttpAPIBean);
-            }
-
-            String json=JSON.toJSONString(list);
-            logger.info("行程预约成功后的返回传参内容"+json);
-            //接口访问日志操作
-            NetworkLog networkLog=new NetworkLog();
-            networkLog.setCreateTime(new Date());
-            networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
-            networkLog.setInterfaceInfo(NetworkEnum.PASSENGRT_SERVICE_CALL_BACK.getValue());
-            networkLog.setMethod(NetworkEnum.METHOD_POST.getValue());
-            networkLog.setUrl(callback_URL);
-            networkLog.setType(NetworkEnum.TYPE_HTTPS.getValue());
-            networkLog.setAccessContent(json);
-            logger.info("行程预约成功后的返回传参内容"+json);
-            String body="";
-            try {
-                body= HttpClientUtil.doPostJson(callback_URL,json);
-                networkLog.setResponseResult(body);
-                networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
-                logger.info("行程预约成功后的返回结果:"+body);
-                JSONObject resultJson=JSONObject.parseObject(body);
-                logger.info("回调乘客服务系统接收参数"+resultJson.toString());
-                String code=resultJson.getString("code");
-
-                if(!code.equals("00008")){
-                    //失败   数据信息做修改  失败status 为2
-                    orderInfoService.updateByIdList(orderInoList,2);
-                }else{
-                    //失败   数据信息做修改  成功status 为1
-                    orderInfoService.updateByIdList(orderInoList,1);
-                }
-            } catch (Exception e) {
-                //失败   数据信息做修改  失败status 为2
-                orderInfoService.updateByIdList(orderInoList,2);
-                networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
-                e.printStackTrace();
-            }
-
-            networkLogService.insertNetworkLog(networkLog);
-        }
-    }
-
-
-    @Scheduled(cron = "0 0/2 * * * ?")
-    public void transportCapacity() throws Exception{
-        logger.info("运力检测开始");
-        Date stateDate=new Date();
-        long time=1000*60*30*24*7+stateDate.getTime();//一周时间
-        Date endDate= DateUtil.millisecondToDate(time);
-        List<OrderInfo>  orderList= orderInfoService.findNotTransportCapacity(DateUtil.getCurrentTime(stateDate),DateUtil.getCurrentTime(endDate));
-
-        for (OrderInfo order:orderList){
-            JSONObject jsonObject=new JSONObject();
-            jsonObject.put("o_id",order.getId()+"");
-            jsonObject.put("from_p_id",order.getBeginStationId()+"");
-            jsonObject.put("to_p_id",order.getEndStationId()+"");
-            jsonObject.put("start_time",DateUtil.getCurrentTime(order.getStartTime()));
-            jsonObject.put("ticket_number",order.getTicketNumber());
-            logger.info("快速响应算法发送请求"+jsonObject.toJSONString());
-            String body=HttpClientUtil.doPostJson(response_URL,jsonObject.toJSONString());
-            logger.info("快速响应算法接收返回"+body);
-            if(StringUtils.hasText(body)){
-                JSONObject json=JSON.parseObject(body);
-                Integer status= json.getInteger("status");
-
-                Map<String,String> map=new HashMap<>();
-                map.put("o_id",order.getSourceOrderId());
-
-                map.put("message",json.getString("suggest"));
-                map.put("code",status.toString());
-                String jsonString=JSON.toJSONString(map);
-                logger.info("运力检测乘客服务系统发送参数"+jsonString);
-                String resultBody= HttpClientUtil.doPostJson(capacity_url,jsonString);
-                logger.info("运力检测乘客服务系统返回结果"+resultBody);
-                JSONObject resulJson=JSON.parseObject(resultBody);
-                String code= resulJson.getString("code");
-                if(301==status && code.equals("00008")){
-                    logger.info("订单取消移除信息，保存订单日志");
-                    OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
-                    BeanUtils.copyProperties(order,orderInfoHistotry);
-                    //运力不足取消订单
-
-                    orderInfoHistotryService.insert(orderInfoHistotry);
-                    orderInfoService.deleteBySourceOrderId(order.getSourceOrderId());
-                }else if(201==status) {
-                    //代表运力检测  修改
-                    order.setStatus(1);
-                    orderInfoService.updateById(order);
-                }
-
-
-            }
-
-        }
-        logger.info("运力检测结束");
-    }
 
 
 }

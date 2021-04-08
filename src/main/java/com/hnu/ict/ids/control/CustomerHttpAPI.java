@@ -2,13 +2,12 @@ package com.hnu.ict.ids.control;
 
 import com.alibaba.fastjson.JSON;
 import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
-import com.hnu.ict.ids.bean.TicketInfo;
 import com.hnu.ict.ids.entity.OrderInfo;
 import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
-import com.hnu.ict.ids.webHttp.HttpClientUtil;
+import com.hnu.ict.ids.utils.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

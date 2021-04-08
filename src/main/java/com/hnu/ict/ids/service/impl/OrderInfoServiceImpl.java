@@ -2,18 +2,17 @@ package com.hnu.ict.ids.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.hnu.ict.ids.entity.OrderInfo;
-import com.hnu.ict.ids.entity.OrderInfoHistotry;
-import com.hnu.ict.ids.entity.OrderUserLink;
-import com.hnu.ict.ids.entity.TravelInfo;
+import com.hnu.ict.ids.entity.*;
+import com.hnu.ict.ids.exception.NetworkEnum;
 import com.hnu.ict.ids.mapper.OrderInfoHistotryMapper;
 import com.hnu.ict.ids.mapper.OrderInfoMapper;
 
 import com.hnu.ict.ids.mapper.OrderUserLinkMapper;
 import com.hnu.ict.ids.mapper.TravelInfoMapper;
+import com.hnu.ict.ids.service.NetworkLogService;
 import com.hnu.ict.ids.service.OrderInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
-import com.hnu.ict.ids.webHttp.HttpClientUtil;
+import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +47,9 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
     @Autowired
     TravelInfoMapper travelInfoMapper;
+
+    @Autowired
+    NetworkLogService networkLogServer;
 
 
     @Value("${travel.algorithm.cancels.url}")
@@ -186,7 +188,7 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         }
 
 
-        logger.info("行程id查询"+order.getTravelId()+"/");
+        logger.info("取消行程id查询"+order.getTravelId()+"/");
         List<OrderInfo> orderList= orderMapper.findOrderTravelId(order.getTravelId());
         String oIds="";
         if(orderList!=null &&orderList.size()>0){
@@ -202,10 +204,21 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         json.put("dl_1",dl);
         json.put("task_record",taskJson);
         logger.info("发送请求数据"+json.toString());
+        //保存预警信息
+        NetworkLog networkLog=new NetworkLog();
+        networkLog.setCreateTime(new Date());
+        networkLog.setInterfaceInfo(NetworkEnum.ALGORITHM_INRERFACE_DEL.getValue());
+        networkLog.setType(NetworkEnum.TYPE_HTTP.getValue());
+        networkLog.setMethod(NetworkEnum.METHOD_POST.getValue());
+        networkLog.setUrl(URL);
+        networkLog.setAccessContent(json.toString());
+
         try {
             String body= HttpClientUtil.doPostJson(URL,json.toString());
             logger.info("接收请求数据"+body);
             JSONObject jsonObject=JSONObject.parseObject(body);
+            networkLog.setResponseResult(body);
+            networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
             //status 1为成功
             if(jsonObject.getInteger("status")==1){
                 //解析入库
@@ -215,8 +228,11 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
 
         } catch (Exception e) {
+            networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
             e.printStackTrace();
         }
+        //保存接口日志
+        networkLogServer.insertNetworkLog(networkLog);
     }
 
 
@@ -331,15 +347,6 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         }
 
 
-//        //修改订单与行程对应关系
-//        for(Map.Entry<Integer,String> entry : map.entrySet()){
-//            //key为订单id    value为行程
-//            OrderInfo order= orderMapper.getById(entry.getKey());
-//            order.setTravelId(entry.getValue());
-//            order.setTravelSource(0);//默认算法来源  0
-//            orderMapper.updateById(order);
-//
-//        }
 
     }
 
@@ -375,5 +382,11 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
     public void updateById(OrderInfo orderInfo){
         orderMapper.updateById(orderInfo);
+    }
+
+
+
+    public List<OrderInfo> findPushFailedOrderIinfo(){
+        return orderMapper.findPushFailedOrderIinfo();
     }
 }

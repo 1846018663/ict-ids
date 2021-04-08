@@ -12,11 +12,9 @@ import com.hnu.ict.ids.bean.Tickets;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
-import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
-import com.hnu.ict.ids.utils.UnicodeConvertUtils;
-import com.hnu.ict.ids.webHttp.HttpClientUtil;
+import com.hnu.ict.ids.utils.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -320,7 +318,12 @@ public class DispatchTaskControl {
             jsonObject.put("start_time",DateUtil.getCurrentTime(order.getStartTime()));
             jsonObject.put("ticket_number",order.getTicketNumber());
             logger.info("快速响应算法发送请求"+jsonObject.toJSONString());
-            String body=HttpClientUtil.doPostJson(response_URL,jsonObject.toJSONString());
+            String body= null;
+            try {
+                body = HttpClientUtil.doPostJson(response_URL,jsonObject.toJSONString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             logger.info("快速响应算法接收返回"+body);
             if(StringUtils.hasText(body)){
                 JSONObject json=JSON.parseObject(body);
@@ -332,7 +335,12 @@ public class DispatchTaskControl {
                 map.put("code",status.toString());
                 String jsonString=JSON.toJSONString(map);
                 logger.info("运力检测乘客服务系统发送参数"+jsonString);
-                String resultBody= HttpClientUtil.doPostJson(capacity_url,jsonString);
+                String resultBody= null;
+                try {
+                    resultBody = HttpClientUtil.doPostJson(capacity_url,jsonString);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 logger.info("运力检测乘客服务系统返回结果"+resultBody);
 
 

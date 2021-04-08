@@ -1,4 +1,4 @@
-package com.hnu.ict.ids.webHttp;
+package com.hnu.ict.ids.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,9 +72,9 @@ public class HttpClientUtil {
             // 根据默认超时限制初始化requestConfig
 
             // 客户端从服务器读取数据的timeout
-            int socketTimeout = 50000;
+            int socketTimeout = 1000*30;
             // 客户端和服务器建立连接的timeout
-            int connectTimeout = 100000;
+            int connectTimeout = 1000*30;
             // 从连接池获取连接的timeout
             int connectionRequestTimeout = 10000;
             //设置请求超时时间
@@ -112,7 +111,7 @@ public class HttpClientUtil {
 
             @Override
             public long getRetryInterval() {
-                return 1000L;
+                return 1000*60;
             }
         };
 
@@ -211,7 +210,7 @@ public class HttpClientUtil {
         return doPost(url, null);
     }
 
-    public static String doPostJson(String url, String json) {
+    public static String doPostJson (String url, String json) throws Exception{
         // 创建Httpclient对象
         CloseableHttpClient httpClient = getHttpClient();
         CloseableHttpResponse response = null;

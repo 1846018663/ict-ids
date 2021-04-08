@@ -36,4 +36,7 @@ public interface OrderInfoService {
     void updateById(OrderInfo orderInfo);
 
 
+    List<OrderInfo> findPushFailedOrderIinfo();
+
+
 }

@@ -92,6 +92,21 @@ public class OrderInfo {
     private Integer status;
 
 
+    /**
+     * 推送乘客服务系统次数
+     */
+    private Integer pushNumber;
+
+
+    /**
+     * 推送状态  1成功  2失败
+     */
+    private Integer pushStatus;
+
+    /**
+     * 运力检测说明
+     */
+    private String message;
 
 
     @Override

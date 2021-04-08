@@ -11,7 +11,9 @@ public enum NetworkEnum {
     ALGORITHM_INRERFACE_ADD("4001","新增行程算法接口"),
     ALGORITHM_INRERFACE_DEL("4002","取消已有行程算法接口"),
     ALGORITHM_INRERFACE_UP("4003","添加已有行程算法接口"),
-    PASSENGRT_SERVICE_CALL_BACK("5001","乘客服务回调行程预约成功接口");
+    PASSENGRT_SERVICE_CALL_BACK("5001","乘客服务回调行程预约成功接口"),
+    EALY_WARNING("6001","通知乘客服务系统预警通知");
+
 
     private String code;
     private String value;
