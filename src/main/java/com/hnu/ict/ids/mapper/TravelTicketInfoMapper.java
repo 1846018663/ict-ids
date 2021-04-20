@@ -3,6 +3,7 @@ package com.hnu.ict.ids.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.hnu.ict.ids.bean.TicketInfo;
 import com.hnu.ict.ids.entity.TravelTicketInfo;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -20,4 +21,16 @@ public interface TravelTicketInfoMapper extends BaseMapper<TravelTicketInfo> {
      */
     @Select("SELECT * from travel_ticket_info o where o.travel_id=#{traveId}  ")
     List<TravelTicketInfo> findPassengerSeating(@Param("traveId") String traveId);
+
+    @Select("SELECT * from travel_ticket_info o where o.travel_id=#{traveId} and o.user_id=#{userId}")
+    TravelTicketInfo findTraveIdSeat(@Param("traveId")String traveId,@Param("userId")Integer userId);
+
+
+    @Delete("DELETE FROM travel_ticket_info t where t.travel_id=#{traveId} and t.user_id=#{userId}")
+    void delTraveIdSeat(@Param("traveId")String traveId,@Param("userId")Integer userId);
+
+
+    @Delete("DELETE FROM travel_ticket_info t where t.travel_id=#{traveId}")
+    void deldelTraveId(@Param("traveId")String  traveId);
+
 }

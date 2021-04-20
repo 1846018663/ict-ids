@@ -35,6 +35,17 @@ public class TravelTicketInfoServiceImpl implements TravelTicketInfoService {
         return  travelTicketInfoMapper.findPassengerSeating(traveId);
     }
 
+    public TravelTicketInfo findTraveIdSeat(String traveId,Integer userId){
+        return travelTicketInfoMapper.findTraveIdSeat(traveId,userId);
+    }
+
+   public void delTraveIdSeat(String traveId,Integer userId ){
+        travelTicketInfoMapper.delTraveIdSeat(traveId,userId);
+   }
+
+   public void deldelTraveId(String traveId){
+       travelTicketInfoMapper.deldelTraveId(traveId);
+   }
 
 
 }

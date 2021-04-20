@@ -68,4 +68,7 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     @Select("SELECT * from order_info o where o.push_status>=2 and o.push_number<5 ")
     List<OrderInfo> findPushFailedOrderIinfo();
 
+    @Select("SELECT * from order_info o where o.order_no=#{orderNo} ")
+    OrderInfo findOrderNo(@Param("orderNo")String orderNo);
+
 }

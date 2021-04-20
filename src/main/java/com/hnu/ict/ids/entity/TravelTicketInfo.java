@@ -25,7 +25,7 @@ public class TravelTicketInfo {
     /**
      * 乘车用户id
      */
-    private BigInteger userId;
+    private Integer userId;
 
 
     /**

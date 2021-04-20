@@ -6,24 +6,24 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.math.BigInteger;
+import java.util.Date;
 
 @Data
-@TableName(value = "order_user_link") //订单用户信息拓展表
-public class OrderUserLink {
+@TableName(value = "car_formation")//车辆信息
+public class CarFormation {
 
     /** 主键ID **/
     @TableId(type = IdType.AUTO)
-    private BigInteger id;
+    Integer id;
 
+    String fId;
 
-  private BigInteger userId;
+    Integer fromPId;
 
+    Date startTime;
 
-  private String orderNo;
+    String carList;
 
-  private int state;
-
-  private String seatPreference;
+    Date createTime;
 
 }

@@ -11,7 +11,7 @@ import java.util.Date;
 public class OrderTask {
 
     @JSONField(ordinal=1)
-    int o_id;//订单id
+    String o_id;//订单id
     @JSONField(ordinal=2)
     int from_p_id;//出发站
     @JSONField(ordinal=3)

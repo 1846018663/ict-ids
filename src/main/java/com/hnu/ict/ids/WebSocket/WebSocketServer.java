@@ -17,7 +17,10 @@ import javax.websocket.server.ServerEndpoint;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.bean.CarPosition;
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -26,139 +29,93 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 
-@Slf4j
-@ServerEndpoint(value = "/websocket/{appId}")
 @Component
+@ServerEndpoint(value = "/localPathWebsocket/{clientId}")
+@Log4j2
 public class WebSocketServer {
 
-    private static int onlineCount = 0;
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static ConcurrentHashMap<String, CopyOnWriteArraySet<WebSocketServer>> webSocketSetMap = new ConcurrentHashMap<String, CopyOnWriteArraySet<WebSocketServer>>();
+    //在线clientId数
+    public static int onlineNumber = 0;
 
+    //以用户的clientId，WebSocket为对象保存起来
+    public static Map<String, WebSocketServer> clients = new ConcurrentHashMap<>();
+
+    //会话
     private Session session;
 
-    @Resource
-    private RedisTemplate redisTemplate;
-
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
-
-
-
+    //客户端名称
+    private String clientId;
 
     /**
-     * 连接建立成功调用的方法
+     * 链接websocket
+     *
+     * @param session 会话
      */
     @OnOpen
-    public void onOpen(Session session, @PathParam("appId") String appId) {
-        this.session = session;
-        CopyOnWriteArraySet<WebSocketServer> webSocketSet = webSocketSetMap.get(appId);
-        if (CollectionUtils.isEmpty(webSocketSet)) {
-            webSocketSet = new CopyOnWriteArraySet<WebSocketServer>();
-        }
-        webSocketSet.add(this);
-        webSocketSetMap.put(appId, webSocketSet);
-        addOnlineCount();
-        log.info("有新连接加入,门店号:{}, sessionId:{}, 当前在线人数为:{}", appId, session.getId(), getOnlineCount());
-        List<CarPosition> list=new ArrayList<>();
-
-        Map<String, String> map = new HashMap<>();
-        map.put("1","31.343375,121.280737");
-        map.put("12","31.335508,121.281756");
-        map.put("21","31.371762,121.255854");
-
-
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            CarPosition car=new CarPosition();
-            car.setId(entry.getKey());
-            String[] arr=entry.getValue().split(",");
-            car.setLongitude(arr[1]);
-            car.setLatitude(arr[0]);
-            list.add(car);
-        }
-
-        String str= JSON.toJSONString(list);
-
-        try {
-            sendMessage(str);
-        } catch (IOException e) {
-            log.error("websocket IO异常");
-        }
-    }
-
-    /**
-     * 连接关闭调用的方法
-     */
-    @OnClose
-    public void onClose(@PathParam("shopId") String shopId) {
-        if(StringUtils.hasText(shopId)){
-            CopyOnWriteArraySet<WebSocketServer> webSocketSet = webSocketSetMap.get(shopId);
-            if (!CollectionUtils.isEmpty(webSocketSet)) {
-                webSocketSet.remove(this);
+    public void onOpen(@PathParam("clientId") String clientId, Session session) {
+        for (String s : clients.keySet()) {
+            this.clientId = clientId;
+            if (s.equals(clientId)) {
+                onClose();
             }
-            subOnlineCount();
-            log.info("有一连接关闭,门店号:{}, sessionId:{},当前在线人数为", shopId, this.session.getId(), getOnlineCount());
-
         }
-
+        log.info(clientId + "    连接成功!!!!!!");
+        this.session = session;
+        this.clientId = clientId;
+        try {
+            //把自己的信息加入到map当中去
+            clients.put(clientId, this);
+//            sendMessageAll("success");
+        } catch (Exception e) {
+            logger.info(clientId + "链接发生了错误" + e.getMessage());
+        }
     }
 
-    /**
-     * 收到客户端消息后调用的方法
-     *
-     * @param message 客户端发送过来的消息
-     */
-    @OnMessage
-    public void onMessage(String message) {
-        log.info("来自客户端的消息:" + message);
-    }
-
-    /**
-     * @param session
-     * @param error
-     */
     @OnError
     public void onError(Session session, Throwable error) {
-        log.error("发生错误");
-        error.printStackTrace();
+        logger.info("服务端发生了错误" + error.getMessage());
     }
-
-
-    public void sendMessage(String message) throws IOException {
-        if(StringUtils.hasText(message)){
-            this.session.getBasicRemote().sendText(message);
-        }
-
-    }
-
 
     /**
-     * 群发自定义消息
+     * 连接关闭
      */
-    public static void sendInfo(String message, String shopId) throws IOException {
-        log.info(message);
-        CopyOnWriteArraySet<WebSocketServer> webSocketSet = webSocketSetMap.get(shopId);
-        if (CollectionUtils.isEmpty(webSocketSet)) {
-            return;
+    @OnClose
+    public void onClose() {
+        onlineNumber--;
+        clients.remove(clientId);
+        try {
+            if (clients.size() > 0) {
+                sendMessageAll(clientId + "退出");
+            }
+        } catch (IOException e) {
+            logger.info(clientId + "发生了错误");
         }
-        for (WebSocketServer item : webSocketSet) {
-            try {
-                item.sendMessage(message);
-            } catch (IOException e) {
-                continue;
+    }
+
+    /**
+     * 收到客户端的消息
+     */
+    @OnMessage
+    public void onMessage(String message, Session session) {
+        try {
+            logger.info("来自客户端消息：" + message + "客户端的id是：" + session.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.info("发生了错误了");
+        }
+    }
+
+    public void sendMessageAll(String message) throws IOException {
+        if (clients != null && clients.size() > 0) {
+            for (WebSocketServer item : clients.values()) {
+                item.session.getAsyncRemote().sendText(message);
             }
         }
     }
 
     public static synchronized int getOnlineCount() {
-        return onlineCount;
-    }
-
-    public static synchronized void addOnlineCount() {
-        WebSocketServer.onlineCount++;
-    }
-
-    public static synchronized void subOnlineCount() {
-        WebSocketServer.onlineCount--;
+        return onlineNumber;
     }
 }

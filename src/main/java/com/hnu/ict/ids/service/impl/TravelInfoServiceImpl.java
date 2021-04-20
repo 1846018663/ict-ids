@@ -49,14 +49,14 @@ public class TravelInfoServiceImpl implements TravelInfoService {
 
     @Transactional
     @Override
-    public Boolean addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map){
+    public Boolean addTravelInfoList(List<TravelInfo> list, Map<String,String> map){
         try {
             //添加行程数据
             travelInfoMapper.addTravelInfo(list);
             //修改订单与行程对应关系
-            for(Map.Entry<Integer,String> entry : map.entrySet()){
+            for(Map.Entry<String,String> entry : map.entrySet()){
                 //key为订单id    value为行程
-                OrderInfo order= orderInfoMapper.getById(entry.getKey());
+                OrderInfo order= orderInfoMapper.getBySourceOrderId(entry.getKey());
                 order.setTravelId(entry.getValue());
                 order.setTravelSource(0);//默认算法来源  0
                 orderInfoMapper.updateById(order);

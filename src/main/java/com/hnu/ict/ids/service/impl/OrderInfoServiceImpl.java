@@ -1,5 +1,6 @@
 package com.hnu.ict.ids.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.entity.*;
@@ -11,6 +12,7 @@ import com.hnu.ict.ids.mapper.OrderUserLinkMapper;
 import com.hnu.ict.ids.mapper.TravelInfoMapper;
 import com.hnu.ict.ids.service.NetworkLogService;
 import com.hnu.ict.ids.service.OrderInfoService;
+import com.hnu.ict.ids.service.TravelTicketInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
@@ -50,6 +52,8 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
     @Autowired
     NetworkLogService networkLogServer;
+    @Autowired
+    TravelTicketInfoService travelTicketInfoService;
 
 
     @Value("${travel.algorithm.cancels.url}")
@@ -71,11 +75,15 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     public void insertOrder(OrderInfo orderInfo,String uIds){
 
         //对关联   表进行添加
-        String[]  ids=uIds.split(",");
-        for (int i=0;i<ids.length;i++){
+        JSONArray array=JSONArray.parseArray(uIds);
+        for (int i=0;i<array.size();i++){
+            JSONObject jsonObjec=array.getJSONObject(i);
             OrderUserLink orderUserLink=new OrderUserLink();
             orderUserLink.setOrderNo(orderInfo.getOrderNo());
-            orderUserLink.setUserId(new BigInteger(ids[i]));
+            orderUserLink.setUserId(BigInteger.valueOf(jsonObjec.getInteger("u_id")));
+            if(jsonObjec.getString("seat_preference")!=null){
+                orderUserLink.setSeatPreference(jsonObjec.getString("seat_preference"));
+            }
             orderUserLink.setState(1);
             orderUserLinkMapper.insert(orderUserLink);
         }
@@ -94,8 +102,7 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             logger.info(new BigInteger(ids[i])+"end of input integer"+order.getId());
             orderUserLinkMapper.updateOrderUserLinkState(new BigInteger(ids[i]),order.getOrderNo());
         }
-        //判断订单所属成功是否全部移除
-        int count=orderUserLinkMapper.findRemove(order.getOrderNo());
+
 
         //修改订单表座位数
         orderMapper.updateOrderNumber(ids.length,order.getId());
@@ -112,10 +119,35 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         //业务判断如果未生成行程不做一下操作    如果已经行程存在取消订单需调用算法完成行程取消流程
         if(!StringUtils.isEmpty(order.getTravelId()) && order.getTicketNumber()>0){
             TravelInfo travelInfo=travelInfoMapper.findTravelId(order.getTravelId());
-            travelInfoCancels(order,ids.length,travelInfo.getItNumber());
+
+            JSONArray seat_info=new JSONArray();
+            JSONObject seatJson=new JSONObject();
+            seatJson.put("car_id",travelInfo.getCarId());
+            //查询座位
+            List<TravelTicketInfo> travelTicketInfoList= travelTicketInfoService.findPassengerSeating(travelInfo.getTravelId());
+            JSONArray correspond_seat_id=new JSONArray();
+            for (int i=0; i<travelTicketInfoList.size();i++){
+               JSONObject ob=new JSONObject();
+               TravelTicketInfo info=travelTicketInfoList.get(i);
+               ob.put("u_id",info.getUserId());
+               ob.put("seat",info.getSeatNum());
+               correspond_seat_id.add(ob);
+            }
+            seatJson.put("correspond_seat_id",correspond_seat_id);
+            seat_info.add(seatJson);
+            travelInfoCancels(order,ids,travelInfo.getItNumber(),seat_info);
+            //删除座位数据
+            for (int i=0;i<ids.length;i++){
+                logger.info("======="+ids[i]);
+                Integer id=Integer.parseInt(ids[i]);
+                logger.info(travelInfo.getTravelId()+"操作座位表"+id);
+                travelTicketInfoService.delTraveIdSeat(travelInfo.getTravelId(),id);
+            }
+
         }
 
-
+        //判断订单所属成功是否全部移除
+        int count=orderUserLinkMapper.findRemove(order.getOrderNo());
 
         if(count==0){
             orderMapper.deleteBySourceOrderId(order.getSourceOrderId());
@@ -136,23 +168,29 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     /**
      * 取消行程算法调用
      * @param order
-     * @param number
+     * @param ids
      */
-    public void travelInfoCancels(OrderInfo order,Integer number,Integer ticketNumber){
+    public void travelInfoCancels(OrderInfo order,String[] ids,Integer ticketNumber,JSONArray seatJson){
         //调用算法接口
         JSONObject json=new JSONObject();
 
         JSONObject dl=new JSONObject();
-        dl.put("o_id",order.getId());
+        dl.put("o_id",order.getSourceOrderId());
         dl.put("from_p_id",order.getBeginStationId());
         dl.put("to_p_id",order.getEndStationId());
         dl.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
-        dl.put("ticket_number",number+"/"+ticketNumber);
-
+        dl.put("ticket_number",ids.length+"/"+ticketNumber);
+        String order_u_id="";
+        for (int i=0;i<ids.length;i++){
+            order_u_id=order_u_id+ids[i]+",";
+        }
+        order_u_id=order_u_id.substring(0,order_u_id.length()-1);
+        dl.put("order_u_id",order_u_id);
         JSONArray taskJson=new JSONArray();
         JSONObject task=new JSONObject();
         TravelInfo info=travelInfoMapper.findTravelId(order.getTravelId());
-
+        task.put("correspond_order_number",info.getCorrespondOrderNumber());
+        task.put("driver_id",info.getDriverId());
         task.put("it_number",info.getItNumber());
         task.put("car_id",info.getCarId());
         task.put("from_p_id",info.getBeginStationId());
@@ -193,16 +231,19 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         String oIds="";
         if(orderList!=null &&orderList.size()>0){
             for (int i=0;i<orderList.size();i++){
-                oIds=oIds+orderList.get(i).getId()+",";
+                oIds=oIds+orderList.get(i).getSourceOrderId()+",";
             }
             oIds= oIds.substring(0,oIds.length()-1);
             task.put("correspond_order_id",oIds);
             taskJson.add(task);
         }
 
+
+
         //封装最后传参
         json.put("dl_1",dl);
         json.put("task_record",taskJson);
+        json.put("seat_info",seatJson);
         logger.info("发送请求数据"+json.toString());
         //保存预警信息
         NetworkLog networkLog=new NetworkLog();
@@ -244,7 +285,7 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         JSONArray array=jsonObject.getJSONArray("task");
         //对数据进行解析
         List<TravelInfo> travelInfoList=new ArrayList<>();
-        Map<Integer,String > map=new HashMap<>();
+        Map<String,String > map=new HashMap<>();
         for (int i=0;i<array.size();i++){
             JSONObject object=array.getJSONObject(i);
             TravelInfo info=new TravelInfo();
@@ -322,7 +363,7 @@ public class OrderInfoServiceImpl implements OrderInfoService {
                 String orderIds=object.getString("correspond_order_id");
                 String[] ids=orderIds.split(",");
                 for (int k=0;k<ids.length;k++){
-                    map.put(Integer.parseInt(ids[k]),taskerId);
+                    map.put(ids[k],taskerId);
                 }
                 System.out.println("解析车辆对应关系"+ orderIds);
             }
@@ -388,5 +429,10 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
     public List<OrderInfo> findPushFailedOrderIinfo(){
         return orderMapper.findPushFailedOrderIinfo();
+    }
+
+
+    public OrderInfo findOrderNo(String orderNo){
+        return orderMapper.findOrderNo(orderNo);
     }
 }

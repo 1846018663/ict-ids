@@ -45,12 +45,12 @@ public class CarControl {
      */
     @RequestMapping(value="/getCarTraveInfo" ,method = RequestMethod.POST)
     @ParamsNotNull(str ="carId")
-    public PojoBaseResponse getCarTraveInfo(String carId){
+    public PojoBaseResponse getCarTraveInfo(Integer carId){
         logger.info("查询车辆id"+carId);
         PojoBaseResponse result=new PojoBaseResponse();
          CarTrave carTrave=new CarTrave();
         //根据车牌查询车辆
-        IvsAppCarInfo carinfo=ivsAppCarInfoService.getByCarId(Integer.parseInt(carId));
+        IvsAppCarInfo carinfo=ivsAppCarInfoService.getByCarId(carId);
          if(carinfo!=null){
              carTrave.setCarNo(carinfo.getLicenseNumber());
              carTrave.setCarType(carinfo.getCarType());

@@ -81,7 +81,7 @@ public class DispatchTask {
             for (Iterator<OrderInfo> it = listOrder.iterator(); it.hasNext();) {
                 OrderInfo info=it.next();
                     OrderTask task=new OrderTask();
-                    task.setO_id(info.getId().intValue());
+                    task.setO_id(info.getOrderNo());
                     task.setFrom_p_id(info.getBeginStationId());
                     task.setTo_p_id(info.getEndStationId());
                     task.setStart_time(DateUtil.getCurrentTime(info.getStartTime()));
@@ -107,7 +107,7 @@ public class DispatchTask {
                 if(status==1){
                     //对数据进行解析
                     List<TravelInfo> travelInfoList=new ArrayList<>();
-                    Map<Integer,String > map=new HashMap<>();
+                    Map<String,String > map=new HashMap<>();
 
 
                     JSONArray array=jsonObject.getJSONArray("task");
@@ -136,7 +136,7 @@ public class DispatchTask {
                         String orderIds=object.getString("correspond_order_id").replace("[","").replace("]","").replace(" ","");
                         String[] ids=orderIds.split(",");
                         for (int k=0;k<ids.length;k++){
-                            map.put(Integer.parseInt(ids[k]),taskerId);
+                            map.put(ids[k],taskerId);
                         }
 
                         System.out.println("解析车辆对应关系"+ orderIds);

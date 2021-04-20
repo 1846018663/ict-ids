@@ -19,7 +19,7 @@ public interface TravelInfoService {
     TravelInfo getCarTime(int carId,Date timeDate);
 
 
-    Boolean addTravelInfoList(List<TravelInfo> list, Map<Integer,String> map);
+    Boolean addTravelInfoList(List<TravelInfo> list, Map<String,String> map);
 
     void updateById(TravelInfo travelInfo);
 

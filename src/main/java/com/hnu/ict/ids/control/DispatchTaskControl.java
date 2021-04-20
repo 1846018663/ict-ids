@@ -4,11 +4,10 @@ package com.hnu.ict.ids.control;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.hnu.common.respone.PojoBaseResponse;
-import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
-import com.hnu.ict.ids.bean.OrderTask;
-import com.hnu.ict.ids.bean.TicketInfo;
-import com.hnu.ict.ids.bean.Tickets;
+import com.hnu.ict.ids.bean.*;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
@@ -27,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.util.*;
 
 @Api(tags = "调度任务API")
@@ -49,6 +49,9 @@ public class DispatchTaskControl {
     @Value("${passenger.service.capacity.test.url}")
     private String capacity_url;
 
+    @Value("${travel.algorithm.seat.url}")
+    private String seat_url;
+
 
     @Autowired
     TravelInfoService travelInfoService;
@@ -68,6 +71,9 @@ public class DispatchTaskControl {
     @Autowired
     TravelTicketInfoService travelTicketInfoService;
 
+    @Autowired
+    CarFormationService carFormationService;
+
 
     /**
      * 调用新增行程算法接口
@@ -75,7 +81,7 @@ public class DispatchTaskControl {
      */
     @RequestMapping(value = "/findNotTrave", method = RequestMethod.GET)
     public PojoBaseResponse findNotTrave() {
-        logger.info("---------------------------执行任务------------------");
+        logger.info("---------------------------新增行程执行任务------------------");
         PojoBaseResponse result=new PojoBaseResponse();
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
         Date stateDate=new Date();
@@ -95,7 +101,7 @@ public class DispatchTaskControl {
                 }else{//订单已经被需取消   中途终止该操作
                     return null;
                 }
-                task.setO_id(info.getId().intValue());
+                task.setO_id(info.getSourceOrderId());
                 task.setFrom_p_id(info.getBeginStationId());
                 task.setTo_p_id(info.getEndStationId());
                 task.setStart_time(DateUtil.getCurrentTime(info.getStartTime()));
@@ -136,10 +142,28 @@ public class DispatchTaskControl {
             JSONObject jsonObject=JSONObject.parseObject(body);
             int status = jsonObject.getInteger("status");
             logger.info("-----------------开始解析算法返回结果-------------");
+
             //有效数据
             if(status==1){
-                Map<Integer,String > map=new HashMap<>();
+                Map<String,String > map=new HashMap<>();
                 Map<String,String > mapResult=new HashMap<>();
+                //车辆编队信息保存
+                JSONArray line=jsonObject.getJSONArray("line");
+                if(line.size()>0){
+                    for(int k=0;k<line.size();k++){
+                        JSONObject object=line.getJSONObject(k);
+                        CarFormation carFormation=new CarFormation();
+                        carFormation.setFId(object.getString("f_id"));
+                        carFormation.setFromPId(object.getInteger("from_p_id"));
+                        carFormation.setCarList(object.getString("car_list"));
+                        carFormation.setStartTime(DateUtil.strToDate(object.getString("start_time")));
+                        carFormation.setCreateTime(new Date());
+
+                        carFormationService.insert(carFormation);
+                    }
+                }
+
+                //行程数据保存
                 JSONArray array=jsonObject.getJSONArray("task");
                 if(array.size()>0){
                     for (int i=0;i<array.size();i++){
@@ -161,16 +185,18 @@ public class DispatchTaskControl {
                         info.setParkId(object.getInteger("park_id"));
                         info.setDriverId(object.getInteger("driver_id"));
                         info.setWarning(object.getString("warning"));
+                        info.setCorrespondOrderNumber(object.getString("correspond_order_number"));
                         taskerId =object.getString("travel_id");
 
                         info.setTravelId(taskerId);
                         info.setCreateTime(new Date());
                         //获取订单与行程对应数据关联 .replace("[","").replace("]","").replace(" ","")
                         String orderIds=object.getString("correspond_order_id");
+                        info.setCorrespondOrderId(orderIds);
                         String[] ids=orderIds.split(",");
                         for (int k=0;k<ids.length;k++){
-                            map.put(Integer.parseInt(ids[k]),taskerId);
-                            OrderInfo orderInfo=orderInfoService.getById(Integer.parseInt(ids[k]));
+                            map.put(ids[k],taskerId);
+                            OrderInfo orderInfo=orderInfoService.getBySourceOrderId(ids[k]);
                             mapResult.put(orderInfo.getSourceOrderId(),taskerId);
                         }
                         logger.info("-----------------已完成解析算法返回结果"+map.toString());
@@ -189,6 +215,8 @@ public class DispatchTaskControl {
                         logger.info("-----------------回调乘客服务系统    结束-------------");
                     }
                 }
+
+
 
             }
 
@@ -235,6 +263,78 @@ public class DispatchTaskControl {
             customerHttpAPIBean.setRet_status(1);
             customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));
 
+            //调用算法获取座位信息
+            List<SeatBean> beatLis=new ArrayList<>();
+            SeatBean seatBean=new SeatBean();
+            seatBean.setCar_id(travelInfo.getCarId());
+            seatBean.setCorrespond_order_id(travelInfo.getCorrespondOrderId());
+            seatBean.setCorrespond_order_number(travelInfo.getCorrespondOrderNumber());
+            //查询数据该行程所属乘客
+            List<OrderInfo>  orderList=orderInfoService.findOrderTravelId(travelInfo.getTravelId());
+            List<SeatUserBean> userList=new ArrayList<>();
+            List<SeatPreference> seatPreferenceList=new ArrayList<>();
+            for (int i=0;i<orderList.size();i++){
+                SeatUserBean userBean=new SeatUserBean();
+                OrderInfo order= orderList.get(i);
+                userBean.setOrderId(order.getSourceOrderId());
+                List<OrderUserLink> userLinks=orderUserLinkService.findOrderNo(order.getOrderNo());
+                String userId="";
+                for (OrderUserLink orderUser: userLinks){
+                    SeatPreference seatPreference=new SeatPreference();
+                    seatPreference.setU_id(orderUser.getUserId().toString());
+                    seatPreference.setSeat_preference(orderUser.getSeatPreference());
+                    seatPreferenceList.add(seatPreference);
+
+                    userId=userId+orderUser.getUserId().toString()+",";
+
+                }
+                userId= userId.substring(0,userId.length()-1);
+                userBean.setUserId(userId);
+                userList.add(userBean);
+            }
+            //查询座位表
+            seatBean.setSeatPreferenceList(seatPreferenceList);
+            seatBean.setOrder_u_id(userList);
+            seatBean.setIt_number(travelInfo.getItNumber());
+            beatLis.add(seatBean);
+
+            String seatJson=JSON.toJSONString(beatLis);
+            String  seatBody;
+            try {
+                List<TravelTicketInfo> travelTicketInfoList=new ArrayList<>();
+                logger.info("发送获取乘客座位信息参数："+seatJson);
+                seatBody=HttpClientUtil.doPostJson(seat_url,seatJson);
+                logger.info("接收获取乘客座位信息参数："+seatBody);
+                JSONArray arrSeat=JSONArray.parseArray(seatBody);
+                for (int i=0;i<arrSeat.size();i++){
+                    JSONObject json= arrSeat.getJSONObject(i);
+                    JSONArray arr=json.getJSONArray("correspond_seat_id");
+                    for (int k=0;k<arr.size();k++){
+
+                        JSONObject ob=arr.getJSONObject(k);
+                        String sourceOrderId=ob.getString("orderId");
+                        OrderInfo orderInfo=orderInfoService.getBySourceOrderId(sourceOrderId);
+                        JSONArray seatID=ob.getJSONArray("seatId");
+                        for (int j=0;j<seatID.size();j++){
+                            TravelTicketInfo travelTicketInfo=new TravelTicketInfo();
+                            JSONObject seatOb=seatID.getJSONObject(j);
+
+                            travelTicketInfo.setTravelId(orderInfo.getTravelId());
+                            travelTicketInfo.setUserId(seatOb.getInteger("u_id"));
+                            travelTicketInfo.setSeatNum(seatOb.getString("seat"));
+                            travelTicketInfoList.add(travelTicketInfo);
+                        }
+
+                    }
+
+                }
+
+                travelTicketInfoService.insertTravelTicketInfoList(travelTicketInfoList);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
             //乘客座位信息获取封装
             List<TicketInfo> ticketInfoList=new ArrayList<>();
             for (OrderInfo info:orderInfoList ){
@@ -244,9 +344,14 @@ public class DispatchTaskControl {
                 List<Tickets> ticketsList=new ArrayList<>();
                 for (OrderUserLink user:ticket_info){
                     Tickets tickets=new Tickets();
-                    tickets.setU_id(user.getUserId().intValue());
-                    tickets.setSeat_number("");
-                    ticketsList.add(tickets);
+                    //根据订单查出乘客user_id   通过user_id与行程查询用户座位号
+                    TravelTicketInfo travelTicketInfo= travelTicketInfoService.findTraveIdSeat(travelInfo.getTravelId(),user.getUserId().intValue());
+                    if(travelTicketInfo!=null){
+                        tickets.setU_id(travelTicketInfo.getUserId().intValue());
+                        tickets.setSeat_number(travelTicketInfo.getSeatNum());
+                        ticketsList.add(tickets);
+                    }
+
                 }
                 ticketInfo.setTickets(ticketsList);
                 ticketInfoList.add(ticketInfo);

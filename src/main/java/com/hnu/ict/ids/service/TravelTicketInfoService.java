@@ -12,4 +12,12 @@ public interface TravelTicketInfoService {
 
 
     List<TravelTicketInfo> findPassengerSeating(String traveId);
+
+    TravelTicketInfo findTraveIdSeat(String traveId,Integer userId);
+
+
+    void delTraveIdSeat(String traveId,Integer userId );
+
+
+    void deldelTraveId(String traveId);
 }

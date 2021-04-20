@@ -215,29 +215,19 @@ public class HttpClientUtil {
         CloseableHttpClient httpClient = getHttpClient();
         CloseableHttpResponse response = null;
         String resultString = "";
-        try {
             // 创建Http Post请求
-            HttpPost httpPost = new HttpPost(url);
-            // 创建请求内容
-            StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
-            httpPost.setEntity(entity);
-            // 执行http请求
-            logger.info("-----------------doPostJson请求发送------------");
-            response = httpClient.execute(httpPost);
-            resultString = EntityUtils.toString(response.getEntity(), CHARSET_UTF_8);
-            logger.info("-----------------doPostJson请求结束------------");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (response != null) {
-                    response.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        HttpPost httpPost = new HttpPost(url);
+        // 创建请求内容
+        StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
+        httpPost.setEntity(entity);
+        // 执行http请求
+        response = httpClient.execute(httpPost);
+        resultString = EntityUtils.toString(response.getEntity(), CHARSET_UTF_8);
+        if (response != null) {
+            response.close();
         }
         return resultString;
+
     }
 
 }

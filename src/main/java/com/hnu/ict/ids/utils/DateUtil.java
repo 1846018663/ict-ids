@@ -320,7 +320,7 @@ public class DateUtil {
     * @return
     */
     public static Date strToDate(String strDate) {
-        SimpleDateFormat format =  new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat format =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         ParsePosition pos = new ParsePosition(0);
         Date strtodate = format.parse(strDate, pos);
         return strtodate;

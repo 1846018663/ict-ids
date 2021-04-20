@@ -3,10 +3,7 @@ package com.hnu.ict.ids.TimerTask;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
-import com.hnu.ict.ids.bean.OrderTask;
-import com.hnu.ict.ids.bean.TicketInfo;
-import com.hnu.ict.ids.bean.Tickets;
+import com.hnu.ict.ids.bean.*;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
@@ -60,12 +57,17 @@ public class DispatchCompensateTask {
     @Autowired
     OrderInfoHistotryService  orderInfoHistotryService;
 
+    @Autowired
+    TravelTicketInfoService travelTicketInfoService;
 
 
 
+    @Value("${travel.algorithm.seat.url}")
+    private String seat_url;
 
-//    @Scheduled(cron = "0/5 * * * * ?")
+   @Scheduled(cron = "0/1 * * * * ?")
     public void compensates() throws Exception{
+       logger.info("行程订单补偿");
         //查询同步失败订单信息
         List<TravelInfo>  travelInfoList=travelInfoService.findeNotPushStatus();
 
@@ -104,9 +106,14 @@ public class DispatchCompensateTask {
                     List<Tickets> ticketsList=new ArrayList<>();
                     for (OrderUserLink user:ticket_info){
                         Tickets tickets=new Tickets();
-                        tickets.setU_id(user.getUserId().intValue());
-                        tickets.setSeat_number("");
-                        ticketsList.add(tickets);
+                        //根据订单查出乘客user_id   通过user_id与行程查询用户座位号
+                        TravelTicketInfo travelTicketInfo= travelTicketInfoService.findTraveIdSeat(travelInfo.getTravelId(),user.getUserId().intValue());
+                        if(travelTicketInfo!=null){
+                            tickets.setU_id(travelTicketInfo.getUserId().intValue());
+                            tickets.setSeat_number(travelTicketInfo.getSeatNum());
+                            ticketsList.add(tickets);
+                        }
+
                     }
                     ticketInfo.setTickets(ticketsList);
                     ticketInfoList.add(ticketInfo);

@@ -157,5 +157,10 @@ public class TravelInfo {
 
 
 
+    private String correspondOrderNumber;
+
+
+    private String correspondOrderId;
+
 
 }

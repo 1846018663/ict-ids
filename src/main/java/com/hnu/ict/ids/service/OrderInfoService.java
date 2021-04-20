@@ -39,4 +39,7 @@ public interface OrderInfoService {
     List<OrderInfo> findPushFailedOrderIinfo();
 
 
+    OrderInfo findOrderNo(String orderNo);
+
+
 }

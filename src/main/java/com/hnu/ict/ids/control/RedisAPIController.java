@@ -112,7 +112,7 @@ public class RedisAPIController {
 
         String str= JSON.toJSONString(list);
         System.out.println(str);
-        webSocketServer.sendInfo(str,"0114");
+        webSocketServer.sendMessageAll(str);
         response.setData(list);
         return response;
     }
