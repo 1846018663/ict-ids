@@ -369,4 +369,47 @@ public class DateUtil {
     }
 
 
+    public static String getLastMonth(){
+        //设置时间格式
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        //获得实体类
+        Calendar ca = Calendar.getInstance();
+        //设置最后一天
+        ca.set(Calendar.DAY_OF_MONTH, ca.getActualMaximum(Calendar.DAY_OF_MONTH));
+        //最后一天格式化
+        String lastDay = format.format(ca.getTime());
+        return lastDay;
+    }
+
+
+    public static  String getStarMonth(){
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.MONTH, 0); //获取当前月第一天
+        c.set(Calendar.DAY_OF_MONTH, 1); //设置为1号,当前日期既为本月第一天
+        c.set(Calendar.HOUR_OF_DAY, 0); //将小时至0
+        c.set(Calendar.MINUTE, 0); //将分钟至0
+        c.set(Calendar.SECOND,0); //将秒至0
+        c.set(Calendar.MILLISECOND, 0); //将毫秒至0
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(c.getTime());
+    }
+    public static  String getEndMonth(){
+        Calendar c2 = Calendar.getInstance();
+        c2.set(Calendar.DAY_OF_MONTH, c2.getActualMaximum(Calendar.DAY_OF_MONTH)); //获取当前月最后一天
+        c2.set(Calendar.HOUR_OF_DAY, 23); //将小时至23
+        c2.set(Calendar.MINUTE, 59); //将分钟至59
+        c2.set(Calendar.SECOND,59); //将秒至59
+        c2.set(Calendar.MILLISECOND, 999); //将毫秒至999
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(c2.getTime());
+    }
+
+    public static void main(String[] args) {
+        String i="276,93,95,96,101,104,105,130,136,137,142,150,151,152,153,154,155,156,157,158,161,162";
+        String[] id=i.split(",");
+        System.out.println(id.length);
+        System.out.println(getStarMonth());
+
+        System.out.println(getEndMonth());
+    }
 }

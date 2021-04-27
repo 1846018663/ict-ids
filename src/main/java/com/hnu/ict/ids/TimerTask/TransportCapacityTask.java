@@ -69,7 +69,7 @@ public class TransportCapacityTask {
     NetworkLogService networkLogServer;
 
 
-    @Scheduled(cron = "0 0/2 * * * ?")
+    @Scheduled(cron = "5/50 * * * * ? ")
     public void transportCapacity() throws Exception{
         logger.info("======运力检测开始=======");
         Date stateDate=new Date();
@@ -95,18 +95,25 @@ public class TransportCapacityTask {
                 map.put("o_id",order.getSourceOrderId());
                 String message=json.getString("suggest");
                 map.put("message",message);
-                map.put("code",status.toString());
-                String jsonString=JSON.toJSONString(map);
-                logger.info("==== 运力检测乘客服务系统发送参数======"+jsonString);
+                if(status==302) {
+                    map.put("code", "301");
+                }else{
+                    map.put("code", status.toString());
+                }
+
                 //更新订单数据
                 if(status==201){
                     order.setStatus(PushStatusEnum.SUCCESS.getValue());//运力检测  预约成功
                 }
-                if(status==301){
+                if(status==302){
                     order.setStatus(PushStatusEnum.FAIL.getValue());//运力检测  预约失败
                 }
                 order.setMessage(message);
                 orderInfoService.updateById(order);
+
+                String jsonString=JSON.toJSONString(map);
+                logger.info("==== 运力检测乘客服务系统发送参数======"+jsonString);
+
                 //获取最新order数据内容
                 OrderInfo orderInfo= orderInfoService.getById(order.getId().intValue());
                 try {
@@ -115,14 +122,14 @@ public class TransportCapacityTask {
                     JSONObject resulJson=JSON.parseObject(resultBody);
                     String code= resulJson.getString("code");
 
-                    if(status==301){
+                    if(status==302){
                         if(code.equals("00007")){
-                            logger.info("订单通知乘客服务失败 累加推送次数");
+                            logger.info("订单通知乘客服务失败 累加推送次数"+PushStatusEnum.FAIL.getValue()+"alkngkjsdjaigdjhnais");
                             orderInfo.setPushNumber(order.getPushNumber()+1);
                             orderInfo.setPushStatus(PushStatusEnum.FAIL.getValue());
                         }
 
-                        orderInfoService.updateById(order);
+                        orderInfoService.updateById(orderInfo);
 
                         if(code.equals("00008")){
                             logger.info("订单取消成功  移除信息，保存订单日志");
@@ -141,6 +148,7 @@ public class TransportCapacityTask {
                         if(code.equals("00007")){
                             logger.info("订单通知乘客服务失败");
                             //设置推送失败
+                            orderInfo.setPushNumber(order.getPushNumber()+1);
                             orderInfo.setPushStatus(PushStatusEnum.FAIL.getValue());
                         }
                         if(code.equals("00008")){
@@ -157,7 +165,7 @@ public class TransportCapacityTask {
                     if(status==201){
                         orderInfo.setStatus(PushStatusEnum.SUCCESS.getValue());
                     }
-                    if(status==301){
+                    if(status==302){
                         orderInfo.setStatus(PushStatusEnum.FAIL.getValue());
                     }
                     orderInfo.setPushNumber(orderInfo.getPushNumber()+3);

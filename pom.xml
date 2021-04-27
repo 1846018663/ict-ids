@@ -204,6 +204,10 @@
             <!-- 启用 -->
             <optional>false</optional>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+        </dependency>
 
     </dependencies>
 

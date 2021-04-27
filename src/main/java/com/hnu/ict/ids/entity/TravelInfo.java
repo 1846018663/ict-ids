@@ -163,4 +163,7 @@ public class TravelInfo {
     private String correspondOrderId;
 
 
+    private String CCode;
+
+
 }

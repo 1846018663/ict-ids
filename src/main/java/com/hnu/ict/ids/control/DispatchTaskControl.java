@@ -74,6 +74,9 @@ public class DispatchTaskControl {
     @Autowired
     CarFormationService carFormationService;
 
+    @Autowired
+    IvsAppPlatformInfoService ivsAppPlatformInfoService;
+
 
     /**
      * 调用新增行程算法接口
@@ -108,8 +111,8 @@ public class DispatchTaskControl {
                 task.setOrder_time(DateUtil.getCurrentTime(info.getCreateTime()));
 
 
-                int DateTime=Integer.parseInt(resultMap.get(ConfigEnum.CARTIMECONFIG.getValue()).toString())*60;
-                task.setSet_time(DateTime);
+//                int DateTime=Integer.parseInt(resultMap.get(ConfigEnum.CARTIMECONFIG.getValue()).toString())*60;
+                task.setSet_time(60);
                 list.add(task);
             }
             String json= JSON.toJSONString(list);
@@ -170,6 +173,12 @@ public class DispatchTaskControl {
                         JSONObject object=array.getJSONObject(i);
                         TravelInfo info=new TravelInfo();
                         info.setBeginStationId(object.getInteger("from_p_id"));
+                        //根据出发站台查询归属城市
+                        if(object.getInteger("from_p_id")!=null){
+                            IvsAppPlatformInfo appPlatformInfo= ivsAppPlatformInfoService.getByPlatformId(object.getInteger("from_p_id"));
+                            info.setCCode(appPlatformInfo.getCCode());
+                        }
+
                         info.setEndStationId(object.getInteger("to_p_id"));
                         info.setTravelStatus(1);//预约成功
                         info.setItNumber(object.getInteger("it_number"));
@@ -293,7 +302,7 @@ public class DispatchTaskControl {
                 userList.add(userBean);
             }
             //查询座位表
-            seatBean.setSeatPreferenceList(seatPreferenceList);
+            seatBean.setUser_preference(seatPreferenceList);
             seatBean.setOrder_u_id(userList);
             seatBean.setIt_number(travelInfo.getItNumber());
             beatLis.add(seatBean);

@@ -51,4 +51,13 @@ public class IvsAppCarInfoServiceImpl implements IvsAppCarInfoService {
     public List<CarTypeTotal> getCarTypeTotal(String cityCode){
         return ivsAppCarInfoMapper.getCarTypeTotal(cityCode);
     }
+    @Override
+    public int insert(IvsAppCarInfo ivsAppCarInfo){
+        return ivsAppCarInfoMapper.insert(ivsAppCarInfo);
+    }
+
+    @Override
+    public int update(IvsAppCarInfo ivsAppCarInfo){
+        return ivsAppCarInfoMapper.updateById(ivsAppCarInfo);
+    }
 }

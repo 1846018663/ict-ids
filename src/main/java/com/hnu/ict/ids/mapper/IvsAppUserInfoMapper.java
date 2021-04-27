@@ -17,4 +17,7 @@ public interface IvsAppUserInfoMapper extends BaseMapper<IvsAppUserInfo> {
      */
     @Select("select * from ivs_app_user_info where phone = #{phone}")
     IvsAppUserInfo getByPhone(@Param("phone") String phone);
+
+    @Select("select * from ivs_app_user_info where number = #{number}")
+    IvsAppUserInfo findNumber(@Param("number")String number);
 }

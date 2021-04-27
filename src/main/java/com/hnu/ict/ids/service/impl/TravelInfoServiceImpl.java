@@ -1,10 +1,12 @@
 package com.hnu.ict.ids.service.impl;
 
+import com.hnu.ict.ids.bean.TraveTrendBean;
 import com.hnu.ict.ids.entity.OrderInfo;
 import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.mapper.OrderInfoMapper;
 import com.hnu.ict.ids.mapper.TravelInfoMapper;
 import com.hnu.ict.ids.service.TravelInfoService;
+import com.hnu.ict.ids.utils.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class TravelInfoServiceImpl implements TravelInfoService {
@@ -42,8 +42,8 @@ public class TravelInfoServiceImpl implements TravelInfoService {
     }
 
     @Override
-    public int finDateTraveTotal(Date startDate, Date endDate){
-        return travelInfoMapper.finDateTraveTotal(startDate,endDate);
+    public int finDateTraveTotal(Date startDate, Date endDate,String cityCode){
+        return travelInfoMapper.finDateTraveTotal(startDate,endDate,cityCode);
     }
 
 
@@ -89,4 +89,31 @@ public class TravelInfoServiceImpl implements TravelInfoService {
     public List<TravelInfo> findeNotPushStatus(){
         return travelInfoMapper.findeNotPushStatus();
     }
+
+
+
+    public List<Map<String,Object>> getTraveTrendToDay(String cityCode,String dateTime){
+        List<Map<String,Object>> listMap=travelInfoMapper.getTraveTrendToDay(cityCode,dateTime);
+          return  listMap;
+    }
+
+
+   public List<Map<String,Object>>  getTraveTrendServen(String cityCode,String dateTime){
+       List<Map<String,Object>> listMap=travelInfoMapper.getTraveTrendServen(cityCode,dateTime);
+       return listMap;
+    }
+
+    public List<Map<String,Object>> startinPointRanking(String cityCode){
+        return travelInfoMapper.StartinPointRanking(cityCode);
+    }
+
+    public List<Map<String,Object>> destinationRanking(String cityCode){
+        return travelInfoMapper.destinationRanking(cityCode);
+    }
+    public List<Map<String,Object>> combinedTravel(String cityCode){
+        return travelInfoMapper.combinedTravel(cityCode);
+    }
+
+
+
 }

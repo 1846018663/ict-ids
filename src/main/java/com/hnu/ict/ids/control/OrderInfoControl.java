@@ -39,7 +39,7 @@ public class OrderInfoControl {
     @Value("${travel.algorithm.add.url}")
     private String add_URL;
 
-    @Resource
+    @Autowired
     OrderInfoService orderInfoService;
 
     @Autowired
@@ -95,10 +95,23 @@ public class OrderInfoControl {
         order.setOrderSource("乘客服务系统");
         order.setStatus(0);//初始化
         order.setTravelSource(null);
-        String u_ids=json.getString("seat_preference");
+        JSONArray jsonArray=new JSONArray();
+        if(json.getJSONArray("seat_preferences")!=null){
+            jsonArray =json.getJSONArray("seat_preferences");
+        }else{
+           String ids= json.getString("u_ids") ;
+           String[] id=ids.split(",");
+           for (int i=0; i<id.length;i++){
+               JSONObject object=new JSONObject();
+               object.put("u_id",id[i]);
+               object.put("seat_preference","");
+               jsonArray.add(object);
+
+           }
+        }
+        orderInfoService.insertOrder(order,jsonArray.toString());
         //操作数据库
         try {
-            orderInfoService.insertOrder(order,u_ids);
             result.setCode(ResutlMessage.SUCCESS.getName());
             result.setMessage(ResutlMessage.SUCCESS.getValue());
             logger.info("新增行程"+result.toString());
@@ -166,7 +179,7 @@ public class OrderInfoControl {
 
     @RequestMapping(value="/addExistence" ,method = RequestMethod.POST)
     public Map addExistence(@RequestBody  String body){
-        Map<String,String> result=new HashMap<>();
+        Map<String,Object> result=new HashMap<>();
         JSONObject json=JSONObject.parseObject(body);
         logger.info("添加已有行程"+body);
 
@@ -187,7 +200,7 @@ public class OrderInfoControl {
         if(oper_type==1){
             //验证o_id    SourceOrderId是否已经存在
 
-            OrderInfo orderInfo= orderInfoService.getBySourceOrderId(json.getLong("o_d").toString());
+            OrderInfo orderInfo= orderInfoService.getBySourceOrderId(json.getLong("o_id").toString());
 
             if(orderInfo!=null){
                 result.put("code","00007");
@@ -211,10 +224,24 @@ public class OrderInfoControl {
             order.setTravelId(travel_id);
 
             logger.info("创建订单数据行程id"+travel_id);
-            JSONArray array=JSONArray.parseArray(json.getString("seat_preference"));
+            JSONArray jsonArray=new JSONArray();
+            if(json.getString("seat_preference")!=null){
+                jsonArray =JSONArray.parseArray(json.getString("seat_preference"));
+            }else{
+                String ids= json.getString("u_ids") ;
+                String[] id=ids.split(",");
+                for (int i=0; i<id.length;i++){
+                    JSONObject object=new JSONObject();
+                    object.put("u_id",id[i]);
+                    object.put("seat_preference","");
+                    jsonArray.add(object);
+
+                }
+            }
+//            orderInfoService.insertOrder(order,jsonArray.toString());
             //调用算法添加已有行程算法接口
             logger.info("===============调用添加已有行程算法接口=============");
-            boolean bool= addYesAlgorithm(order,array.size(),array);
+            boolean bool= addYesAlgorithm(order,jsonArray.size(),jsonArray);
             logger.info("===============调用添加已有行程算法完成   对行程数据update=============");
 
             logger.info("===============保存已有行程对应订单信息完成=============");
@@ -223,6 +250,18 @@ public class OrderInfoControl {
                 result.put("code","00008");
                 result.put("message","加入成功");
                 result.put("result","");
+                OrderInfo orederInfo= orderInfoService.getBySourceOrderId(order.getSourceOrderId());
+                List<OrderUserLink> listUser= orderUserLinkService.findOrderNo(order.getOrderNo());
+                JSONArray array=new JSONArray();
+                for (OrderUserLink user:listUser){
+                    JSONObject jsonObject=new JSONObject();
+                    jsonObject.put("u_id",user.getUserId());
+                    TravelTicketInfo travelTicketInfo= travelTicketInfoService.findTraveIdSeat(orederInfo.getTravelId(),user.getUserId().intValue());
+                    jsonObject.put("seat_number",travelTicketInfo.getSeatNum());
+                    array.add(jsonObject);
+                }
+                result.put("ticket_info",array);
+
                 logger.info("添加已有行程"+result.toString());
             }else{
                 result.put("code","00007");
@@ -370,7 +409,7 @@ public class OrderInfoControl {
                 travelTicketInfos.add(travelTicketInfo);
             }
 
-            travelTicketInfoService.deldelTraveId(travelInfo.getTravelId());
+            travelTicketInfoService.deldelTraveId(info.getTravelId());
             travelTicketInfoService.insertTravelTicketInfoList(travelTicketInfos);
 
             return  true;

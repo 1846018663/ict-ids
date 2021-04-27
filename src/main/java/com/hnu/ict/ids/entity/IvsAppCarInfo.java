@@ -5,14 +5,16 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.util.Date;
+
 
 @Data
 @TableName(value = "ivs_app_car_info")//车辆信息
 public class IvsAppCarInfo {
 
     /** 主键ID **/
-    @TableId(type = IdType.AUTO)
-    private int cid;
+    @TableId(type = IdType.NONE)
+    private int cId;
 
 
     /**
@@ -45,5 +47,11 @@ public class IvsAppCarInfo {
     private String cStatus;
 
 
+    private Date lastMaintenanceTime;
 
+    private Date lastAnnualInspection;
+
+    private String cIsuse;
+
+    private Date cIsuseDate;
 }

@@ -15,7 +15,7 @@ public class IvsAppUserInfo {
 
     /** 主键ID **/
     @TableId(type = IdType.AUTO)
-    private int id;
+    private int uId;
 
     /**
      * 账号名称
@@ -55,7 +55,7 @@ public class IvsAppUserInfo {
     /**
      * 手机号
      */
-    private String phoen;
+    private String phone;
 
 
     /**
@@ -110,7 +110,7 @@ public class IvsAppUserInfo {
     /**
      * 用户的第三方id
      */
-    private String opengid;
+    private String openid;
 
 
     /**
@@ -123,5 +123,7 @@ public class IvsAppUserInfo {
      * 血型:\\r\\n1：A型\\r\\n2：B型\\r\\n3：AB型\\r\\n4：O型\\r\\n5：HR型
      */
     private int bloodType;
+
+    private String number;
 
 }

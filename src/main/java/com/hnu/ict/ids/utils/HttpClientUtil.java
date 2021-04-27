@@ -1,9 +1,12 @@
 package com.hnu.ict.ids.utils;
 
+import io.micrometer.core.instrument.util.IOUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -20,6 +23,7 @@ import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -30,11 +34,16 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class HttpClientUtil {
@@ -89,7 +98,7 @@ public class HttpClientUtil {
 
     }
 
-    private HttpClientUtil() {
+    public HttpClientUtil() {
     }
 
 
@@ -229,5 +238,66 @@ public class HttpClientUtil {
         return resultString;
 
     }
+
+
+    public String generateRequestParameters(String Url, Map<String, String> params) {
+        StringBuilder sb = new StringBuilder(Url);
+            sb.append("?");
+            for (Map.Entry map : params.entrySet()) {
+                sb.append(map.getKey())
+                        .append("=")
+                        .append(map.getValue())
+                        .append("&");
+                Url = sb.substring(0, sb.length() - 1);
+            return Url;
+        }
+        return sb.toString();
+    }
+
+
+
+    public static String doGetHttp(String url, Map<String, String> headers, Map<String, Object> params) {
+        HttpClient httpclient = new DefaultHttpClient();
+        String apiUrl = url;
+        StringBuffer param = new StringBuffer();
+        int i = 0;
+        for (String key : params.keySet()) {
+            if (i == 0)
+                param.append("?");
+            else
+                param.append("&");
+            param.append(key).append("=").append(params.get(key));
+            i++;
+        }
+        apiUrl += param;
+        String result = null;
+        logger.info("url: " + apiUrl);
+        try {
+            HttpGet httpGet = new HttpGet(apiUrl);
+            // 添加http headers
+            if (headers != null && headers.size() > 0) {
+                for (String key : headers.keySet()) {
+                    httpGet.addHeader(key, headers.get(key));
+                }
+            }
+
+            HttpResponse response = httpclient.execute(httpGet);
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            logger.info("code : " + statusCode);
+
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                InputStream instream = entity.getContent();
+                result = new BufferedReader(new InputStreamReader(instream))
+                        .lines().collect(Collectors.joining(System.lineSeparator()));
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
 
 }

@@ -1,5 +1,6 @@
 package com.hnu.ict.ids.service;
 
+import com.hnu.ict.ids.bean.TraveTrendBean;
 import com.hnu.ict.ids.entity.TravelInfo;
 
 import java.math.BigInteger;
@@ -13,7 +14,7 @@ public interface TravelInfoService {
 
     TravelInfo findTravelId(String  travelId);
 
-    int finDateTraveTotal(Date startDate, Date endDate);
+    int finDateTraveTotal(Date startDate, Date endDate,String cityCode);
 
 
     TravelInfo getCarTime(int carId,Date timeDate);
@@ -29,5 +30,18 @@ public interface TravelInfoService {
 
 
     List<TravelInfo> findeNotPushStatus();
+
+
+    List<Map<String,Object>> getTraveTrendToDay(String cityCode,String dateTime);
+
+
+    List<Map<String,Object>> getTraveTrendServen(String cityCode,String dateTime);
+
+
+    List<Map<String,Object>> startinPointRanking(String cityCode);
+
+    List<Map<String,Object>> destinationRanking(String cityCode);
+
+    List<Map<String,Object>> combinedTravel(String cityCode);
 
 }

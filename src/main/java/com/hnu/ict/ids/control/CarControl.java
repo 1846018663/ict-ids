@@ -60,7 +60,7 @@ public class CarControl {
 
              //根据车辆id查询当前时间
              Date time= new Date();
-             TravelInfo travelInfo= travelInfoService.getCarTime(carinfo.getCid(),time);
+             TravelInfo travelInfo= travelInfoService.getCarTime(carinfo.getCId(),time);
              IvsAppPlatformInfo startPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getBeginStationId());
              IvsAppPlatformInfo  endPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getEndStationId());
              carTrave.setStartStationName(startPlatform.getPName());

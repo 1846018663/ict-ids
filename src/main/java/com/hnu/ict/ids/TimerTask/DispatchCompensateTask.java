@@ -65,7 +65,7 @@ public class DispatchCompensateTask {
     @Value("${travel.algorithm.seat.url}")
     private String seat_url;
 
-   @Scheduled(cron = "0/1 * * * * ?")
+//   @Scheduled(cron = "0/1 * * * * ?")
     public void compensates() throws Exception{
        logger.info("行程订单补偿");
         //查询同步失败订单信息

@@ -26,4 +26,8 @@ public interface IvsAppCarInfoService {
 
 
     List<CarTypeTotal> getCarTypeTotal(String cityCode);
+
+    int insert(IvsAppCarInfo ivsAppCarInfo);
+
+    int update(IvsAppCarInfo ivsAppCarInfo);
 }

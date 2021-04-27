@@ -30,7 +30,7 @@ public interface TravelTicketInfoMapper extends BaseMapper<TravelTicketInfo> {
     void delTraveIdSeat(@Param("traveId")String traveId,@Param("userId")Integer userId);
 
 
-    @Delete("DELETE FROM travel_ticket_info t where t.travel_id=#{traveId}")
+    @Delete("DELETE FROM travel_ticket_info where travel_id=#{traveId} ")
     void deldelTraveId(@Param("traveId")String  traveId);
 
 }

@@ -13,7 +13,7 @@ public class SeatBean {
     private String correspond_order_number;
     private List<SeatUserBean> order_u_id;
     private Integer it_number;
-    private List<SeatPreference> seatPreferenceList;
+    private List<SeatPreference> user_preference;
 
 
 }
