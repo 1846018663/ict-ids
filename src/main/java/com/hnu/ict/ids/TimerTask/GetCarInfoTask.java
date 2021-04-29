@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 
@@ -28,7 +29,7 @@ public class GetCarInfoTask{
     @Autowired
     IvsAppCarInfoService ivsAppCarInfoService;
 
-//    @Scheduled(cron = "0/35 * * * * ?")
+    @Scheduled(cron = "0 0 0/4 * * ? ")
     public void getCarInfo() throws Exception {
         String body=HttpClientUtil.doGet(URL);
         JSONObject object=JSONObject.parseObject(body);

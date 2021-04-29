@@ -1,5 +1,6 @@
-package com.hnu.ict.ids.utils;
+package com.hnu.ict.ids.config;
 
+import com.hnu.ict.ids.utils.CheckParamsInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

@@ -40,13 +40,13 @@ public class OrderInfo {
     /**
      * 出发站id
      */
-    private int beginStationId;
+    private Integer beginStationId;
 
 
     /**
      * 终点站id
      */
-    private int endStationId;
+    private Integer endStationId;
 
 
     /**

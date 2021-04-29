@@ -32,7 +32,15 @@ public class IvsAppPlatformInfoServiceImpl implements IvsAppPlatformInfoService 
     }
 
     @Override
-    public IvsAppPlatformInfo getByPlatformId(int platforId){
+    public IvsAppPlatformInfo getByPlatformId(String platforId){
         return ivsAppPlatformInfoMapper.getByPlatformId(platforId);
+    }
+
+    public int insert(IvsAppPlatformInfo ivsAppPlatformInfo){
+        return ivsAppPlatformInfoMapper.insertIvsAppPlatformInfo(ivsAppPlatformInfo);
+    }
+
+    public int updateById(IvsAppPlatformInfo ivsAppPlatformInfo){
+        return ivsAppPlatformInfoMapper.updateById(ivsAppPlatformInfo);
     }
 }

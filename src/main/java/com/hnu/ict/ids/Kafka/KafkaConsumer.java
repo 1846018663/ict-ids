@@ -20,7 +20,7 @@ import java.util.Date;
 @Component
 public class KafkaConsumer {
 
-    Logger logger= LoggerFactory.getLogger(KafkaProducer.class);
+    Logger logger= LoggerFactory.getLogger(KafkaProducera.class);
 
     @Value("${map.redis.car.positioning}")
     private String carPositioning;
@@ -87,7 +87,7 @@ public class KafkaConsumer {
     @KafkaListener(topics = "vms_trip_status_change_info")
     public void vmsTripStatusChangeInfo(ConsumerRecord<?, ?> record) throws Exception {
         logger.info("消费---vms_trip_status_change_info---车辆行程状态变更");
-        logger.info("++++++++++++++++++topic = %s, offset = %d, value = %s \n", record.topic(), record.offset(), record.value());
+        logger.info(record.value().toString());
 
         //对其车辆信息进行解析并保存数据库
         JSONObject jsonObject= JSON.parseObject( record.value().toString());
@@ -109,8 +109,7 @@ public class KafkaConsumer {
     @KafkaListener(topics = "vms_in_and_out_station")
     public void vmsInAndOutStation (ConsumerRecord<?, ?> record) throws Exception {
         logger.info("消费---vms_in_and_out_station---车辆进出站信息");
-        logger.info("++++++++++++++++++topic = %s, offset = %d, value = %s \n", record.topic(), record.offset(), record.value());
-
+        logger.info(record.value().toString());
 
         //对其车辆信息进行解析并保存数据库
         JSONObject jsonObject= JSON.parseObject( record.value().toString());
@@ -134,9 +133,8 @@ public class KafkaConsumer {
      */
     @KafkaListener(topics = "vms_temporary_leave_req")
     public void vmsTemporaryTeaveReq(ConsumerRecord<?, ?> record) throws Exception  {
-        logger.info("消费---vms_temporary_leave_req---车辆进出站信息");
-        logger.info("++++++++++++++++++topic = %s, offset = %d, value = %s \n", record.topic(), record.offset(), record.value());
-
+        logger.info("消费---vms_temporary_leave_req---预约暂离信息");
+        logger.info(record.value().toString());
         //对其车辆信息进行解析并保存数据库
         JSONObject jsonObject= JSON.parseObject( record.value().toString());
         TdCarSuspendInfo tdCarSuspendInfo = JSON.toJavaObject(jsonObject, TdCarSuspendInfo.class);
@@ -159,8 +157,7 @@ public class KafkaConsumer {
     @KafkaListener(topics = "vms_temporary_leave_end")
     public void vmsTemporaryLeaveEnd(ConsumerRecord<?, ?> record) throws Exception  {
         logger.info("消费---vms_temporary_leave_end---结束暂离信息");
-        logger.info("++++++++++++++++++topic = %s, offset = %d, value = %s \n", record.topic(), record.offset(), record.value());
-
+        logger.info(record.value().toString());
 
         //对其车辆信息进行解析并保存数据库
         JSONObject jsonObject= JSON.parseObject( record.value().toString());
@@ -182,8 +179,7 @@ public class KafkaConsumer {
     @KafkaListener(topics = "vms_car_fault")
     public void vmsCarFault(ConsumerRecord<?, ?> record) throws Exception  {
         logger.info("消费---vms_car_fault---车辆故障（停止运营）信息");
-        logger.info("++++++++++++++++++topic = %s, offset = %d, value = %s \n", record.topic(), record.offset(), record.value());
-
+        logger.info(record.value().toString());
         //对其车辆信息进行解析并保存数据库
         JSONObject jsonObject= JSON.parseObject( record.value().toString());
         TdCarFaultInfo tdCarFaultInfo = JSON.toJavaObject(jsonObject, TdCarFaultInfo.class);
@@ -202,11 +198,10 @@ public class KafkaConsumer {
     /**
      * 7、 车辆状态信息，预留
      */
-   // @KafkaListener(topics = "vms_car_state fault")
+    @KafkaListener(topics = "vms_car_state")
     public void vmsCarState(ConsumerRecord<?, ?> record) throws Exception  {
         logger.info("消费---vms_car_state fault---车辆状态信息，预留");
-        logger.info("++++++++++++++++++topic = %s, offset = %d, value = %s \n", record.topic(), record.offset(), record.value());
-
+        logger.info(record.value().toString());
         //对其车辆信息进行解析并保存数据库
         JSONObject jsonObject= JSON.parseObject( record.value().toString());
         TdCarStateInfo tdCarStateInfo = JSON.toJavaObject(jsonObject, TdCarStateInfo.class);
@@ -219,6 +214,18 @@ public class KafkaConsumer {
 
         //通知算法  调用接口
 
+    }
+
+
+    /**
+     * 7、 行程数据
+     */
+  //  @KafkaListener(topics = "dms_trip_dispatching")
+    public void getTripInfo(ConsumerRecord<?, ?> record) throws Exception {
+        logger.info("消费---dms_trip_dispatching---行程数据，预留");
+        logger.info("++++++++++++++++++topic = %s, offset = %d, value = %s \n", record.topic(), record.offset(), record.value());
+        logger.info("dms_trip_dispatching=====key===="+record.key());
+        logger.info("dms_trip_dispatching====value====="+record.value());
     }
 
 }

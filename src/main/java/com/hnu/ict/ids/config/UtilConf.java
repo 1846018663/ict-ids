@@ -1,4 +1,4 @@
-package com.hnu.ict.ids.utils;
+package com.hnu.ict.ids.config;
 
 import java.util.UUID;
 

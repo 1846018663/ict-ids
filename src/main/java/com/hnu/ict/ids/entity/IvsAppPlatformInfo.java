@@ -12,8 +12,8 @@ public class IvsAppPlatformInfo {
 
 
     /** 主键ID **/
-    @TableId(type = IdType.AUTO)
-    private int pId;
+    @TableId(type = IdType.NONE)
+    private String pId;
 
     /**
      * 所属城市统一编码
@@ -112,6 +112,17 @@ public class IvsAppPlatformInfo {
      * 线路来回侧类型（0--来侧，1--回侧）
      */
     private int pRoadSide;
+
+    /**
+     *站点限速，单位km/h
+     */
+    private Integer speedLimit;
+
+    /**
+     *站点范围，半径，单位:米(m)
+     */
+    private Integer rangeRadius;
+
 
 
 

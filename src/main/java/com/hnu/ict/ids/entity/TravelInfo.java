@@ -166,4 +166,7 @@ public class TravelInfo {
     private String CCode;
 
 
+    private String arriveTime;
+
+
 }

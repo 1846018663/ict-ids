@@ -16,5 +16,9 @@ public interface IvsAppPlatformInfoService {
 
     List<PlatformInfoFrom> getPlatformAll(String cityCode);
 
-    IvsAppPlatformInfo getByPlatformId(int platforId);
+    IvsAppPlatformInfo getByPlatformId(String platforId);
+
+    int insert(IvsAppPlatformInfo ivsAppPlatformInfo);
+
+    int updateById(IvsAppPlatformInfo ivsAppPlatformInfo);
 }

@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +27,7 @@ import java.util.*;
 
 @Api(tags = "车辆信息API")
 @RestController
+//@CrossOrigin(origins = "*",maxAge = 3600)
 @RequestMapping("/car")
 public class CarControl {
 
@@ -61,8 +63,8 @@ public class CarControl {
              //根据车辆id查询当前时间
              Date time= new Date();
              TravelInfo travelInfo= travelInfoService.getCarTime(carinfo.getCId(),time);
-             IvsAppPlatformInfo startPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getBeginStationId());
-             IvsAppPlatformInfo  endPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getEndStationId());
+             IvsAppPlatformInfo startPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getBeginStationId().toString());
+             IvsAppPlatformInfo  endPlatform=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getEndStationId().toString());
              carTrave.setStartStationName(startPlatform.getPName());
              carTrave.setEndStationName(endPlatform.getPName());
 

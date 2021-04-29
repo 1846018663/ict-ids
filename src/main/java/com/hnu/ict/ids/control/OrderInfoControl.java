@@ -4,6 +4,7 @@ package com.hnu.ict.ids.control;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.hnu.ict.ids.Kafka.KafkaProducera;
 import com.hnu.ict.ids.bean.SeatPreference;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.NetworkEnum;
@@ -11,7 +12,7 @@ import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.exception.ResutlMessage;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
-import com.hnu.ict.ids.utils.UtilConf;
+import com.hnu.ict.ids.config.UtilConf;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
@@ -26,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
 import java.util.*;
 
 @Api(tags = "订单行程API")
@@ -59,6 +59,9 @@ public class OrderInfoControl {
 
     @Autowired
     TravelTicketInfoService travelTicketInfoService;
+
+    @Autowired
+    KafkaProducera kafkaProducera;
 
 
 
@@ -261,7 +264,8 @@ public class OrderInfoControl {
                     array.add(jsonObject);
                 }
                 result.put("ticket_info",array);
-
+                TravelInfo info=travelInfoService.findTravelId(orederInfo.getTravelId());
+                kafkaProducera.getTripInfo(info);
                 logger.info("添加已有行程"+result.toString());
             }else{
                 result.put("code","00007");

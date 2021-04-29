@@ -59,13 +59,13 @@ public interface TravelInfoMapper extends BaseMapper<TravelInfo> {
     List<Map<String,Object>> getTraveTrendServen(@Param("cityCode")String cityCode,@Param("dateTime") String dateTime);
 
 
-    @Select("select begin_station_name as platforName,count(begin_station_name) as total  from travel_info where c_code=#{cityCode} order by begin_station_name desc limit 10")
+    @Select("select begin_station_name as platforName,count(begin_station_name) as total  from travel_info where c_code=#{cityCode} order by begin_station_name desc limit 6")
     List<Map<String,Object>> StartinPointRanking(@Param("cityCode")String cityCode);
 
-    @Select("select end_station_name as platforName,count(end_station_name) as total from travel_info where c_code=#{cityCode}  order by begin_station_name desc limit 10")
+    @Select("select end_station_name as platforName,count(end_station_name) as total from travel_info where c_code=#{cityCode}  order by begin_station_name desc limit 6")
     List<Map<String,Object>> destinationRanking(@Param("cityCode")String cityCode);
 
-    @Select("select a.begin_station_name as  platforName,count(a.begin_station_id) as total from travel_info a inner join (select begin_station_id, end_station_id from travel_info where c_code=#{cityCode}) b on a.begin_station_id = b.end_station_id  and a.begin_station_id = b.end_station_id GROUP BY a.begin_station_id order by a.begin_station_id  limit 10")
+    @Select("select a.begin_station_name as  platforName,count(a.begin_station_id) as total from travel_info a inner join (select begin_station_id, end_station_id from travel_info where c_code=#{cityCode}) b on a.begin_station_id = b.end_station_id  and a.begin_station_id = b.end_station_id GROUP BY a.begin_station_id order by a.begin_station_id  limit 6")
     List<Map<String,Object>> combinedTravel(@Param("cityCode")String cityCode);
 
 

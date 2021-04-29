@@ -10,4 +10,6 @@ public interface IvsAppUserInfoService {
 
     IvsAppUserInfo findNumber(String number);
 
+    IvsAppUserInfo getById(Integer id);
+
 }

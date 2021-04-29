@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hnu.common.respone.PojoBaseResponse;
+import com.hnu.ict.ids.Kafka.KafkaProducera;
 import com.hnu.ict.ids.bean.*;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
@@ -77,6 +78,9 @@ public class DispatchTaskControl {
     @Autowired
     IvsAppPlatformInfoService ivsAppPlatformInfoService;
 
+
+    @Autowired
+    KafkaProducera kafkaProducera;
 
     /**
      * 调用新增行程算法接口
@@ -175,7 +179,7 @@ public class DispatchTaskControl {
                         info.setBeginStationId(object.getInteger("from_p_id"));
                         //根据出发站台查询归属城市
                         if(object.getInteger("from_p_id")!=null){
-                            IvsAppPlatformInfo appPlatformInfo= ivsAppPlatformInfoService.getByPlatformId(object.getInteger("from_p_id"));
+                            IvsAppPlatformInfo appPlatformInfo= ivsAppPlatformInfoService.getByPlatformId(object.getInteger("from_p_id").toString());
                             info.setCCode(appPlatformInfo.getCCode());
                         }
 
@@ -187,6 +191,7 @@ public class DispatchTaskControl {
                         info.setExpectedTime(object.getInteger("expected_time").toString());
                         info.setDriverContent(object.getString("driver_content"));
                         info.setAllTravelPlat(object.getString("all_travel_plat"));
+                        info.setArriveTime(object.getString("start_time")+","+object.getString("arrive_time"));
                         info.setCarId(object.getInteger("car_id"));
                         info.setBeginStationName(object.getString("from_order_name"));
                         info.setEndStationName(object.getString("to_order_name"));
@@ -245,9 +250,11 @@ public class DispatchTaskControl {
     public String successfulTrip(Map<String,String > map,List<TravelInfo> travelInfoList,
                                  List<OrderInfo> orderInfoList){
         List<CustomerHttpAPIBean> customerHttpAPIBeanList=new ArrayList<>();
+        List<String> travelIdList=new ArrayList<>();
         for(TravelInfo  travelInfo:travelInfoList){
             CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
             customerHttpAPIBean.setDistance(travelInfo.getDistance().doubleValue());
+            travelIdList.add(travelInfo.getTravelId());
 
             String oIds="";
             for(Map.Entry<String, String> entry : map.entrySet()){
@@ -396,6 +403,11 @@ public class DispatchTaskControl {
                travelInfoService.updateByIdList(travelInfoList,2);
             }else{
                 //失败   数据信息做修改  成功status 为1
+                logger.info("kafka准备发消息");
+                for (String id:travelIdList){
+                    TravelInfo info=travelInfoService.findTravelId(id);
+                    kafkaProducera.getTripInfo(info);
+                }
                 travelInfoService.updateByIdList(travelInfoList,1);
             }
         } catch (Exception e) {

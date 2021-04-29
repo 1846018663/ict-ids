@@ -27,7 +27,7 @@ public class GetDriverInfoTask {
     IvsAppUserInfoService ivsAppUserInfoService;
 
 
-//    @Scheduled(cron = "0/55 * * * * ?")
+    @Scheduled(cron = "0 0 0/6 * * ? ")
     public void getCarInfo() throws Exception {
         String body= HttpClientUtil.doGet(URL);
         JSONObject object=JSONObject.parseObject(body);

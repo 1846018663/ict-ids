@@ -30,6 +30,10 @@ public class IvsAppUserInfoServiceImpl implements IvsAppUserInfoService {
         return ivsAppUserInfoMapper.findNumber(number);
     }
 
+    public IvsAppUserInfo getById(Integer id){
+       return  ivsAppUserInfoMapper.selectById(id);
+    }
+
 
 
 }
