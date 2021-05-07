@@ -114,7 +114,6 @@ public class KafkaProducera {
         map.put("value",value);
         logger.info("kafka发布消息："+map);
         kafkaTemplate.send("dms_trip_dispatching",key.toJSONString(),value.toJSONString());
-       // kafkaTemplate.send("dms_trip_dispatching",map);
         return map;
     }
 

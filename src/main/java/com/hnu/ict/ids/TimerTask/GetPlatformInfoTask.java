@@ -28,7 +28,7 @@ public class GetPlatformInfoTask {
     @Autowired
     IvsAppPlatformInfoService ivsAppPlatformInfoService;
 
-
+    //
     @Scheduled(cron = "0 0 5,21 * * ?")
     public void getCarInfo() throws Exception {
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");

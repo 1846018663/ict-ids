@@ -36,7 +36,7 @@ public interface IvsAppPlatformInfoMapper extends BaseMapper<IvsAppPlatformInfo>
     List<PlatformInfoFrom> getPlatformAll(@Param("code") String code);
 
 
-    /**
+    /**宋puls
      * 根据状态查询站台总数
      * @param status
      * @return

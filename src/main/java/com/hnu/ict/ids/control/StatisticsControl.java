@@ -1,7 +1,9 @@
 package com.hnu.ict.ids.control;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.hnu.common.respone.PojoBaseResponse;
+import com.hnu.ict.ids.bean.ResultBean;
 import com.hnu.ict.ids.bean.TraveTrendBean;
 import com.hnu.ict.ids.bean.TravelStatisticsBean;
 import com.hnu.ict.ids.service.TravelInfoService;
@@ -13,13 +15,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 @Api(tags = "综合统计API")
 @RestController
-//@CrossOrigin(origins = "*",maxAge = 3600)
 @RequestMapping("/report")
 public class StatisticsControl {
 
@@ -36,6 +38,7 @@ public class StatisticsControl {
     @RequestMapping(value = "/travelStatistics",method = RequestMethod.POST)
     @ParamsNotNull(str = "cityCode")
     public PojoBaseResponse getToDayTraveTotal(String cityCode){
+        logger.info("出行订单数量统计1天7天1月");
         PojoBaseResponse result=new PojoBaseResponse();
         Date date=new Date();
         String time=DateUtil.getDateByString(date);
@@ -65,6 +68,7 @@ public class StatisticsControl {
     @RequestMapping(value = "/traveTrendToDay" ,method = RequestMethod.POST)
     @ParamsNotNull(str = "cityCode")
     public PojoBaseResponse getTraveTrendToDay(String cityCode){
+        logger.info("出行今日趋势");
         PojoBaseResponse result=new PojoBaseResponse();
         Date date=new Date();
         String time=DateUtil.getDateByString(date);
@@ -79,6 +83,7 @@ public class StatisticsControl {
     @RequestMapping(value = "/traveTrendServen" ,method = RequestMethod.POST)
     @ParamsNotNull(str = "cityCode")
     public PojoBaseResponse getTraveTrendServen(String cityCode){
+        logger.info("出行7日趋势");
         PojoBaseResponse result=new PojoBaseResponse();
         String time=DateUtil.getServen(new Date());
         List<Map<String,Object>> list= travelInfoService.getTraveTrendServen(cityCode,time);
@@ -91,6 +96,7 @@ public class StatisticsControl {
     @RequestMapping(value = "/startingPointRanking" ,method = RequestMethod.POST)
     @ParamsNotNull(str = "cityCode")
     public PojoBaseResponse startingPointRanking(String cityCode){
+        logger.info("起点排行");
         PojoBaseResponse result=new PojoBaseResponse();
         List<Map<String,Object>> list= travelInfoService.startinPointRanking(cityCode);
         result.setData(list);
@@ -102,6 +108,7 @@ public class StatisticsControl {
     @RequestMapping(value = "/destinationRanking" ,method = RequestMethod.POST)
     @ParamsNotNull(str = "cityCode")
     public PojoBaseResponse destinationRanking(String cityCode){
+        logger.info("终点排行");
         PojoBaseResponse result=new PojoBaseResponse();
         List<Map<String,Object>> list= travelInfoService.destinationRanking(cityCode);
         result.setData(list);

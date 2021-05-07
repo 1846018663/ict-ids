@@ -5,13 +5,18 @@ import com.hnu.common.respone.PojoBaseResponse;
 import com.hnu.ict.ids.bean.PlatformInfoFrom;
 import com.hnu.ict.ids.entity.DistancePlan;
 import com.hnu.ict.ids.entity.IvsAppPlatformInfo;
+import com.hnu.ict.ids.entity.NetworkLog;
+import com.hnu.ict.ids.exception.NetworkEnum;
 import com.hnu.ict.ids.service.DistancePlanService;
 import com.hnu.ict.ids.service.IvsAppPlatformInfoService;
+import com.hnu.ict.ids.service.NetworkLogService;
+import com.hnu.ict.ids.utils.HttpClientUtil;
 import com.hnu.ict.ids.utils.ParamsNotNull;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,11 +29,17 @@ public class IvsAppPlatformInfoControl {
 
     Logger logger= LoggerFactory.getLogger(IvsAppPlatformInfoControl.class);
 
+    @Value("${travel.algorithm.planning.url}")
+    private String url;
+
     @Autowired
     IvsAppPlatformInfoService  ivsAppPlatformInfoService;
 
     @Autowired
     DistancePlanService distancePlanService;
+
+    @Autowired
+    NetworkLogService networkLogServer;
 
 
     /**
@@ -55,11 +66,40 @@ public class IvsAppPlatformInfoControl {
         String endId=json.getString("end_id");
         Map<String,Object> map=new HashMap<>();
         if(StringUtils.hasText(stataId) && StringUtils.hasText(endId)){
-            DistancePlan distancePlan= distancePlanService.findStartEnd(Integer.parseInt(stataId),Integer.parseInt(endId));
-            if(distancePlan!=null){
+            JSONObject jsonObject=new JSONObject();
+            jsonObject.put("start_id",Integer.parseInt(stataId));
+            jsonObject.put("end_id",Integer.parseInt(endId));
+
+
+            NetworkLog networkLog=new NetworkLog();
+            networkLog.setCreateTime(new Date());
+            networkLog.setInterfaceInfo(NetworkEnum.ALGORITHM_PLANNING.getValue());
+            networkLog.setType(NetworkEnum.TYPE_HTTP.getValue());
+            networkLog.setMethod(NetworkEnum.METHOD_POST.getValue());
+            networkLog.setUrl(url);
+            networkLog.setAccessContent(jsonObject.toJSONString());
+
+            String result=null;
+            try {
+                result= HttpClientUtil.doPostJson(url,jsonObject.toJSONString());
+                networkLog.setResponseResult(result);
+                networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
+            } catch (Exception e) {
+                networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
+                e.printStackTrace();
+            }
+            //保存接口日志
+            networkLogServer.insertNetworkLog(networkLog);
+
+            //解析算法内容数据
+            JSONObject object=JSONObject.parseObject(result);
+            logger.info("路径行程与距离算法返回值"+result);
+            int status = object.getInteger("status");
+
+            if(status==1){
                 map.put("code","0008");
-                map.put("distance",distancePlan.getDistance());
-                map.put("all_travel_plat",distancePlan.getAllTravelPlat());
+                map.put("distance",object.getDouble("distance"));
+                map.put("all_travel_plat",object.getString("all_travel_plat"));
             }else{
                 map.put("code","0007");
                 map.put("distance","");

@@ -29,9 +29,11 @@ public class GetCarInfoTask{
     @Autowired
     IvsAppCarInfoService ivsAppCarInfoService;
 
-    @Scheduled(cron = "0 0 0/4 * * ? ")
+    //0/1 * * * * ?
+    @Scheduled(cron = "0 0 0/4 * * ?")
     public void getCarInfo() throws Exception {
-        String body=HttpClientUtil.doGet(URL);
+        StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
+        String body=HttpClientUtil.doGet(urlInfo.toString());
         JSONObject object=JSONObject.parseObject(body);
         logger.info("==========获取车辆信息============"+body);
         if(object.getBoolean("success")==true){

@@ -109,6 +109,12 @@ public class OrderInfo {
     private String message;
 
 
+    /**
+     * 包车类型
+     * 1：车辆5座，
+     * 2：车辆15座，3：车辆23座
+     */
+    private String charteredBus;
 
 
 

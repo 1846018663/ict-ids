@@ -27,7 +27,6 @@ import java.util.*;
 
 @Api(tags = "车辆信息API")
 @RestController
-//@CrossOrigin(origins = "*",maxAge = 3600)
 @RequestMapping("/car")
 public class CarControl {
 

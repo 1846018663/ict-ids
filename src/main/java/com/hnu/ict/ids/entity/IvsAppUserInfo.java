@@ -14,7 +14,7 @@ import java.util.Date;
 public class IvsAppUserInfo {
 
     /** 主键ID **/
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.INPUT)
     private int uId;
 
     /**

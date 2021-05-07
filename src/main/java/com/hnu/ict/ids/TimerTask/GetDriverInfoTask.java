@@ -26,10 +26,11 @@ public class GetDriverInfoTask {
     @Autowired
     IvsAppUserInfoService ivsAppUserInfoService;
 
-
-    @Scheduled(cron = "0 0 0/6 * * ? ")
+    //0/5 * * * * ?
+    @Scheduled(cron = "0 0 0/6 * * ?")
     public void getCarInfo() throws Exception {
-        String body= HttpClientUtil.doGet(URL);
+        StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
+        String body= HttpClientUtil.doGet(urlInfo.toString());
         JSONObject object=JSONObject.parseObject(body);
         logger.info("==========获取司机信息============"+body);
         if(object.getBoolean("success")==true){
@@ -39,19 +40,23 @@ public class GetDriverInfoTask {
             JSONArray carJson= dataJson.getJSONArray("result");
             for (int i=0;i<carJson.size();i++){
                 JSONObject json=carJson.getJSONObject(i);
-                if(json.getString("gmtCreate")==null){
+                if(json.getString("driverId")==null){
                     return ;
                 }
                 //根据id查询车辆是否存在  存在修改   不存在新增
-                IvsAppUserInfo user= ivsAppUserInfoService.findNumber(json.getString("driverEmpNo"));
+                IvsAppUserInfo user= ivsAppUserInfoService.getById(json.getLong("driverId").intValue());
                 if(user==null){
                     user=new IvsAppUserInfo();
+                    user.setUId(json.getLong("driverId").intValue());
                     user.setUName(json.getString("driverName"));
                     user.setNumber(json.getString("driverEmpNo"));
-                    user.setOpenid(json.getLong("driverId").toString());
+                    user.setOpenid(json.getString("driverEmpNo"));
                     user.setPhone(json.getString("mobile"));
                     user.setType(3);
-                    user.setLastLoginTime(DateUtil.strToDate(json.getString("gmtModified")));
+                    if(json.getString("gmtModified")!=null){
+                        user.setLastLoginTime(DateUtil.strToDate(json.getString("gmtModified")));
+                    }
+
                     ivsAppUserInfoService.insert(user);
                 }else{
                     user.setUName(json.getString("driverName"));
@@ -59,7 +64,9 @@ public class GetDriverInfoTask {
                     user.setOpenid(json.getLong("driverId").toString());
                     user.setPhone(json.getString("mobile"));
                     user.setType(3);
-                    user.setLastLoginTime(DateUtil.strToDate(json.getString("gmtModified")));
+                    if(json.getString("gmtModified")!=null){
+                        user.setLastLoginTime(DateUtil.strToDate(json.getString("gmtModified")));
+                    }
                     ivsAppUserInfoService.updateById(user);
                 }
             }
