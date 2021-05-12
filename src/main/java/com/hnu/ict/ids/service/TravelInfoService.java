@@ -44,4 +44,6 @@ public interface TravelInfoService {
 
     List<Map<String,Object>> combinedTravel(String cityCode);
 
+    int insert(TravelInfo travelInfo);
+
 }

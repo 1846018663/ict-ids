@@ -48,7 +48,7 @@ public class StatisticsControl {
         int total = travelInfoService.finDateTraveTotal(DateUtil.strToDate(startTime),DateUtil.strToDate(endTime),cityCode);
         //近7天统计
         String servenTime=DateUtil.getServen(date)+" 23:59:59";
-        int servenTotal = travelInfoService.finDateTraveTotal(DateUtil.strToDate(startTime),DateUtil.strToDate(servenTime),cityCode);
+        int servenTotal = travelInfoService.finDateTraveTotal(DateUtil.strToDate(servenTime),DateUtil.strToDate(endTime),cityCode);
         //本月统计
         String starMonth=DateUtil.getStarMonth();
         String endMonth=DateUtil.getEndMonth();

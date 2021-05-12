@@ -278,6 +278,7 @@ public class DispatchTaskControl {
             //调用算法获取座位信息
             List<SeatBean> beatLis=new ArrayList<>();
             SeatBean seatBean=new SeatBean();
+            seatBean.setTravel_id(travelInfo.getTravelId());
             seatBean.setCar_id(travelInfo.getCarId());
             seatBean.setCorrespond_order_id(travelInfo.getCorrespondOrderId());
             seatBean.setCorrespond_order_number(travelInfo.getCorrespondOrderNumber());
@@ -398,7 +399,7 @@ public class DispatchTaskControl {
                 //失败   数据信息做修改  失败status 为2
                travelInfoService.updateByIdList(travelInfoList,2);
             }else{
-                //失败   数据信息做修改  成功status 为1
+                //成功   数据信息做修改  成功status 为1
                 logger.info("kafka准备发消息");
                 for (String id:travelIdList){
                     TravelInfo info=travelInfoService.findTravelId(id);

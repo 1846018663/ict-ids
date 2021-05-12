@@ -5,6 +5,7 @@
         select * from order_info
         where
               travel_id is null
+          and  chartered_bus is null
           and status <![CDATA[ <= ]]> 1
           and start_time <![CDATA[ >= ]]> #{statDate}
           and start_time <![CDATA[ <= ]]> #{endDate}
@@ -23,6 +24,7 @@
         select * from order_info
         where
             travel_id is null
+          and chartered_bus is null
           and start_time <![CDATA[ >= ]]> #{statDate}
           and start_time <![CDATA[ <= ]]> #{endDate}
           and status= 0

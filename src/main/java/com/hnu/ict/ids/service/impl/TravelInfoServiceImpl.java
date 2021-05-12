@@ -115,5 +115,7 @@ public class TravelInfoServiceImpl implements TravelInfoService {
     }
 
 
-
+    public int insert(TravelInfo travelInfo){
+        return travelInfoMapper.insert(travelInfo);
+    }
 }

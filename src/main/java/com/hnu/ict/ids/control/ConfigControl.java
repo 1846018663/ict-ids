@@ -25,7 +25,7 @@ import java.util.Optional;
 @RequestMapping("/config")
 public class ConfigControl {
 
-    @Resource
+    @Autowired
     private RedisTemplate redisTemplate;
 
 

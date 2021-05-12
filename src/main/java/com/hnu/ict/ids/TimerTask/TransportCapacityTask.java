@@ -79,7 +79,7 @@ public class TransportCapacityTask {
 
         for (OrderInfo order:orderList){
             JSONObject jsonObject=new JSONObject();
-            jsonObject.put("o_id",order.getId()+"");
+            jsonObject.put("o_id",order.getSourceOrderId());
             jsonObject.put("from_p_id",order.getBeginStationId()+"");
             jsonObject.put("to_p_id",order.getEndStationId()+"");
             jsonObject.put("start_time",DateUtil.getCurrentTime(order.getStartTime()));
