@@ -81,6 +81,7 @@ public class IvsAppPlatformInfoControl {
 
             String result=null;
             try {
+                logger.info("获取路径"+jsonObject.toJSONString());
                 result= HttpClientUtil.doPostJson(url,jsonObject.toJSONString());
                 networkLog.setResponseResult(result);
                 networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());

@@ -3,12 +3,9 @@ package com.hnu.ict.ids.TimerTask;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.async.UpdatePlatformAsync;
-import com.hnu.ict.ids.bean.UpdatePlatfromBean;
+import com.hnu.ict.ids.bean.UpdatePlatfromAsyncBean;
 import com.hnu.ict.ids.entity.IvsAppPlatformInfo;
-import com.hnu.ict.ids.entity.IvsAppUserInfo;
 import com.hnu.ict.ids.service.IvsAppPlatformInfoService;
-import com.hnu.ict.ids.service.IvsAppUserInfoService;
-import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +34,8 @@ public class GetPlatformInfoTask {
     @Autowired
     UpdatePlatformAsync updatePlatformAsync;
 
-    //站台信息0 0 5,21 * * ?
-    @Scheduled(cron = "0/55 * * * * ?")
+    //站台信息0/55 * * * * ?
+    @Scheduled(cron = "0 0 5,21 * * ?")
     public void getCarInfo() throws Exception {
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
         String body= HttpClientUtil.doGet(urlInfo.toString());
@@ -48,14 +45,16 @@ public class GetPlatformInfoTask {
             //解析data   key值
             JSONObject dataJson=object.getJSONObject("data");
             //解析车数组内容
+
+
             JSONArray carJson= dataJson.getJSONArray("result");
-            List<UpdatePlatfromBean> list=new ArrayList<>();
+
+            List<UpdatePlatfromAsyncBean> list=new ArrayList<>();
 
             for (int i=0;i<carJson.size();i++){
                 JSONObject json=carJson.getJSONObject(i);
-
                 //封装数据给算法
-                UpdatePlatfromBean updatePlatfromBean=new UpdatePlatfromBean();
+                UpdatePlatfromAsyncBean updatePlatfromBean=new UpdatePlatfromAsyncBean();
                 updatePlatfromBean.setP_id(Integer.parseInt(json.getString("stationCode")));
                 updatePlatfromBean.setP_name(json.getString("stationName"));
                 updatePlatfromBean.setP_type(json.getInteger("stationType"));

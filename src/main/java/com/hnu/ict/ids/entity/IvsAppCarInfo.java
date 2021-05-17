@@ -13,7 +13,7 @@ import java.util.Date;
 public class IvsAppCarInfo {
 
     /** 主键ID **/
-    @TableId(type = IdType.NONE)
+    @TableId(type = IdType.INPUT)
     private int cId;
 
 

@@ -40,20 +40,31 @@ public class KafkaProducera {
     @Autowired
     OrderInfoService orderInfoService;
 
+    static  int boo=0;
+
 
     // 发送消息
-    public Map<String ,Object> getTripInfo(TravelInfo travelInfo ) {
+    public Map<String ,Object> getTripInfo(TravelInfo travelInfo ,int tripType) {
         JSONObject key=new JSONObject();
         key.put("vehicleId",travelInfo.getCarId());
         key.put("timestamp",new Date().getTime());
 
         JSONObject value=new JSONObject();
         value.put("tripNo",travelInfo.getTravelId());
-        value.put("tripType",1);//行程类别，1-车列，2-包车，3-其他
+
+        value.put("tripType",tripType);//行程类别，1-车列，2-包车，3-其他
         //车辆信息封装
         IvsAppCarInfo carInfo=ivsAppCarInfoService.getByCarId(travelInfo.getCarId());
-        value.put("vehicleId",carInfo.getCId());
-        value.put("plateNo",carInfo.getLicenseNumber());
+        if(boo%2==1){
+            value.put("vehicleId",1);
+            value.put("plateNo","沪AE00001");
+        }else{
+            value.put("vehicleId",2);
+            value.put("plateNo","沪AE00002");
+        }
+        boo++;
+//        value.put("vehicleId",carInfo.getCId());
+//        value.put("plateNo",carInfo.getLicenseNumber());
         //司机信息封装
         IvsAppUserInfo userInfo=ivsAppUserInfoService.getById(travelInfo.getDriverId());
         value.put("driverId",userInfo.getUId());

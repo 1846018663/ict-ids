@@ -30,7 +30,7 @@ public class ReqCallbackAsync {
     @Async
     public void reqCallback(ResultEntity result, TravelInfo travelInfo){
         //异步处理
-        logger.info("异步处理请求=================包车");
+        logger.info("异步处理请求=================包车"+JSON.toJSONString(result));
         try {
             String req= HttpClientUtil.doPostJson(back_url, JSON.toJSONString(result));
             JSONObject jsonObject = JSONObject.parseObject(req);
@@ -42,7 +42,7 @@ public class ReqCallbackAsync {
                     travelInfo.setPushStatus(1);
                     travelInfoService.updateById(travelInfo);
                     //消息队列通知大数据平台
-                    kafkaProducera.getTripInfo(travelInfo);
+                    kafkaProducera.getTripInfo(travelInfo,2);
                 }
 
             }else{

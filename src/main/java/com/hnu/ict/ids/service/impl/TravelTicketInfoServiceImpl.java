@@ -31,7 +31,6 @@ public class TravelTicketInfoServiceImpl implements TravelTicketInfoService {
     }
 
     public List<TravelTicketInfo> findPassengerSeating(String traveId){
-        logger.info("根据traveId"+traveId);
         return  travelTicketInfoMapper.findPassengerSeating(traveId);
     }
 

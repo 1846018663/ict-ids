@@ -2,6 +2,8 @@ package com.hnu.ict.ids.TimerTask;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.hnu.ict.ids.async.DiriverinfoUpdateAsync;
+import com.hnu.ict.ids.bean.DiriverinfoUpdateBeanAsync;
 import com.hnu.ict.ids.entity.IvsAppUserInfo;
 import com.hnu.ict.ids.service.IvsAppUserInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
@@ -14,6 +16,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 @EnableScheduling
 public class GetDriverInfoTask {
@@ -23,11 +28,15 @@ public class GetDriverInfoTask {
     @Value("${big.data.getDriverInfo.url}")
     private String URL;
 
+
     @Autowired
     IvsAppUserInfoService ivsAppUserInfoService;
 
-    //0/5 * * * * ?
-    @Scheduled(cron = "0 0 0/6 * * ?")
+    @Autowired
+    DiriverinfoUpdateAsync diriverinfoUpdateAsync;
+
+    //0 0 0/6 * * ?
+    @Scheduled(cron = "0 5 * * * ?")
     public void getCarInfo() throws Exception {
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
         String body= HttpClientUtil.doGet(urlInfo.toString());
@@ -38,12 +47,20 @@ public class GetDriverInfoTask {
             JSONObject dataJson=object.getJSONObject("data");
             //解析车数组内容
             JSONArray carJson= dataJson.getJSONArray("result");
+            List<DiriverinfoUpdateBeanAsync> list=new ArrayList<>();
             for (int i=0;i<carJson.size();i++){
                 JSONObject json=carJson.getJSONObject(i);
                 if(json.getString("driverId")==null){
                     return ;
                 }
-                //根据id查询车辆是否存在  存在修改   不存在新增
+                //调用算法接口  发送司机最新数据
+                DiriverinfoUpdateBeanAsync diriverinfoUpdateBeanAsync=new DiriverinfoUpdateBeanAsync();
+                diriverinfoUpdateBeanAsync.setU_id(json.getLong("driverId").intValue());
+                diriverinfoUpdateBeanAsync.setU_name(json.getString("driverName"));
+                list.add(diriverinfoUpdateBeanAsync);
+
+
+                //根据id查询司机是否存在  存在修改   不存在新增
                 IvsAppUserInfo user= ivsAppUserInfoService.getById(json.getLong("driverId").intValue());
                 if(user==null){
                     user=new IvsAppUserInfo();
@@ -69,6 +86,9 @@ public class GetDriverInfoTask {
                     }
                     ivsAppUserInfoService.updateById(user);
                 }
+            }
+            if(list.size()>0){
+                diriverinfoUpdateAsync.diriverinfoUpdate(list);
             }
         }
 

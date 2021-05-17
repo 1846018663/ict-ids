@@ -3,8 +3,11 @@ package com.hnu.ict.ids.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.hnu.ict.ids.Kafka.KafkaProducera;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.NetworkEnum;
+import com.hnu.ict.ids.exception.ResultEntity;
+import com.hnu.ict.ids.exception.ResutlMessage;
 import com.hnu.ict.ids.mapper.OrderInfoHistotryMapper;
 import com.hnu.ict.ids.mapper.OrderInfoMapper;
 
@@ -55,9 +58,15 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     @Autowired
     TravelTicketInfoService travelTicketInfoService;
 
+    @Autowired
+    KafkaProducera kafkaProducera;
+
 
     @Value("${travel.algorithm.cancels.url}")
     private String URL;
+
+    @Value("${travel.algorithm.cancel.car.url}")
+    private String cancel_car_url;
 
     public List<OrderInfo> findNotTrave(String statDate, String endDate){
         return orderMapper.findNotTrave(statDate,endDate);
@@ -96,7 +105,8 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
     @Transactional
     @Override
-    public void deleteSourceOrderId(OrderInfo order, OrderInfoHistotry orderInfoHistotry,String uIds){
+    public ResultEntity deleteSourceOrderId(OrderInfo order, OrderInfoHistotry orderInfoHistotry, String uIds){
+        ResultEntity resultEntity=new ResultEntity();
         String[] ids=uIds.split(",");
         for (int i=0;i< ids.length;i++){
             logger.info(new BigInteger(ids[i])+"end of input integer"+order.getId());
@@ -117,34 +127,75 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
 
         //业务判断如果未生成行程不做一下操作    如果已经行程存在取消订单需调用算法完成行程取消流程
-        if(!StringUtils.isEmpty(order.getTravelId()) && order.getTicketNumber()>0){
-            TravelInfo travelInfo=travelInfoMapper.findTravelId(order.getTravelId());
-
-            JSONArray seat_info=new JSONArray();
-            JSONObject seatJson=new JSONObject();
-            seatJson.put("car_id",travelInfo.getCarId());
-            //查询座位
-            List<TravelTicketInfo> travelTicketInfoList= travelTicketInfoService.findPassengerSeating(travelInfo.getTravelId());
-            JSONArray correspond_seat_id=new JSONArray();
-            for (int i=0; i<travelTicketInfoList.size();i++){
-               JSONObject ob=new JSONObject();
-               TravelTicketInfo info=travelTicketInfoList.get(i);
-               ob.put("u_id",info.getUserId());
-               ob.put("seat",info.getSeatNum());
-               correspond_seat_id.add(ob);
-            }
-            seatJson.put("correspond_seat_id",correspond_seat_id);
-            seat_info.add(seatJson);
-            travelInfoCancels(order,ids,travelInfo.getItNumber(),seat_info);
-            //删除座位数据
-            for (int i=0;i<ids.length;i++){
-                logger.info("======="+ids[i]);
-                Integer id=Integer.parseInt(ids[i]);
-                logger.info(travelInfo.getTravelId()+"操作座位表"+id);
-                travelTicketInfoService.delTraveIdSeat(travelInfo.getTravelId(),id);
+        //追加条件如果是包车取消走新业务流程
+        if(order.getCharteredBus()!=null || (order.getTravelId()==null && order.getStatus()==1)){
+            JSONObject charteredJSON=new JSONObject();
+            charteredJSON.put("o_id",order.getSourceOrderId());
+            charteredJSON.put("from_p_id",order.getBeginStationId().shortValue());
+            charteredJSON.put("to_p_id",order.getEndStationId());
+            charteredJSON.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
+            if(order.getCharteredBus()==null){
+                charteredJSON.put("chartered_bus","-1");
+            }else{
+                charteredJSON.put("chartered_bus",order.getCharteredBus());
             }
 
+            charteredJSON.put("it_number",ids.length);
+
+            //包车业务取消   删除订单数据并且通知算法是否车辆信息资源
+            try {
+                logger.info("包车运力删除"+charteredJSON.toJSONString());
+                String delCHartered=HttpClientUtil.doPostJson(cancel_car_url,charteredJSON.toJSONString());
+                logger.info("包车运力删除结果"+delCHartered);
+                JSONObject delCHarteredJson=JSONObject.parseObject(delCHartered);
+                resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
+                resultEntity.setCode(ResutlMessage.SUCCESS.getName());
+            } catch (Exception e) {
+                resultEntity.setMessage(ResutlMessage.FAIL.getValue());
+                resultEntity.setCode(ResutlMessage.FAIL.getName());
+                e.printStackTrace();
+            }
+        }else{
+
+            try {
+                if(!StringUtils.isEmpty(order.getTravelId()) && order.getTicketNumber()>0){
+                    TravelInfo travelInfo=travelInfoMapper.findTravelId(order.getTravelId());
+
+                    JSONArray seat_info=new JSONArray();
+                    JSONObject seatJson=new JSONObject();
+                    seatJson.put("car_id",travelInfo.getCarId());
+                    //查询座位
+                    List<TravelTicketInfo> travelTicketInfoList= travelTicketInfoService.findPassengerSeating(travelInfo.getTravelId());
+                    JSONArray correspond_seat_id=new JSONArray();
+                    for (int i=0; i<travelTicketInfoList.size();i++){
+                        JSONObject ob=new JSONObject();
+                        TravelTicketInfo info=travelTicketInfoList.get(i);
+                        ob.put("u_id",info.getUserId());
+                        ob.put("seat",info.getSeatNum());
+                        correspond_seat_id.add(ob);
+                    }
+                    seatJson.put("correspond_seat_id",correspond_seat_id);
+                    seat_info.add(seatJson);
+                    travelInfoCancels(order,ids,travelInfo.getItNumber(),seat_info);
+                    //删除座位数据
+                    for (int i=0;i<ids.length;i++){
+                        logger.info("======="+ids[i]);
+                        Integer id=Integer.parseInt(ids[i]);
+                        logger.info(travelInfo.getTravelId()+"操作座位表"+id);
+                        travelTicketInfoService.delTraveIdSeat(travelInfo.getTravelId(),id);
+                    }
+
+                }
+                resultEntity.setMessage(ResutlMessage.SUCCESS.getValue());
+                resultEntity.setCode(ResutlMessage.SUCCESS.getName());
+            } catch (NumberFormatException e) {
+                resultEntity.setMessage(ResutlMessage.FAIL.getValue());
+                resultEntity.setCode(ResutlMessage.FAIL.getName());
+                e.printStackTrace();
+            }
         }
+
+
 
         //判断订单所属成功是否全部移除
         int count=orderUserLinkMapper.findRemove(order.getOrderNo());
@@ -154,6 +205,27 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             travelInfoMapper.updateTravlInfoStatus(order.getTravelId());
         }
 
+        //通知大数据删除
+       TravelInfo info= travelInfoMapper.findTravelId(order.getTravelId());
+        if(info!=null){
+            boolean bool=true;
+            List<OrderInfo > list=orderMapper.findOrderTravelId(info.getTravelId());
+            for (OrderInfo orderInfo:list){
+                if(orderInfo.getCharteredBus()==null){
+                    bool=false;
+                }
+            }
+
+            if(bool){
+                //包车
+                kafkaProducera.getTripInfo(info,2);
+            }else{
+                //包车
+                kafkaProducera.getTripInfo(info,1);
+            }
+
+        }
+        return resultEntity;
     }
 
 

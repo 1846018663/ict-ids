@@ -259,7 +259,7 @@ public class DispatchTaskControl {
             }
             oIds=oIds.substring(0,oIds.length()-1);
             customerHttpAPIBean.setO_ids(oIds);
-            customerHttpAPIBean.setTravel_id(travelInfo.getTravelId().toString());
+            customerHttpAPIBean.setTravel_id(travelInfo.getTravelId());
             customerHttpAPIBean.setExpected_time(Integer.parseInt(travelInfo.getExpectedTime()));
             customerHttpAPIBean.setAll_travel_plat(travelInfo.getAllTravelPlat());
             customerHttpAPIBean.setDriver_content(travelInfo.getDriverContent());
@@ -403,7 +403,7 @@ public class DispatchTaskControl {
                 logger.info("kafka准备发消息");
                 for (String id:travelIdList){
                     TravelInfo info=travelInfoService.findTravelId(id);
-                    kafkaProducera.getTripInfo(info);
+                    kafkaProducera.getTripInfo(info,1);
                 }
                 travelInfoService.updateByIdList(travelInfoList,1);
             }

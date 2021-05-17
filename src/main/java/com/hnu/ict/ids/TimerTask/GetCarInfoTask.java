@@ -29,7 +29,7 @@ public class GetCarInfoTask{
     @Autowired
     IvsAppCarInfoService ivsAppCarInfoService;
 
-    //0/1 * * * * ?
+    //
     @Scheduled(cron = "0 0 0/4 * * ?")
     public void getCarInfo() throws Exception {
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
@@ -43,11 +43,9 @@ public class GetCarInfoTask{
            JSONArray carJson= dataJson.getJSONArray("result");
            for (int i=0;i<carJson.size();i++){
                JSONObject json=carJson.getJSONObject(i);
-               if(json.getString("gmtCreate")==null){
-                    return ;
-               }
                //根据id查询车辆是否存在  存在修改   不存在新增
                IvsAppCarInfo car= ivsAppCarInfoService.getByCarId(json.getInteger("vehicleId"));
+               logger.info("同步车辆id"+json.getInteger("vehicleId"));
                if(car==null){
                    car=new IvsAppCarInfo();
                    car.setCId(json.getInteger("vehicleId"));

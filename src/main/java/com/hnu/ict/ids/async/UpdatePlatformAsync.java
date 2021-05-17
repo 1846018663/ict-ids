@@ -2,7 +2,7 @@ package com.hnu.ict.ids.async;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.hnu.ict.ids.bean.UpdatePlatfromBean;
+import com.hnu.ict.ids.bean.UpdatePlatfromAsyncBean;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class UpdatePlatformAsync {
     private String updatePlatformUrl;
 
     @Async
-    public void updatePlatformAlgorithm(List<UpdatePlatfromBean> list){
+    public void updatePlatformAlgorithm(List<UpdatePlatfromAsyncBean> list){
         //异步完成算法数据同步----站台信息
         logger.info("异步完成算法数据同步----站台信息"+JSON.toJSONString(list));
         try {

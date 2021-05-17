@@ -154,7 +154,7 @@ public class OrderInfoControl {
                 String uIds=json.getString("u_ids");
                 if(uIds!=null && uIds.length()>0){
                     logger.info("取消订单关联u_id"+uIds);
-                    orderInfoService.deleteSourceOrderId(order,orderInfoHistotry,uIds);
+                    result=orderInfoService.deleteSourceOrderId(order,orderInfoHistotry,uIds);
                 }else{
                     //直接删除订单   根据订单号查询对应u_ids
                     List<OrderUserLink>  list=orderUserLinkService.findOrderNo(order.getOrderNo());
@@ -164,17 +164,13 @@ public class OrderInfoControl {
                     }
                     ids=ids.substring(0,ids.length()-1);
                     logger.info("取消订单关联u_id"+uIds);
-                    orderInfoService.deleteSourceOrderId(order,orderInfoHistotry,ids);
+                    result=orderInfoService.deleteSourceOrderId(order,orderInfoHistotry,ids);
                 }
 
 
             }
 
         }
-
-
-        result.setCode(ResutlMessage.SUCCESS.getName());
-        result.setMessage(ResutlMessage.SUCCESS.getValue());
         logger.info("删除行程"+result.toString());
         return result;
     }
@@ -265,7 +261,7 @@ public class OrderInfoControl {
                 }
                 result.put("ticket_info",array);
                 TravelInfo info=travelInfoService.findTravelId(orederInfo.getTravelId());
-                kafkaProducera.getTripInfo(info);
+                kafkaProducera.getTripInfo(info,1);
                 logger.info("添加已有行程"+result.toString());
             }else{
                 result.put("code","00007");

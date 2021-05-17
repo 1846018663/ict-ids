@@ -5,7 +5,7 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 @Data
-public class UpdatePlatfromBean {
+public class UpdatePlatfromAsyncBean {
     @JSONField(ordinal=1)
     Integer p_id;//站点编号
     @JSONField(ordinal=2)

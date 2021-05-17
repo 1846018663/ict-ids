@@ -4,6 +4,7 @@ package com.hnu.ict.ids.control;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonObject;
 import com.hnu.ict.ids.Kafka.KafkaProducera;
 import com.hnu.ict.ids.async.ReqCallbackAsync;
 import com.hnu.ict.ids.bean.*;
@@ -39,8 +40,8 @@ public class ScheduleCarControl {
 
     @Value("${travel.algorithm.charter.url}")
     private String URL;
-    @Value("${travel.algorithm.seat.url}")
-    private String seat_url;
+    @Value("${travel.algorithm.charterCar.seat.url}")
+    private String charterCar_seat_url;
 
 
     @Autowired
@@ -148,8 +149,14 @@ public class ScheduleCarControl {
             networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
         } catch (Exception e) {
             networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
+            result.setCode("301");
+            result.setMessage("算法服务异常，请稍后再试。。。");
+            result.setResult("");
+            //异步处理
+            reqCallbackAsync.reqCallback(result,null);
             e.printStackTrace();
         }
+
         //保存接口日志
         networkLogServer.insertNetworkLog(networkLog);
 
@@ -160,6 +167,7 @@ public class ScheduleCarControl {
         if (code == 201) {
             //行程数据保存
             JSONArray array = jsonObject.getJSONArray("task");
+
             for (int i = 0; i < array.size(); i++) {
                 JSONObject reObject = array.getJSONObject(i);
                 TravelInfo info = new TravelInfo();
@@ -259,7 +267,7 @@ public class ScheduleCarControl {
                     try {
                         List<TravelTicketInfo> travelTicketInfoList = new ArrayList<>();
                         logger.info("发送获取乘客座位信息参数：" + seatJson);
-                        seatBody = HttpClientUtil.doPostJson(seat_url, seatJson);
+                        seatBody = HttpClientUtil.doPostJson(charterCar_seat_url, seatJson);
                         logger.info("接收获取乘客座位信息参数：" + seatBody);
                         JSONArray arrSeat = JSONArray.parseArray(seatBody);
                         for (int j = 0; j < arrSeat.size(); j++) {
@@ -310,7 +318,18 @@ public class ScheduleCarControl {
                         ticketInfoList.add(ticketInfo);
                     }
                 }
-                resultObject.put("tickets", ticketInfoList);
+                JSONArray arr=new JSONArray();
+                for (TicketInfo ticketInfo: ticketInfoList){
+                    List<Tickets> list=ticketInfo.getTickets();
+                    for (Tickets tickets:list){
+                        JSONObject ticJson=new JSONObject();
+                        ticJson.put("seat_number",tickets.getSeat_number());
+                        ticJson.put("u_id",tickets.getU_id()) ;
+                        arr.add(ticJson);
+                    }
+
+                }
+                resultObject.put("tickets", arr);
 
                 result.setCode("201");
                 result.setMessage(jsonObject.getString("message"));
