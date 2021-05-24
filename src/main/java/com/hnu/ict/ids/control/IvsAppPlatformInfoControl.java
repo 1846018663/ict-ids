@@ -64,11 +64,17 @@ public class IvsAppPlatformInfoControl {
         logger.info("乘客服务系统路径规划与距离计算接口"+body);
         String stataId=json.getString("start_id");
         String endId=json.getString("end_id");
+        String waypoints=json.getString("waypoints");
         Map<String,Object> map=new HashMap<>();
         if(StringUtils.hasText(stataId) && StringUtils.hasText(endId)){
             JSONObject jsonObject=new JSONObject();
             jsonObject.put("start_id",Integer.parseInt(stataId));
             jsonObject.put("end_id",Integer.parseInt(endId));
+            if(waypoints!=null){
+                jsonObject.put("way_id",waypoints);
+            }else{
+                jsonObject.put("way_id","");
+            }
 
 
             NetworkLog networkLog=new NetworkLog();

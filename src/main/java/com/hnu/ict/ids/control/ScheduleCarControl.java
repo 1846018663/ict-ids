@@ -351,5 +351,22 @@ public class ScheduleCarControl {
         return result;
     }
 
+    @RequestMapping(value = "/queryAvailableGroups", method = RequestMethod.POST)
+    public ResultEntity queryAvailableGroups(@RequestBody String body){
+        ResultEntity resultEntity=new ResultEntity();
+        JSONObject json = JSONObject.parseObject(body);
+        Date stime=DateUtil.strToDateyyyyMMddHHmmss(json.getString("stime"));
+        Date etime=DateUtil.strToDateyyyyMMddHHmmss(json.getString("etime"));
+        String routeCode=json.getString("routeCode");
+        String fromPId=json.getString("from_p_id");
+        String toPId=json.getString("to_p_id");
+
+        //获得数据调用算法接口
+
+
+
+        return resultEntity;
+    }
+
 }
 

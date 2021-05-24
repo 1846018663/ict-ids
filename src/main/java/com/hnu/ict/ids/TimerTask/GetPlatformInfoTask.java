@@ -34,13 +34,13 @@ public class GetPlatformInfoTask {
     @Autowired
     UpdatePlatformAsync updatePlatformAsync;
 
-    //站台信息0/55 * * * * ?
-    @Scheduled(cron = "0 0 5,21 * * ?")
+    //站台信息0 0 5,21 * * ?
+    @Scheduled(cron = "0 0/12 * * * ? ")
     public void getCarInfo() throws Exception {
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
         String body= HttpClientUtil.doGet(urlInfo.toString());
         JSONObject object=JSONObject.parseObject(body);
-        logger.info("==========获取站台信息============"+body);
+//        logger.info("==========获取站台信息============"+body);
         if(object.getBoolean("success")==true){
             //解析data   key值
             JSONObject dataJson=object.getJSONObject("data");

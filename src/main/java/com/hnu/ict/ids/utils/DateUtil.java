@@ -326,12 +326,13 @@ public class DateUtil {
         return strtodate;
    }
     public static Date strToDateyyyyMMddHHmmss(String strDate) {
-
         Date date = new Date();
-        try {
-            date = new SimpleDateFormat("yyyyMMddHHmmss").parse(strDate);//先按照原格式转换为时间
-        } catch (ParseException e) {
-            e.printStackTrace();
+        if(!StringUtils.isEmpty(strDate)){
+            try {
+                date = new SimpleDateFormat("yyyyMMddHHmmss").parse(strDate);//先按照原格式转换为时间
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
         return date;
     }
