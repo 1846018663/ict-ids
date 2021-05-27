@@ -2,6 +2,7 @@ package com.hnu.ict.ids.control;
 
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.common.respone.PojoBaseResponse;
+import com.hnu.ict.ids.bean.PathPlanningRequest;
 import com.hnu.ict.ids.bean.PlatformInfoFrom;
 import com.hnu.ict.ids.entity.DistancePlan;
 import com.hnu.ict.ids.entity.IvsAppPlatformInfo;
@@ -67,14 +68,10 @@ public class IvsAppPlatformInfoControl {
         String waypoints=json.getString("waypoints");
         Map<String,Object> map=new HashMap<>();
         if(StringUtils.hasText(stataId) && StringUtils.hasText(endId)){
-            JSONObject jsonObject=new JSONObject();
-            jsonObject.put("start_id",Integer.parseInt(stataId));
-            jsonObject.put("end_id",Integer.parseInt(endId));
-            if(waypoints!=null){
-                jsonObject.put("way_id",waypoints);
-            }else{
-                jsonObject.put("way_id","");
-            }
+            PathPlanningRequest pathPlanningRequest=new PathPlanningRequest();
+            pathPlanningRequest.setToId(endId);
+            pathPlanningRequest.setFromId(stataId);
+            pathPlanningRequest.setWayId(waypoints);
 
 
             NetworkLog networkLog=new NetworkLog();
@@ -83,12 +80,12 @@ public class IvsAppPlatformInfoControl {
             networkLog.setType(NetworkEnum.TYPE_HTTP.getValue());
             networkLog.setMethod(NetworkEnum.METHOD_POST.getValue());
             networkLog.setUrl(url);
-            networkLog.setAccessContent(jsonObject.toJSONString());
+            networkLog.setAccessContent(JSONObject.toJSONString(pathPlanningRequest));
 
             String result=null;
             try {
-                logger.info("获取路径"+jsonObject.toJSONString());
-                result= HttpClientUtil.doPostJson(url,jsonObject.toJSONString());
+                logger.info("获取路径"+JSONObject.toJSONString(pathPlanningRequest));
+                result= HttpClientUtil.doPostJson(url,JSONObject.toJSONString(pathPlanningRequest));
                 networkLog.setResponseResult(result);
                 networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
             } catch (Exception e) {
@@ -106,7 +103,7 @@ public class IvsAppPlatformInfoControl {
             if(status==1){
                 map.put("code","0008");
                 map.put("distance",object.getDouble("distance"));
-                map.put("all_travel_plat",object.getString("all_travel_plat"));
+                map.put("all_travel_plat",object.getString("travelPlat"));
             }else{
                 map.put("code","0007");
                 map.put("distance","");

@@ -29,6 +29,7 @@ public class UpdatePlatformAsync {
         try {
            String result= HttpClientUtil.doPostJson(updatePlatformUrl, JSON.toJSONString(list));
            JSONObject json=JSONObject.parseObject(result);
+            logger.info("异步完成算法数据同步结果"+result);
            if(json.getInteger("status")==1){
                logger.info("异步完成算法数据同步----站台信息完成");
            }else{

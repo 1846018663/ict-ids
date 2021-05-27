@@ -35,18 +35,16 @@ public class GetPlatformInfoTask {
     UpdatePlatformAsync updatePlatformAsync;
 
     //站台信息0 0 5,21 * * ?
-    @Scheduled(cron = "0 0/12 * * * ? ")
+    @Scheduled(cron = "0 0 5,21 * * ?")
     public void getCarInfo() throws Exception {
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
         String body= HttpClientUtil.doGet(urlInfo.toString());
         JSONObject object=JSONObject.parseObject(body);
-//        logger.info("==========获取站台信息============"+body);
+        logger.info("==========获取站台信息============"+body);
         if(object.getBoolean("success")==true){
             //解析data   key值
             JSONObject dataJson=object.getJSONObject("data");
             //解析车数组内容
-
-
             JSONArray carJson= dataJson.getJSONArray("result");
 
             List<UpdatePlatfromAsyncBean> list=new ArrayList<>();
@@ -55,14 +53,27 @@ public class GetPlatformInfoTask {
                 JSONObject json=carJson.getJSONObject(i);
                 //封装数据给算法
                 UpdatePlatfromAsyncBean updatePlatfromBean=new UpdatePlatfromAsyncBean();
-                updatePlatfromBean.setP_id(Integer.parseInt(json.getString("stationCode")));
-                updatePlatfromBean.setP_name(json.getString("stationName"));
-                updatePlatfromBean.setP_type(json.getInteger("stationType"));
-                updatePlatfromBean.setP_route_type(json.getInteger("stationRouteType"));
-                updatePlatfromBean.setNext_p_ids(json.getString("nextStaIds"));
-                updatePlatfromBean.setNext_p_distances(json.getString("nextStaDistances"));
-                updatePlatfromBean.setP_gps(json.getDouble("lng").toString()+","+json.getDouble("lat").toString());
-                updatePlatfromBean.setP_radius(json.getDouble("rangeRadius"));
+                updatePlatfromBean.setStationId(Integer.parseInt(json.getString("stationCode")));
+                updatePlatfromBean.setStationName(json.getString("stationName"));
+                updatePlatfromBean.setStationType(json.getInteger("stationType"));
+                updatePlatfromBean.setStationRouteType(json.getInteger("stationRouteType"));
+
+                if(json.getString("nextStaIds")!=null){
+                    updatePlatfromBean.setNextStaIds(json.getString("nextStaIds"));
+                }else{
+                    updatePlatfromBean.setNextStaIds("");
+                }
+
+                if(json.getString("nextStaDistances")!=null){
+                    updatePlatfromBean.setNextStaDistances(json.getString("nextStaDistances"));
+                }else{
+                    updatePlatfromBean.setNextStaDistances("");
+                }
+
+
+                updatePlatfromBean.setStaGps(json.getDouble("lng").toString()+","+json.getDouble("lat").toString());
+                updatePlatfromBean.setRangeRadius(json.getFloat("rangeRadius"));
+                updatePlatfromBean.setCityCod(json.getString("areaCode"));
                 list.add(updatePlatfromBean);
 
                 //根据站台id获取站台信息
