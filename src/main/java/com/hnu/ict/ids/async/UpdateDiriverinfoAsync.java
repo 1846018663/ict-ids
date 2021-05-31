@@ -2,10 +2,7 @@ package com.hnu.ict.ids.async;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.hnu.ict.ids.bean.CancelCharterCarBeanAsync;
-import com.hnu.ict.ids.bean.DiriverinfoUpdateBeanAsync;
-import com.hnu.ict.ids.entity.OrderInfo;
-import com.hnu.ict.ids.entity.TravelInfo;
+import com.hnu.ict.ids.bean.TraveDiriverinfoRequset;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +12,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * 同步算法基础数据   异步同步司机信息
+ */
 @Component
-public class DiriverinfoUpdateAsync {
+public class UpdateDiriverinfoAsync {
 
-    Logger logger= LoggerFactory.getLogger(DiriverinfoUpdateAsync.class);
+    Logger logger= LoggerFactory.getLogger(UpdateDiriverinfoAsync.class);
 
     @Value("${travel.algorithm.diriverinfo.update.url}")
     private String diriverinfo_update_url;
@@ -29,7 +29,7 @@ public class DiriverinfoUpdateAsync {
      * @param list 司机信息集合
      */
     @Async
-    public void diriverinfoUpdate(List<DiriverinfoUpdateBeanAsync> list) {
+    public void diriverinfoUpdate(List<TraveDiriverinfoRequset> list) {
         //异步完成算法数据同步----站台信息
         logger.info("异步完成算法数据同步----司机信息"+ JSON.toJSONString(list));
         try {

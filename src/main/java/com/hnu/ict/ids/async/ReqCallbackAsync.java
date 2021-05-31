@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+/**
+ * 包车结果  异步回调接口
+ */
 @Component
 public class ReqCallbackAsync {
     Logger logger= LoggerFactory.getLogger(ReqCallbackAsync.class);

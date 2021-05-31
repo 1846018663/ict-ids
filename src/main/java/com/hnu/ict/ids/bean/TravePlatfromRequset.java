@@ -5,8 +5,7 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 @Data
-public class UpdatePlatfromAsyncBean {
-
+public class TravePlatfromRequset {
     Integer stationId;//车站ID
     String stationName;//车站名称
     Integer stationType;//车站类型
