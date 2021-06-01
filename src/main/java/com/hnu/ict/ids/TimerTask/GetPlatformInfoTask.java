@@ -35,7 +35,7 @@ public class GetPlatformInfoTask {
     UpdatePlatformAsync updatePlatformAsync;
 
     //站台信息0 0 5,21 * * ?
-    @Scheduled(cron = "0 0/50 * * * ? ")
+    @Scheduled(cron = "0 0/10 * * * ? ")
     public void getCarInfo() throws Exception {
         //网络请求获取全量站点信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
@@ -57,7 +57,11 @@ public class GetPlatformInfoTask {
                 IvsAppPlatformInfo platformInfo=ivsAppPlatformInfoService.getByPlatformId(json.getString("stationCode"));
 
                 //异步不同步集合数据对象
-                platfromList.add(intoTravePlatfromRequset(json));
+                String code=json.getString("areaCode");
+                if(code.equals("1002")) {
+                    platfromList.add(intoTravePlatfromRequset(json));
+                }
+
                 updateData(platformInfo ,json);
             }
 

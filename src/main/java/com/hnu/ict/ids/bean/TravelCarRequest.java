@@ -11,6 +11,7 @@ public class TravelCarRequest {
     String carId;//车辆id
     Integer carType;//车辆类型
     Integer carSeatNumber;//车辆座位数
+    Integer carOperatonStatus;
 
 
 }

@@ -81,9 +81,9 @@ public class HttpClientUtil {
             // 根据默认超时限制初始化requestConfig
 
             // 客户端从服务器读取数据的timeout
-            int socketTimeout = 1000*300;
+            int socketTimeout = 1000*120;
             // 客户端和服务器建立连接的timeout
-            int connectTimeout = 1000*300;
+            int connectTimeout = 1000*120;
             // 从连接池获取连接的timeout
             int connectionRequestTimeout = 10000;
             //设置请求超时时间

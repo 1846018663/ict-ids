@@ -39,7 +39,7 @@ public class GetCarInfoTask{
     UpdateCarAsync updateCarAsync;
 
 
-    @Scheduled(cron = "0 0/23 * * * ?")
+    @Scheduled(cron = "0 0/2 * * * ?")
     public void getCarInfo() throws Exception {
         //网络请求获取全量车辆信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
@@ -56,7 +56,10 @@ public class GetCarInfoTask{
                JSONObject json=carJson.getJSONObject(i);
                IvsAppCarInfo car= ivsAppCarInfoService.getByCarId(json.getInteger("vehicleId"));
                //异步不同步集合数据对象
-               carList.add( intoTravelCarRequest(json));
+               String code=json.getString("areaCode");
+               if(code.equals("1002")) {
+                   carList.add(intoTravelCarRequest(json));
+               }
                updateData(car ,json);
 
            }
@@ -80,6 +83,8 @@ public class GetCarInfoTask{
         carRequest.setCarType(json.getInteger("carType"));
         carRequest.setCityType(Integer.parseInt(json.getString("areaCode")));
         carRequest.setCarSeatNumber(json.getInteger("seatNum"));
+        carRequest.setCarOperatonStatus(json.getInteger("isDeleted"));
+
         return  carRequest;
     }
 

@@ -36,7 +36,7 @@ public class GetDriverInfoTask {
     UpdateDiriverinfoAsync updatediriverinfoAsync;
 
     //0 0 0/6 * * ?
-    @Scheduled(cron = "0 0/42 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     public void getCarInfo() throws Exception {
         //网络请求获取全量司机信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
@@ -59,7 +59,11 @@ public class GetDriverInfoTask {
                 IvsAppUserInfo user= ivsAppUserInfoService.getById(json.getLong("driverId").intValue());
 
                 //异步不同步集合数据对象
-                diriverinfoList.add(intoTraveDiriverinfoRequset(json));
+                String code=json.getString("areaCode");
+                if(code.equals("1002")){
+                    diriverinfoList.add(intoTraveDiriverinfoRequset(json));
+                }
+
                 updateData(user ,json);
             }
             if(diriverinfoList!=null && diriverinfoList.size()>0){
