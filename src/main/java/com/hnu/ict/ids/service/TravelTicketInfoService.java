@@ -1,6 +1,5 @@
 package com.hnu.ict.ids.service;
 
-import com.hnu.ict.ids.bean.TicketInfo;
 import com.hnu.ict.ids.entity.TravelTicketInfo;
 
 import java.util.List;

@@ -35,8 +35,8 @@ public class GetPlatformInfoTask {
     UpdatePlatformAsync updatePlatformAsync;
 
     //站台信息0 0 5,21 * * ?
-    @Scheduled(cron = "0 0/10 * * * ? ")
-    public void getCarInfo() throws Exception {
+//    @Scheduled(cron = "0 0/10 * * * ? ")
+    public void getPlatformInfo() throws Exception {
         //网络请求获取全量站点信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
         String body= HttpClientUtil.doGet(urlInfo.toString());

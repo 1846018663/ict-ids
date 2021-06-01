@@ -3,7 +3,7 @@ package com.hnu.ict.ids.TimerTask;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.async.UpdateDiriverinfoAsync;
-import com.hnu.ict.ids.bean.TraveDiriverinfoRequset;
+import com.hnu.ict.ids.bean.TraveDiriverinfoRequest;
 import com.hnu.ict.ids.entity.IvsAppUserInfo;
 import com.hnu.ict.ids.service.IvsAppUserInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
@@ -37,7 +37,7 @@ public class GetDriverInfoTask {
 
     //0 0 0/6 * * ?
     @Scheduled(cron = "0 0/5 * * * ?")
-    public void getCarInfo() throws Exception {
+    public void getDriverInfo() throws Exception {
         //网络请求获取全量司机信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
         String body= HttpClientUtil.doGet(urlInfo.toString());
@@ -49,7 +49,7 @@ public class GetDriverInfoTask {
             JSONObject dataJson=object.getJSONObject("data");
             //解析车数组内容
             JSONArray carJson= dataJson.getJSONArray("result");
-            List<TraveDiriverinfoRequset> diriverinfoList=new ArrayList<>();
+            List<TraveDiriverinfoRequest> diriverinfoList=new ArrayList<>();
             for (int i=0;i<carJson.size();i++){
                 JSONObject json=carJson.getJSONObject(i);
                 if(json.getString("driverId")==null){
@@ -78,8 +78,8 @@ public class GetDriverInfoTask {
      * @param json
      * @return
      */
-    public TraveDiriverinfoRequset intoTraveDiriverinfoRequset(JSONObject  json){
-        TraveDiriverinfoRequset traveDiriverinfoRequset=new TraveDiriverinfoRequset();
+    public TraveDiriverinfoRequest intoTraveDiriverinfoRequset(JSONObject  json){
+        TraveDiriverinfoRequest traveDiriverinfoRequset=new TraveDiriverinfoRequest();
         traveDiriverinfoRequset.setUserId(json.getLong("driverId").toString());
         traveDiriverinfoRequset.setUserName(json.getString("driverName"));
         traveDiriverinfoRequset.setCityType(Integer.parseInt(json.getString("areaCode")));

@@ -1,6 +1,5 @@
 package com.hnu.ict.ids.service.impl;
 
-import com.hnu.ict.ids.bean.TicketInfo;
 import com.hnu.ict.ids.entity.TravelTicketInfo;
 import com.hnu.ict.ids.mapper.TravelTicketInfoMapper;
 import com.hnu.ict.ids.service.TravelTicketInfoService;

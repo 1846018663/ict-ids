@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class CustomerHttpAPIBean {
+public class CustomerTravelRequset {
     String o_ids;
     String travel_id;
     double distance;
@@ -17,7 +17,7 @@ public class CustomerHttpAPIBean {
     Integer reservation_status;
     Integer it_number;
     Integer ret_status;
-    List<TicketInfo> ticket_info;
+    List<CustomerTicketInfoRequset> ticket_info;
     Integer waiting_space;
     String oper_time;
 

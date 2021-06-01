@@ -1,7 +1,7 @@
 package com.hnu.ict.ids.control;
 
 import com.alibaba.fastjson.JSON;
-import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
+import com.hnu.ict.ids.bean.CustomerTravelRequset;
 import com.hnu.ict.ids.entity.OrderInfo;
 import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.service.OrderInfoService;
@@ -42,8 +42,8 @@ public class CustomerHttpAPI {
         TravelInfo info= travelInfoService.getById(id);
         OrderInfo order= orderInfoService.getBySourceOrderId(info.getSourceTravelId());
 
-        List<CustomerHttpAPIBean> list=new ArrayList<>();
-        CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
+        List<CustomerTravelRequset> list=new ArrayList<>();
+        CustomerTravelRequset customerHttpAPIBean=new CustomerTravelRequset();
         customerHttpAPIBean.setDistance(info.getDistance().doubleValue());
         customerHttpAPIBean.setO_ids(info.getSourceTravelId());
         customerHttpAPIBean.setTravel_id(info.getId().toString());

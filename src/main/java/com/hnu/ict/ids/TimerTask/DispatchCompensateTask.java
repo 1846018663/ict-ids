@@ -1,27 +1,21 @@
 package com.hnu.ict.ids.TimerTask;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.bean.*;
 import com.hnu.ict.ids.entity.*;
-import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -72,10 +66,10 @@ public class DispatchCompensateTask {
         List<TravelInfo>  travelInfoList=travelInfoService.findeNotPushStatus();
 
         List<OrderInfo> orderInoList=orderInfoService.findCompensatesOrderIinfo();
-        ArrayList<CustomerHttpAPIBean> list=new ArrayList<>();
+        ArrayList<CustomerTravelRequset> list=new ArrayList<>();
         if(travelInfoList!=null && travelInfoList.size()>0){
             for(TravelInfo travelInfo:travelInfoList){
-                CustomerHttpAPIBean customerHttpAPIBean=new CustomerHttpAPIBean();
+                CustomerTravelRequset customerHttpAPIBean=new CustomerTravelRequset();
                 List<OrderInfo> orderInfoList=orderInfoService.findOrderTravelId(travelInfo.getTravelId());
                 String ids="";
                 for (OrderInfo ordre:orderInfoList){
@@ -98,10 +92,10 @@ public class DispatchCompensateTask {
                 customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));
 
                 //乘客座位信息获取封装
-                List<TicketInfo> ticketInfoList=new ArrayList<>();
+                List<CustomerTicketInfoRequset> ticketInfoList=new ArrayList<>();
                 for (OrderInfo info:orderInfoList ){
                     List<OrderUserLink> ticket_info =orderUserLinkService.findOrderNo(info.getOrderNo());
-                    TicketInfo ticketInfo=new TicketInfo();
+                    CustomerTicketInfoRequset ticketInfo=new CustomerTicketInfoRequset();
                     ticketInfo.setO_id(info.getSourceOrderId());
                     List<Tickets> ticketsList=new ArrayList<>();
                     for (OrderUserLink user:ticket_info){

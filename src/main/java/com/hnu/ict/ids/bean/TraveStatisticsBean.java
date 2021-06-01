@@ -4,7 +4,7 @@ import lombok.Data;
 import org.apache.ibatis.annotations.Delete;
 
 @Data
-public class TravelStatisticsBean {
+public class TraveStatisticsBean {
     Integer total;
     Integer servenTotal;
     Integer monthTotal;

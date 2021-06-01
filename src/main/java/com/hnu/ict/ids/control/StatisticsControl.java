@@ -1,11 +1,8 @@
 package com.hnu.ict.ids.control;
 
 
-import com.alibaba.fastjson.JSONObject;
 import com.hnu.common.respone.PojoBaseResponse;
-import com.hnu.ict.ids.bean.ResultBean;
-import com.hnu.ict.ids.bean.TraveTrendBean;
-import com.hnu.ict.ids.bean.TravelStatisticsBean;
+import com.hnu.ict.ids.bean.TraveStatisticsBean;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.ParamsNotNull;
@@ -15,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +49,7 @@ public class StatisticsControl {
         String starMonth=DateUtil.getStarMonth();
         String endMonth=DateUtil.getEndMonth();
         int monthTotal = travelInfoService.finDateTraveTotal(DateUtil.strToDate(starMonth),DateUtil.strToDate(endMonth),cityCode);
-        TravelStatisticsBean tatisticsBean=new TravelStatisticsBean();
+        TraveStatisticsBean tatisticsBean=new TraveStatisticsBean();
         tatisticsBean.setTotal(total);
         tatisticsBean.setMonthTotal(monthTotal);
         tatisticsBean.setServenTotal(servenTotal);

@@ -4,8 +4,6 @@ package com.hnu.ict.ids.control;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonObject;
-import com.hnu.ict.ids.Kafka.KafkaProducera;
 import com.hnu.ict.ids.async.ReqCallbackAsync;
 import com.hnu.ict.ids.bean.*;
 import com.hnu.ict.ids.config.UtilConf;
@@ -21,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -223,28 +220,28 @@ public class ScheduleCarControl {
                 //座位信息
                 TravelInfo travelInfo = travelInfoService.findTravelId(taskerId);
                 //乘客座位信息获取封装
-                List<TicketInfo> ticketInfoList = new ArrayList<>();
+                List<CustomerTicketInfoRequset> ticketInfoList = new ArrayList<>();
                 if (userList != null) {
                     //调用算法获取座位信息
-                    List<SeatBean> beatLis = new ArrayList<>();
+                    List<SeatBeanRequest> beatLis = new ArrayList<>();
 
-                    SeatBean seatBean = new SeatBean();
-                    seatBean.setTravel_id(travelInfo.getTravelId());
-                    seatBean.setCar_id(travelInfo.getCarId());
-                    seatBean.setCorrespond_order_id(order.getSourceOrderId());
-                    seatBean.setCorrespond_order_number(travelInfo.getCorrespondOrderNumber());
+                    SeatBeanRequest seatBean = new SeatBeanRequest();
+                    seatBean.setTravelId(travelInfo.getTravelId());
+                    seatBean.setCarId(travelInfo.getCarId().toString());
+                    seatBean.setCorrespondOrderId(order.getSourceOrderId());
+                    seatBean.setCorrespondNumber(travelInfo.getCorrespondOrderNumber());
                     //查询数据该行程所属乘客
                     List<OrderInfo> orderList = orderInfoService.findOrderTravelId(travelInfo.getTravelId());
-                    List<SeatUserBean> userLists = new ArrayList<>();
-                    List<SeatPreference> seatPreferenceList = new ArrayList<>();
+                    List<SeatUserRequset> userLists = new ArrayList<>();
+                    List<SeatPreferenceRequset> seatPreferenceList = new ArrayList<>();
                     for (int p = 0; p < orderList.size(); p++) {
-                        SeatUserBean userBean = new SeatUserBean();
+                        SeatUserRequset userBean = new SeatUserRequset();
                         OrderInfo orders = orderList.get(p);
                         userBean.setOrderId(orders.getSourceOrderId());
                         List<OrderUserLink> userLinks = orderUserLinkService.findOrderNo(orders.getOrderNo());
                         String userId = "";
                         for (OrderUserLink orderUser : userLinks) {
-                            SeatPreference seatPreference = new SeatPreference();
+                            SeatPreferenceRequset seatPreference = new SeatPreferenceRequset();
                             seatPreference.setU_id(orderUser.getUserId().toString());
                             seatPreference.setSeat_preference(orderUser.getSeatPreference());
                             seatPreferenceList.add(seatPreference);
@@ -257,9 +254,8 @@ public class ScheduleCarControl {
                         userLists.add(userBean);
                     }
                     //查询座位表
-                    seatBean.setUser_preference(seatPreferenceList);
-                    seatBean.setOrder_u_id(userLists);
-                    seatBean.setIt_number(travelInfo.getItNumber());
+                    seatBean.setUserPreference(seatPreferenceList);
+                    seatBean.setOrderUserId(userLists);
                     beatLis.add(seatBean);
 
                     String seatJson = JSON.toJSONString(beatLis);
@@ -300,7 +296,7 @@ public class ScheduleCarControl {
 
                     for (OrderInfo infos : orderList) {
                         List<OrderUserLink> ticket_info = orderUserLinkService.findOrderNo(infos.getOrderNo());
-                        TicketInfo ticketInfo = new TicketInfo();
+                        CustomerTicketInfoRequset ticketInfo = new CustomerTicketInfoRequset();
                         ticketInfo.setO_id(infos.getSourceOrderId());
                         List<Tickets> ticketsList = new ArrayList<>();
                         for (OrderUserLink user : ticket_info) {
@@ -319,7 +315,7 @@ public class ScheduleCarControl {
                     }
                 }
                 JSONArray arr=new JSONArray();
-                for (TicketInfo ticketInfo: ticketInfoList){
+                for (CustomerTicketInfoRequset ticketInfo: ticketInfoList){
                     List<Tickets> list=ticketInfo.getTickets();
                     for (Tickets tickets:list){
                         JSONObject ticJson=new JSONObject();
@@ -327,7 +323,6 @@ public class ScheduleCarControl {
                         ticJson.put("u_id",tickets.getU_id()) ;
                         arr.add(ticJson);
                     }
-
                 }
                 resultObject.put("tickets", arr);
 

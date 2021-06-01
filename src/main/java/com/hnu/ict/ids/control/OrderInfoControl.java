@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.Kafka.KafkaProducera;
-import com.hnu.ict.ids.bean.SeatPreference;
+import com.hnu.ict.ids.bean.SeatPreferenceRequset;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.NetworkEnum;
 import com.hnu.ict.ids.exception.ResultEntity;
@@ -319,10 +319,10 @@ public class OrderInfoControl {
         dl.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
         dl.put("ticket_number",number);
         String id="";
-        List<SeatPreference> listSeatPreference=new ArrayList<>();
+        List<SeatPreferenceRequset> listSeatPreference=new ArrayList<>();
         for (int i=0;i<ids.size();i++){
             JSONObject jsonObject=ids.getJSONObject(i);
-            SeatPreference seatPreference=new SeatPreference();
+            SeatPreferenceRequset seatPreference=new SeatPreferenceRequset();
             seatPreference.setU_id(jsonObject.getInteger("u_id").toString());
             if(jsonObject.getString("seat_preference")!=null){
                 seatPreference.setSeat_preference(jsonObject.getString("seat_preference"));

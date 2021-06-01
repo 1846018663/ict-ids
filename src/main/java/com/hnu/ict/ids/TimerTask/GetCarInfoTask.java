@@ -4,11 +4,10 @@ package com.hnu.ict.ids.TimerTask;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.async.UpdateCarAsync;
-import com.hnu.ict.ids.bean.TravelCarRequest;
+import com.hnu.ict.ids.bean.TraveCarRequest;
 import com.hnu.ict.ids.entity.IvsAppCarInfo;
 import com.hnu.ict.ids.service.IvsAppCarInfoService;
 import com.hnu.ict.ids.utils.HttpClientUtil;
-import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ public class GetCarInfoTask{
     UpdateCarAsync updateCarAsync;
 
 
-    @Scheduled(cron = "0 0/2 * * * ?")
+//    @Scheduled(cron = "0 0/2 * * * ? ")
     public void getCarInfo() throws Exception {
         //网络请求获取全量车辆信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
@@ -47,11 +46,12 @@ public class GetCarInfoTask{
 
         //解析车辆信息集合并做逻辑处理
         JSONObject object=JSONObject.parseObject(body);
+        logger.info("获取车辆信息"+body);
         if(object.getBoolean("success")==true){
             JSONObject dataJson=object.getJSONObject("data");
             //解析车数组内容
            JSONArray carJson= dataJson.getJSONArray("result");
-           List<TravelCarRequest> carList=new ArrayList<>();
+           List<TraveCarRequest> carList=new ArrayList<>();
            for (int i=0;i<carJson.size();i++){
                JSONObject json=carJson.getJSONObject(i);
                IvsAppCarInfo car= ivsAppCarInfoService.getByCarId(json.getInteger("vehicleId"));
@@ -77,8 +77,8 @@ public class GetCarInfoTask{
      * @param json
      * @return
      */
-    public TravelCarRequest intoTravelCarRequest(JSONObject json){
-        TravelCarRequest carRequest=new TravelCarRequest();
+    public TraveCarRequest intoTravelCarRequest(JSONObject json){
+        TraveCarRequest carRequest=new TraveCarRequest();
         carRequest.setCarId(json.getInteger("vehicleId").toString());
         carRequest.setCarType(json.getInteger("carType"));
         carRequest.setCityType(Integer.parseInt(json.getString("areaCode")));

@@ -1,7 +1,6 @@
 package com.hnu.ict.ids.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.hnu.ict.ids.bean.TicketInfo;
 import com.hnu.ict.ids.entity.TravelTicketInfo;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;

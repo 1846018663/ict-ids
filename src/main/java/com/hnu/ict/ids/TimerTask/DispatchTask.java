@@ -3,26 +3,19 @@ package com.hnu.ict.ids.TimerTask;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.hnu.ict.ids.bean.CustomerHttpAPIBean;
-import com.hnu.ict.ids.bean.OrderTask;
-import com.hnu.ict.ids.bean.TicketInfo;
-import com.hnu.ict.ids.bean.Tickets;
+import com.hnu.ict.ids.bean.TraveOrderTaskRequest;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
-import com.hnu.ict.ids.exception.NetworkEnum;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -77,19 +70,19 @@ public class DispatchTask {
         String body= null;
         Map<String,Object> resultMap= redisTemplate.opsForHash().entries("setTimeConfig");
         if(listOrder.size()>0){
-            List<OrderTask> list=new ArrayList<>();
+            List<TraveOrderTaskRequest> list=new ArrayList<>();
             for (Iterator<OrderInfo> it = listOrder.iterator(); it.hasNext();) {
                 OrderInfo info=it.next();
-                    OrderTask task=new OrderTask();
-                    task.setO_id(info.getOrderNo());
-                    task.setFrom_p_id(info.getBeginStationId());
-                    task.setTo_p_id(info.getEndStationId());
-                    task.setStart_time(DateUtil.getCurrentTime(info.getStartTime()));
-                    task.setOrder_time(DateUtil.getCurrentTime(info.getCreateTime()));
-                    task.setTicket_number(info.getTicketNumber());
+                    TraveOrderTaskRequest task=new TraveOrderTaskRequest();
+                    task.setOId(info.getOrderNo());
+                    task.setFromId(info.getBeginStationId().toString());
+                    task.setToId(info.getEndStationId().toString());
+                    task.setStartTime(DateUtil.getCurrentTime(info.getStartTime()));
+                    task.setOrderTime(DateUtil.getCurrentTime(info.getCreateTime()));
+                    task.setTicketNumber(info.getTicketNumber());
                     System.out.println("时间"+resultMap.get(ConfigEnum.CARTIMECONFIG.getValue()).toString());
                     int DateTime=Integer.parseInt(resultMap.get(ConfigEnum.CARTIMECONFIG.getValue()).toString())*60;
-                    task.setSet_time(DateTime);
+                    task.setSetTime(DateTime);
                     list.add(task);
             }
             String json=JSON.toJSONString(list);

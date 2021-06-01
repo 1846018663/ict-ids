@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class TicketInfo {
+public class CustomerTicketInfoRequset {
 
     List<Tickets> tickets;
     String o_id;
