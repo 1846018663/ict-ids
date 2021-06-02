@@ -38,7 +38,7 @@ public class GetCarInfoTask{
     UpdateCarAsync updateCarAsync;
 
 
-//    @Scheduled(cron = "0 0/2 * * * ? ")
+    @Scheduled(cron = "0 0/2 * * * ? ")
     public void getCarInfo() throws Exception {
         //网络请求获取全量车辆信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");

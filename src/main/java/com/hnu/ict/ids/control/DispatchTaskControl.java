@@ -100,11 +100,11 @@ public class DispatchTaskControl {
             List<TravelInfo> travelInfoList = new ArrayList<>();
 
             //有效数据
-            if (jsonObject.getInteger("status") == 0) {
+            if (jsonObject.getInteger("status") == 1) {
                 Map<String, String> map = new HashMap<>();
                 Map<String, String> mapResult = new HashMap<>();
                 //车辆编队信息保存
-                saveLine(jsonObject);
+//                saveLine(jsonObject);
 
                 //行程数据保存
                 JSONArray array = jsonObject.getJSONArray("task");
@@ -160,6 +160,7 @@ public class DispatchTaskControl {
             info.setDriverId(Integer.parseInt(taskResult.getDriverId()));
             info.setWarning(taskResult.getWarning());
             info.setCorrespondOrderNumber(taskResult.getCorrespondNumber());
+            info.setModifyOrderId(taskResult.getModifyOrderId());
             taskerId = taskResult.getTravelId();
 
             info.setTravelId(taskerId);
@@ -362,7 +363,7 @@ public class DispatchTaskControl {
         seatBean.setCarId(travelInfo.getCarId().toString());
         seatBean.setCorrespondOrderId(travelInfo.getCorrespondOrderId());
         seatBean.setCorrespondNumber(travelInfo.getCorrespondOrderNumber());
-
+        seatBean.setModifyOrderId(travelInfo.getModifyOrderId()+"");
         //查询数据该行程所属乘客
         List<SeatUserRequset> userList = new ArrayList<>();
         List<SeatPreferenceRequset> seatPreferenceList = new ArrayList<>();
@@ -387,8 +388,8 @@ public class DispatchTaskControl {
             String userId = "";
             for (OrderUserLink orderUser : userLinks) {
                 SeatPreferenceRequset seatPreference = new SeatPreferenceRequset();
-                seatPreference.setU_id(orderUser.getUserId().toString());
-                seatPreference.setSeat_preference(orderUser.getSeatPreference());
+                seatPreference.setUserId(orderUser.getUserId().toString());
+                seatPreference.setSeatPreference(orderUser.getSeatPreference());
                 seatPreferenceList.add(seatPreference);
                 userId = userId + orderUser.getUserId().toString() + ",";
             }
@@ -555,41 +556,42 @@ public class DispatchTaskControl {
 
         for (OrderInfo order : orderList) {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("o_id", order.getId() + "");
-            jsonObject.put("from_p_id", order.getBeginStationId() + "");
-            jsonObject.put("to_p_id", order.getEndStationId() + "");
-            jsonObject.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
-            jsonObject.put("ticket_number", order.getTicketNumber());
+            jsonObject.put("oId", order.getId() + "");
+            jsonObject.put("fromId", order.getBeginStationId() + "");
+            jsonObject.put("toId", order.getEndStationId() + "");
+            jsonObject.put("startTime", DateUtil.getCurrentTime(order.getStartTime()));
+            jsonObject.put("ticketNumber", order.getTicketNumber());
             logger.info("快速响应算法发送请求" + jsonObject.toJSONString());
             String body = null;
             try {
                 body = HttpClientUtil.doPostJson(response_URL, jsonObject.toJSONString());
+                logger.info("快速响应算法接收返回" + body);
+                if (StringUtils.hasText(body)) {
+                    JSONObject json = JSON.parseObject(body);
+                    Integer status = json.getInteger("status");
+                    Map<String, String> map = new HashMap<>();
+                    map.put("o_id", order.getSourceOrderId());
+
+                    map.put("message", json.getString("suggest"));
+                    map.put("code", status.toString());
+                    String jsonString = JSON.toJSONString(map);
+                    logger.info("运力检测乘客服务系统发送参数" + jsonString);
+                    String resultBody = null;
+                    try {
+                        resultBody = HttpClientUtil.doPostJson(capacity_url, jsonString);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    logger.info("运力检测乘客服务系统返回结果" + resultBody);
+
+
+                } else {
+                    result.setData("");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            logger.info("快速响应算法接收返回" + body);
-            if (StringUtils.hasText(body)) {
-                JSONObject json = JSON.parseObject(body);
-                Integer status = json.getInteger("status");
-                Map<String, String> map = new HashMap<>();
-                map.put("o_id", order.getSourceOrderId());
 
-                map.put("message", json.getString("suggest"));
-                map.put("code", status.toString());
-                String jsonString = JSON.toJSONString(map);
-                logger.info("运力检测乘客服务系统发送参数" + jsonString);
-                String resultBody = null;
-                try {
-                    resultBody = HttpClientUtil.doPostJson(capacity_url, jsonString);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                logger.info("运力检测乘客服务系统返回结果" + resultBody);
-
-
-            } else {
-                result.setData("");
-            }
 
         }
         return result;

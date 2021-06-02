@@ -69,7 +69,7 @@ public class TransportCapacityTask {
     NetworkLogService networkLogServer;
 
 
-    @Scheduled(cron = "5/50 * * * * ? ")
+    @Scheduled(cron = "3/15 * * * * ?  ")
     public void transportCapacity() throws Exception{
         logger.info("======运力检测开始=======");
         Date stateDate=new Date();
@@ -79,11 +79,11 @@ public class TransportCapacityTask {
 
         for (OrderInfo order:orderList){
             JSONObject jsonObject=new JSONObject();
-            jsonObject.put("o_id",order.getSourceOrderId());
-            jsonObject.put("from_p_id",order.getBeginStationId()+"");
-            jsonObject.put("to_p_id",order.getEndStationId()+"");
-            jsonObject.put("start_time",DateUtil.getCurrentTime(order.getStartTime()));
-            jsonObject.put("ticket_number",order.getTicketNumber());
+            jsonObject.put("oId",order.getSourceOrderId());
+            jsonObject.put("fromId",order.getBeginStationId()+"");
+            jsonObject.put("toId",order.getEndStationId()+"");
+            jsonObject.put("startTime",DateUtil.getCurrentTime(order.getStartTime()));
+            jsonObject.put("ticketNumber",order.getTicketNumber());
             logger.info("快速响应算法发送请求"+jsonObject.toJSONString());
             String body=HttpClientUtil.doPostJson(response_URL,jsonObject.toJSONString());
             logger.info("====快速响应算法接收返回======"+body);
@@ -95,7 +95,7 @@ public class TransportCapacityTask {
                 map.put("o_id",order.getSourceOrderId());
                 String message=json.getString("suggest");
                 map.put("message",message);
-                if(status==302) {
+                if(status==301) {
                     map.put("code", "301");
                 }else{
                     map.put("code", status.toString());
@@ -105,7 +105,7 @@ public class TransportCapacityTask {
                 if(status==201){
                     order.setStatus(PushStatusEnum.SUCCESS.getValue());//运力检测  预约成功
                 }
-                if(status==302){
+                if(status==301){
                     order.setStatus(PushStatusEnum.FAIL.getValue());//运力检测  预约失败
                 }
                 order.setMessage(message);
@@ -122,7 +122,7 @@ public class TransportCapacityTask {
                     JSONObject resulJson=JSON.parseObject(resultBody);
                     String code= resulJson.getString("code");
 
-                    if(status==302){
+                    if(status==301){
                         if(code.equals("00007")){
                             logger.info("订单通知乘客服务失败 累加推送次数"+PushStatusEnum.FAIL.getValue()+"alkngkjsdjaigdjhnais");
                             orderInfo.setPushNumber(order.getPushNumber()+1);
@@ -165,7 +165,7 @@ public class TransportCapacityTask {
                     if(status==201){
                         orderInfo.setStatus(PushStatusEnum.SUCCESS.getValue());
                     }
-                    if(status==302){
+                    if(status==301){
                         orderInfo.setStatus(PushStatusEnum.FAIL.getValue());
                     }
                     orderInfo.setPushNumber(orderInfo.getPushNumber()+3);

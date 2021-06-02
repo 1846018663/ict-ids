@@ -36,7 +36,7 @@ public class GetDriverInfoTask {
     UpdateDiriverinfoAsync updatediriverinfoAsync;
 
     //0 0 0/6 * * ?
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/3 * * * ?")
     public void getDriverInfo() throws Exception {
         //网络请求获取全量司机信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");

@@ -74,16 +74,39 @@ public class OrderInfoControl {
         //验证o_id    SourceOrderId是否已经存在
         String oId=json.getString("o_id");
         OrderInfo orderInfo= orderInfoService.getBySourceOrderId(oId);
-
         if(orderInfo!=null){
             result.setCode(ResutlMessage.FAIL.getName());
             result.setMessage("该订单已经存在，请勿重复提交");
             logger.info("新增行程"+result.toString());
             return result;
         }
+
+        try {
+            //操作数据库
+            saveOrder(json);
+            result.setCode(ResutlMessage.SUCCESS.getName());
+            result.setMessage(ResutlMessage.SUCCESS.getValue());
+            logger.info("新增行程"+result.toString());
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.setCode(ResutlMessage.FAIL.getName());
+            result.setMessage(ResutlMessage.FAIL.getValue());
+            logger.info("新增行程"+result.toString());
+            return result;
+        }
+    }
+
+
+
+    /**
+     * 新增订单保存订单
+     * @param json
+     */
+    private void saveOrder(JSONObject json){
         //创建数据对象
         OrderInfo order=new OrderInfo();
-        order.setSourceOrderId(oId);
+        order.setSourceOrderId(json.getString("o_id"));
         order.setBeginStationId(json.getInteger("from_p_id"));
         order.setEndStationId(json.getInteger("to_p_id"));
         order.setTicketNumber(json.getInteger("ticket_number"));
@@ -102,33 +125,17 @@ public class OrderInfoControl {
         if(json.getJSONArray("seat_preferences")!=null){
             jsonArray =json.getJSONArray("seat_preferences");
         }else{
-           String ids= json.getString("u_ids") ;
-           String[] id=ids.split(",");
-           for (int i=0; i<id.length;i++){
-               JSONObject object=new JSONObject();
-               object.put("u_id",id[i]);
-               object.put("seat_preference","");
-               jsonArray.add(object);
+            String ids= json.getString("u_ids") ;
+            String[] id=ids.split(",");
+            for (int i=0; i<id.length;i++){
+                JSONObject object=new JSONObject();
+                object.put("u_id",id[i]);
+                object.put("seat_preference","");
+                jsonArray.add(object);
 
-           }
+            }
         }
         orderInfoService.insertOrder(order,jsonArray.toString());
-        //操作数据库
-        try {
-            result.setCode(ResutlMessage.SUCCESS.getName());
-            result.setMessage(ResutlMessage.SUCCESS.getValue());
-            logger.info("新增行程"+result.toString());
-            return result;
-        } catch (Exception e) {
-            e.printStackTrace();
-            result.setCode(ResutlMessage.FAIL.getName());
-            result.setMessage(ResutlMessage.FAIL.getValue());
-            logger.info("新增行程"+result.toString());
-            return result;
-        }
-
-
-
     }
 
 
@@ -323,11 +330,11 @@ public class OrderInfoControl {
         for (int i=0;i<ids.size();i++){
             JSONObject jsonObject=ids.getJSONObject(i);
             SeatPreferenceRequset seatPreference=new SeatPreferenceRequset();
-            seatPreference.setU_id(jsonObject.getInteger("u_id").toString());
+            seatPreference.setUserId(jsonObject.getInteger("u_id").toString());
             if(jsonObject.getString("seat_preference")!=null){
-                seatPreference.setSeat_preference(jsonObject.getString("seat_preference"));
+                seatPreference.setSeatPreference(jsonObject.getString("seat_preference"));
             }else{
-                seatPreference.setSeat_preference("");
+                seatPreference.setSeatPreference("");
             }
             listSeatPreference.add(seatPreference);
             id=id+jsonObject.getInteger("u_id")+",";

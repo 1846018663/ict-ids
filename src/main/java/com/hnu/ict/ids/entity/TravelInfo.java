@@ -168,5 +168,7 @@ public class TravelInfo {
 
     private String arriveTime;
 
+    private String modifyOrderId;
+
 
 }

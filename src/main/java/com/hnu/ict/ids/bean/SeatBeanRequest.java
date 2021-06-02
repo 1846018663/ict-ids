@@ -15,6 +15,7 @@ public class SeatBeanRequest {
     List<SeatUserRequset>	orderUserId;//	各订单包含的所有乘客的uid
     List<SeatPreferenceRequset>	userPreference;//	订单包含的乘客及其座位偏好信息
     Integer	carType;//	是否包车
+    String  modifyOrderIds;
 
 
 }

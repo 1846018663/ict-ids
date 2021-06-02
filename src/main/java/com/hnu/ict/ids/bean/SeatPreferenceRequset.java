@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 public class SeatPreferenceRequset {
 
-    String u_id;
-    String seat_preference;
+    String userId;
+    String seatPreference;
 }

@@ -242,8 +242,8 @@ public class ScheduleCarControl {
                         String userId = "";
                         for (OrderUserLink orderUser : userLinks) {
                             SeatPreferenceRequset seatPreference = new SeatPreferenceRequset();
-                            seatPreference.setU_id(orderUser.getUserId().toString());
-                            seatPreference.setSeat_preference(orderUser.getSeatPreference());
+                            seatPreference.setUserId(orderUser.getUserId().toString());
+                            seatPreference.setSeatPreference(orderUser.getSeatPreference());
                             seatPreferenceList.add(seatPreference);
 
                             userId = userId + orderUser.getUserId().toString() + ",";
