@@ -9,7 +9,7 @@
           and status <![CDATA[ <= ]]> 1
           and start_time <![CDATA[ >= ]]> #{statDate}
           and start_time <![CDATA[ <= ]]> #{endDate}
-
+          and status= 1
           for update
     </select>
 

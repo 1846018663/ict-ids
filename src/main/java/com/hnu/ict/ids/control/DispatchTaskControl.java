@@ -277,11 +277,11 @@ public class DispatchTaskControl {
         task.setToId(info.getEndStationId().toString());
         task.setStartTime(DateUtil.getCurrentTime(info.getStartTime()));
         task.setOrderTime(DateUtil.getCurrentTime(info.getCreateTime()));
-        if (info.getStatus() == 1) {
-            task.setOrderStatus(info.getStatus());
-        } else {
-            task.setOrderStatus(0);
-        }
+//        if (info.getStatus() == 1) {
+//            task.setOrderStatus(info.getStatus());
+//        } else {
+//            task.setOrderStatus(0);
+//        }
 
         int DateTime = Integer.parseInt(resultMap.get(ConfigEnum.CARTIMECONFIG.getValue()).toString()) * 60;
         task.setSetTime(60);

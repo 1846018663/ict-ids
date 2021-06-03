@@ -35,8 +35,8 @@ public class GetDriverInfoTask {
     @Autowired
     UpdateDiriverinfoAsync updatediriverinfoAsync;
 
-    //0 0 0/6 * * ?
-    @Scheduled(cron = "0 0/3 * * * ?")
+    //每天5点同步司机信息
+    @Scheduled(cron = "0 0 5 * * ? ")
     public void getDriverInfo() throws Exception {
         //网络请求获取全量司机信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
@@ -60,7 +60,7 @@ public class GetDriverInfoTask {
 
                 //异步不同步集合数据对象
                 String code=json.getString("areaCode");
-                if(code.equals("1002")){
+                if(code.equals("1003")){
                     diriverinfoList.add(intoTraveDiriverinfoRequset(json));
                 }
 

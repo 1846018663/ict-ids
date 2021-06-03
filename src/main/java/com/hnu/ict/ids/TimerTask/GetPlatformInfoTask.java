@@ -34,8 +34,8 @@ public class GetPlatformInfoTask {
     @Autowired
     UpdatePlatformAsync updatePlatformAsync;
 
-    //站台信息0 0 5,21 * * ?
-    @Scheduled(cron = "0 0/10 * * * ? ")
+    //站台信息每天凌晨三点
+    @Scheduled(cron = "0 0 3 * * ?  ")
     public void getPlatformInfo() throws Exception {
         //网络请求获取全量站点信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
@@ -58,7 +58,7 @@ public class GetPlatformInfoTask {
 
                 //异步不同步集合数据对象
                 String code=json.getString("areaCode");
-                if(code.equals("1002")) {
+                if(code.equals("1003")) {
                     platfromList.add(intoTravePlatfromRequset(json));
                 }
 

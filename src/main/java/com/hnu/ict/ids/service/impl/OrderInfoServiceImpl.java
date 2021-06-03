@@ -126,21 +126,21 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
 
 
-        //业务判断如果未生成行程不做一下操作    如果已经行程存在取消订单需调用算法完成行程取消流程
+
         //追加条件如果是包车取消走新业务流程
         if(order.getCharteredBus()!=null || (order.getTravelId()==null && order.getStatus()==1)){
             JSONObject charteredJSON=new JSONObject();
-            charteredJSON.put("o_id",order.getSourceOrderId());
-            charteredJSON.put("from_p_id",order.getBeginStationId().shortValue());
-            charteredJSON.put("to_p_id",order.getEndStationId());
-            charteredJSON.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
+            charteredJSON.put("oId",order.getSourceOrderId());
+            charteredJSON.put("fromId",order.getBeginStationId().toString());
+            charteredJSON.put("toId",order.getEndStationId().toString());
+            charteredJSON.put("startTime", DateUtil.getCurrentTime(order.getStartTime()));
             if(order.getCharteredBus()==null){
                 charteredJSON.put("chartered_bus","-1");
             }else{
-                charteredJSON.put("chartered_bus",order.getCharteredBus());
+                charteredJSON.put("charteredBus",order.getCharteredBus());
             }
 
-            charteredJSON.put("it_number",ids.length);
+            charteredJSON.put("itNumber",ids.length);
 
             //包车业务取消   删除订单数据并且通知算法是否车辆信息资源
             try {
@@ -161,22 +161,20 @@ public class OrderInfoServiceImpl implements OrderInfoService {
                 if(!StringUtils.isEmpty(order.getTravelId()) && order.getTicketNumber()>0){
                     TravelInfo travelInfo=travelInfoMapper.findTravelId(order.getTravelId());
 
-                    JSONArray seat_info=new JSONArray();
                     JSONObject seatJson=new JSONObject();
-                    seatJson.put("car_id",travelInfo.getCarId());
                     //查询座位
                     List<TravelTicketInfo> travelTicketInfoList= travelTicketInfoService.findPassengerSeating(travelInfo.getTravelId());
                     JSONArray correspond_seat_id=new JSONArray();
                     for (int i=0; i<travelTicketInfoList.size();i++){
                         JSONObject ob=new JSONObject();
                         TravelTicketInfo info=travelTicketInfoList.get(i);
-                        ob.put("u_id",info.getUserId());
+                        ob.put("userId",info.getUserId().toString());
                         ob.put("seat",info.getSeatNum());
                         correspond_seat_id.add(ob);
                     }
-                    seatJson.put("correspond_seat_id",correspond_seat_id);
-                    seat_info.add(seatJson);
-                    travelInfoCancels(order,ids,travelInfo.getItNumber(),seat_info);
+                    seatJson.put("correspondSeatId",correspond_seat_id);
+                    seatJson.put("travelId",travelInfo.getTravelId());
+                    travelInfoCancels(order,ids,travelInfo.getItNumber(),seatJson);
                     //删除座位数据
                     for (int i=0;i<ids.length;i++){
                         logger.info("======="+ids[i]);
@@ -242,80 +240,23 @@ public class OrderInfoServiceImpl implements OrderInfoService {
      * @param order
      * @param ids
      */
-    public void travelInfoCancels(OrderInfo order,String[] ids,Integer ticketNumber,JSONArray seatJson){
+    public void travelInfoCancels(OrderInfo order,String[] ids,Integer ticketNumber,JSONObject json){
         //调用算法接口
-        JSONObject json=new JSONObject();
-
         JSONObject dl=new JSONObject();
-        dl.put("o_id",order.getSourceOrderId());
-        dl.put("from_p_id",order.getBeginStationId());
-        dl.put("to_p_id",order.getEndStationId());
-        dl.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
-        dl.put("ticket_number",ids.length+"/"+ticketNumber);
+        dl.put("oId",order.getSourceOrderId());
+        dl.put("fromId",order.getBeginStationId().toString());
+        dl.put("toId",order.getEndStationId().toString());
+        dl.put("startTime", DateUtil.getCurrentTime(order.getStartTime()));
+        dl.put("ticketNumber",ids.length+"/"+ticketNumber);
         String order_u_id="";
         for (int i=0;i<ids.length;i++){
             order_u_id=order_u_id+ids[i]+",";
         }
         order_u_id=order_u_id.substring(0,order_u_id.length()-1);
-        dl.put("order_u_id",order_u_id);
-        JSONArray taskJson=new JSONArray();
-        JSONObject task=new JSONObject();
+        dl.put("orderUserId",order_u_id);
+        json.put("orderData",dl);
         TravelInfo info=travelInfoMapper.findTravelId(order.getTravelId());
-        task.put("correspond_order_number",info.getCorrespondOrderNumber());
-        task.put("driver_id",info.getDriverId());
-        task.put("it_number",info.getItNumber());
-        task.put("car_id",info.getCarId());
-        task.put("from_p_id",info.getBeginStationId());
-        task.put("from_order_name",info.getBeginStationName());
-        task.put("to_p_id",info.getEndStationId());
-        task.put("to_order_name",info.getEndStationName());
-        if(info.getParkId()!=null){
-            task.put("park_id",info.getParkId());
-        }else{
-            task.put("park_id","");
-        }
-        if(info.getParkName()!=null){
-            task.put("park_name",info.getParkName());
-        }else{
-            task.put("park_name","");
-        }
 
-        task.put("start_time",DateUtil.getCurrentTime(info.getStartTime()));
-        task.put("travel_id",info.getTravelId());
-        task.put("driver_content",info.getDriverContent());
-        task.put("all_travel_plat",info.getAllTravelPlat());
-        task.put("expected_time",info.getExpectedTime());
-        task.put("distance",info.getDistance());
-        if(info.getModifyId()!=null){
-            task.put("modify_id",info.getModifyId());
-        }else{
-            task.put("modify_id","");
-        }
-        if(info.getWarning()!=null){
-            task.put("warning",info.getWarning());
-        }else{
-            task.put("warning","");
-        }
-
-
-        logger.info("取消行程id查询"+order.getTravelId()+"/");
-        List<OrderInfo> orderList= orderMapper.findOrderTravelId(order.getTravelId());
-        String oIds="";
-        if(orderList!=null &&orderList.size()>0){
-            for (int i=0;i<orderList.size();i++){
-                oIds=oIds+orderList.get(i).getSourceOrderId()+",";
-            }
-            oIds= oIds.substring(0,oIds.length()-1);
-            task.put("correspond_order_id",oIds);
-            taskJson.add(task);
-        }
-
-
-
-        //封装最后传参
-        json.put("dl_1",dl);
-        json.put("task_record",taskJson);
-        json.put("seat_info",seatJson);
         logger.info("发送请求数据"+json.toString());
         //保存预警信息
         NetworkLog networkLog=new NetworkLog();
@@ -361,78 +302,78 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         for (int i=0;i<array.size();i++){
             JSONObject object=array.getJSONObject(i);
             TravelInfo info=new TravelInfo();
-            if(object.getInteger("from_p_id")==null){
+            if(object.getInteger("fromId")==null){
                 info.setBeginStationId(null);
             }else{
-                info.setBeginStationId(object.getInteger("from_p_id"));
+                info.setBeginStationId(object.getInteger("fromId"));
             }
 
-            if(object.getInteger("to_p_id")==null){
+            if(object.getInteger("toId")==null){
                 info.setEndStationId(null);
             }else{
-                info.setEndStationId(object.getInteger("to_p_id"));
+                info.setEndStationId(object.getInteger("toId"));
             }
 
 
             info.setTravelStatus(1);
-            info.setItNumber(object.getInteger("it_number"));
-            info.setStartTime(DateUtil.strToDate(object.getString("start_time")));
+            info.setItNumber(object.getInteger("itNumber"));
+            info.setStartTime(DateUtil.strToDate(object.getString("startTime")));
             if(object.getDouble("distance")==null){
                 info.setDistance(null);
             }else{
                 info.setDistance(new BigDecimal(object.getDouble("distance")));
             }
 
-            if(object.getInteger("expected_time")==null){
+            if(object.getInteger("expectedTime")==null){
                 info.setExpectedTime(null);
             }else{
-                info.setExpectedTime(object.getInteger("expected_time").toString());
+                info.setExpectedTime(object.getInteger("expectedTime").toString());
             }
 
 
-            info.setDriverContent(object.getString("driver_content"));
-            info.setAllTravelPlat(object.getString("all_travel_plat"));
-            if(object.getInteger("car_id")==null){
+            info.setDriverContent(object.getString("driverContent"));
+            info.setAllTravelPlat(object.getString("travelPlat"));
+            if(object.getInteger("carId")==null){
                 info.setCarId(null);
             }else{
-                info.setCarId(object.getInteger("car_id"));
+                info.setCarId(object.getInteger("carId"));
             }
 
-            if (object.getString("from_order_name")==null){
+            if (object.getString("fromName")==null){
                 info.setBeginStationName(null);
             }else{
-                info.setBeginStationName(object.getString("from_order_name"));
+                info.setBeginStationName(object.getString("fromName"));
             }
 
-            if (object.getString("to_order_name")==null){
+            if (object.getString("toName")==null){
                 info.setEndStationName(null);
             }else{
-                info.setEndStationName(object.getString("to_order_name"));
+                info.setEndStationName(object.getString("toName"));
             }
 
-            if (object.getInteger("park_id")==null){
+            if (object.getInteger("parkId")==null){
                 info.setParkId(null);
             }else{
-                info.setParkId(object.getInteger("park_id"));
+                info.setParkId(object.getInteger("parkId"));
             }
 
-            if (object.getString("park_name")==null){
+            if (object.getString("parkName")==null){
                 info.setParkName(null);
             }else{
-                info.setParkName(object.getString("park_name"));
+                info.setParkName(object.getString("parkName"));
             }
 
 
 
 
             info.setWarning(object.getString("warning"));
-            String taskerId =object.getString("travel_id");
+            String taskerId =object.getString("travelId");
             info.setTravelId(taskerId);
             //info.setDriverId(object.getInteger()); //司机id
             info.setUpdateTime(new Date());
             //获取订单与行程对应数据关联
-            if(object.getString("correspond_order_id")!=null) {
-                String orderIds=object.getString("correspond_order_id");
+            if(jsonObject.getString("correspondSeatId")!=null) {
+                String orderIds=jsonObject.getString("correspondSeatId");
                 String[] ids=orderIds.split(",");
                 for (int k=0;k<ids.length;k++){
                     map.put(ids[k],taskerId);
@@ -442,7 +383,7 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
 
 
-            info.setModifyId(object.getString("modify_id"));
+            info.setModifyId(object.getString("modifyOrderId"));
 
             System.out.println("封装"+ map.toString());
             TravelInfo travelInfo=null;
