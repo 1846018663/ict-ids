@@ -135,12 +135,13 @@ public class OrderInfoServiceImpl implements OrderInfoService {
             charteredJSON.put("toId",order.getEndStationId().toString());
             charteredJSON.put("startTime", DateUtil.getCurrentTime(order.getStartTime()));
             if(order.getCharteredBus()==null){
-                charteredJSON.put("chartered_bus","-1");
+                charteredJSON.put("charteredBusNum","-1");
             }else{
-                charteredJSON.put("charteredBus",order.getCharteredBus());
+                TravelInfo info=travelInfoMapper.findTravelId(order.getTravelId());
+                charteredJSON.put("charteredBusNum",info.getCarId().toString());
             }
 
-            charteredJSON.put("itNumber",ids.length);
+            charteredJSON.put("ticketNumber",ids.length);
 
             //包车业务取消   删除订单数据并且通知算法是否车辆信息资源
             try {

@@ -64,7 +64,6 @@ public interface TravelInfoMapper extends BaseMapper<TravelInfo> {
 
     @Select("select end_station_name  as platforName,COUNT(end_station_id) as total from travel_info where c_code=#{cityCode} GROUP BY end_station_id  order by count(end_station_id) desc limit 6")
     List<Map<String,Object>> destinationRanking(@Param("cityCode")String cityCode);
-
     @Select("select a.begin_station_name as platforName,count(a.begin_station_id) as total from travel_info a LEFT JOIN travel_info b on  a.begin_station_id=b.end_station_id  where a.c_code=#{cityCode} GROUP BY a.begin_station_id  order by count(a.begin_station_name) desc limit 6")
     List<Map<String,Object>> combinedTravel(@Param("cityCode")String cityCode);
 

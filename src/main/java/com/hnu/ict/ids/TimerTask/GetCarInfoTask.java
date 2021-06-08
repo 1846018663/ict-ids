@@ -37,9 +37,10 @@ public class GetCarInfoTask{
     @Autowired
     UpdateCarAsync updateCarAsync;
 
-    //每天凌晨4点  同步车辆信息
-    @Scheduled(cron = "0 0 4 * * ?  ")
+    //每天凌晨4点  同步车辆信息0 0 4 * * ?
+
     public void getCarInfo() throws Exception {
+        logger.info("执行同步车辆信息");
         //网络请求获取全量车辆信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
         String body=HttpClientUtil.doGet(urlInfo.toString());
@@ -57,7 +58,7 @@ public class GetCarInfoTask{
                IvsAppCarInfo car= ivsAppCarInfoService.getByCarId(json.getInteger("vehicleId"));
                //异步不同步集合数据对象
                String code=json.getString("areaCode");
-               if(code.equals("1003")) {
+               if(code.equals("1003") && json.getInteger("isDeleted")==0) {
                    carList.add(intoTravelCarRequest(json));
                }
                updateData(car ,json);
@@ -69,6 +70,7 @@ public class GetCarInfoTask{
                updateCarAsync.updateCar(carList);
            }
         }
+
     }
 
 

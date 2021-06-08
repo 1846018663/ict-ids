@@ -56,11 +56,11 @@ public class KafkaProducera {
         //车辆信息封装
         IvsAppCarInfo carInfo=ivsAppCarInfoService.getByCarId(travelInfo.getCarId());
         if(boo%2==1){
-            value.put("vehicleId",4);
-            value.put("plateNo","沪AE00004");
+            value.put("vehicleId",1);
+            value.put("plateNo","沪BR7072");
         }else{
-            value.put("vehicleId",4);
-            value.put("plateNo","沪AE00004");
+            value.put("vehicleId",1);
+            value.put("plateNo","沪BR7072");
         }
         boo++;
 //        value.put("vehicleId",carInfo.getCId());

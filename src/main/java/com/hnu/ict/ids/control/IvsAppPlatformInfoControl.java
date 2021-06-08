@@ -71,7 +71,12 @@ public class IvsAppPlatformInfoControl {
             PathPlanningRequest pathPlanningRequest=new PathPlanningRequest();
             pathPlanningRequest.setToId(endId);
             pathPlanningRequest.setFromId(stataId);
-            pathPlanningRequest.setWayId(waypoints);
+            if(waypoints!=null && waypoints.length()>0){
+                pathPlanningRequest.setWayId(waypoints);
+            }else{
+                pathPlanningRequest.setWayId("");
+            }
+
 
 
             NetworkLog networkLog=new NetworkLog();

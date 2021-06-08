@@ -119,15 +119,15 @@ public class ScheduleCarControl {
         //订单数据保存完成  进行数据算法调用
         JSONArray bodyJson = new JSONArray();
         JSONObject object = new JSONObject();
-        object.put("o_id", order.getSourceOrderId().trim());
-        object.put("from_p_id", order.getBeginStationId().toString());
-        object.put("to_p_id", order.getEndStationId().toString());
-        object.put("start_time", DateUtil.getCurrentTime(order.getStartTime()));
-        object.put("chartered_bus", order.getCharteredBus());
+        object.put("oId", order.getSourceOrderId().trim());
+        object.put("fromId", order.getBeginStationId().toString());
+        object.put("toId", order.getEndStationId().toString());
+        object.put("startTime", DateUtil.getCurrentTime(order.getStartTime()));
+        object.put("charteredBus", order.getCharteredBus());
         if(userList!=null && userList.size()>0){
-            object.put("it_number",userList.size()+"");
+            object.put("ticketNumber",userList.size()+"");
         }else{
-            object.put("it_number","");
+            object.put("ticketNumber","");
         }
         bodyJson.add(object);
 
@@ -160,7 +160,7 @@ public class ScheduleCarControl {
         //解析算法返回数据内容
         logger.info("包车业务算法返回结果" + body);
         JSONObject jsonObject = JSONObject.parseObject(body);
-        int code = jsonObject.getInteger("code");
+        int code = jsonObject.getInteger("status");
         if (code == 201) {
             //行程数据保存
             JSONArray array = jsonObject.getJSONArray("task");
@@ -168,31 +168,32 @@ public class ScheduleCarControl {
             for (int i = 0; i < array.size(); i++) {
                 JSONObject reObject = array.getJSONObject(i);
                 TravelInfo info = new TravelInfo();
-                info.setBeginStationId(reObject.getInteger("from_p_id"));
+                info.setBeginStationId(reObject.getInteger("fromId"));
                 //根据出发站台查询归属城市
-                if (reObject.getInteger("from_p_id") != null) {
-                    IvsAppPlatformInfo appPlatformInfo = ivsAppPlatformInfoService.getByPlatformId(reObject.getInteger("from_p_id").toString());
+                if (reObject.getInteger("fromId") != null) {
+                    IvsAppPlatformInfo appPlatformInfo = ivsAppPlatformInfoService.getByPlatformId(reObject.getInteger("fromId").toString());
                     info.setCCode(appPlatformInfo.getCCode());
                 }
                 String taskerId = null;
-                info.setEndStationId(reObject.getInteger("to_p_id"));
+                info.setEndStationId(reObject.getInteger("toId"));
                 info.setTravelStatus(1);//预约成功
-                info.setItNumber(reObject.getInteger("it_number"));
-                info.setStartTime(DateUtil.strToDate(reObject.getString("start_time")));
+                info.setItNumber(reObject.getInteger("itNumber"));
+                info.setStartTime(DateUtil.strToDate(reObject.getString("startTime")));
                 info.setDistance(new BigDecimal(reObject.getDouble("distance")));
-                info.setExpectedTime(reObject.getInteger("expected_time").toString());
-                info.setDriverContent(reObject.getString("driver_content"));
-                info.setAllTravelPlat(reObject.getString("all_travel_plat"));
-                info.setArriveTime(reObject.getString("start_time") + "," + reObject.getString("arrive_time"));
-                info.setCarId(reObject.getInteger("car_id"));
-                info.setBeginStationName(reObject.getString("from_order_name"));
-                info.setEndStationName(reObject.getString("to_order_name"));
-//                    info.setParkName(reObject.getString("park_name"));
-//                    info.setParkId(reObject.getInteger("park_id"));
-                info.setDriverId(reObject.getInteger("driver_id"));
+                info.setExpectedTime(reObject.getInteger("expectedTime").toString());
+                info.setDriverContent(reObject.getString("driverContent"));
+                info.setAllTravelPlat(reObject.getString("travelPlat"));
+                info.setArriveTime(reObject.getString("startTime") + "," + reObject.getString("arriveTime"));
+                info.setCarId(Integer.parseInt(reObject.getString("carId")));
+                info.setBeginStationName(reObject.getString("fromName"));
+                info.setEndStationName(reObject.getString("toName"));
+                info.setParkName(reObject.getString("parkName"));
+                info.setParkId(reObject.getInteger("parkId"));
+                info.setDriverId(reObject.getInteger("driverId"));
                 info.setWarning(reObject.getString("warning"));
-                info.setCorrespondOrderNumber(reObject.getString("correspond_order_number"));
-                taskerId = reObject.getString("travel_id");
+                info.setCorrespondOrderNumber(reObject.getString("correspondNumber"));
+//                info.setCorrespondOrderId(reObject.getString("correspondOrderId"));
+                taskerId = reObject.getString("travelId");
                 info.setTravelId(taskerId);
                 info.setCreateTime(new Date());
                 //保存行程
@@ -268,7 +269,7 @@ public class ScheduleCarControl {
                         JSONArray arrSeat = JSONArray.parseArray(seatBody);
                         for (int j = 0; j < arrSeat.size(); j++) {
                             JSONObject objectJons = arrSeat.getJSONObject(j);
-                            JSONArray arrayJson = objectJons.getJSONArray("correspond_seat_id");
+                            JSONArray arrayJson = objectJons.getJSONArray("correspondSeatId");
                             for (int k = 0; k < arrayJson.size(); k++) {
                                 JSONObject ob = arrayJson.getJSONObject(k);
                                 String sourceOrderId = ob.getString("orderId");
@@ -279,7 +280,7 @@ public class ScheduleCarControl {
                                     JSONObject seatOb = seatID.getJSONObject(z);
 
                                     travelTicketInfo.setTravelId(infoOrder.getTravelId());
-                                    travelTicketInfo.setUserId(seatOb.getInteger("u_id"));
+                                    travelTicketInfo.setUserId(seatOb.getInteger("userId"));
                                     travelTicketInfo.setSeatNum(seatOb.getString("seat"));
                                     travelTicketInfoList.add(travelTicketInfo);
                                 }
@@ -327,7 +328,7 @@ public class ScheduleCarControl {
                 resultObject.put("tickets", arr);
 
                 result.setCode("201");
-                result.setMessage(jsonObject.getString("message"));
+                result.setMessage(jsonObject.getString("suggest"));
                 result.setResult(resultObject);
 
 
@@ -338,8 +339,8 @@ public class ScheduleCarControl {
 
             } else {
                 result.setCode("301");
-                result.setMessage(jsonObject.getString("message"));
-                result.setResult("");
+                result.setMessage(jsonObject.getString("suggest"));
+                result.setResult(order.getSourceOrderId());
                 //异步处理
                 reqCallbackAsync.reqCallback(result,null);
         }

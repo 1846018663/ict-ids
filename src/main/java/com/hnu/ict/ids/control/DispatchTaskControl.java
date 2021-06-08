@@ -155,7 +155,6 @@ public class DispatchTaskControl {
             info.setCarId(Integer.parseInt(taskResult.getCarId()));
             info.setBeginStationName(taskResult.getFromName());
             info.setEndStationName(taskResult.getToName());
-            info.setParkName(taskResult.getParkName());
             info.setParkId(Integer.parseInt(taskResult.getParkId()));
             info.setDriverId(Integer.parseInt(taskResult.getDriverId()));
             info.setWarning(taskResult.getWarning());
