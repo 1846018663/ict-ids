@@ -562,9 +562,12 @@ public class DispatchTaskControl {
             jsonObject.put("ticketNumber", order.getTicketNumber());
             logger.info("快速响应算法发送请求" + jsonObject.toJSONString());
             String body = null;
+            NetworkLog networkLog= intoNetworkLog(response_URL, NetworkEnum.ALGORITHM_TRANSPORT.getValue(), jsonObject.toJSONString());
             try {
                 body = HttpClientUtil.doPostJson(response_URL, jsonObject.toJSONString());
                 logger.info("快速响应算法接收返回" + body);
+                networkLog.setResponseResult(body);
+                networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
                 if (StringUtils.hasText(body)) {
                     JSONObject json = JSON.parseObject(body);
                     Integer status = json.getInteger("status");
@@ -588,9 +591,10 @@ public class DispatchTaskControl {
                     result.setData("");
                 }
             } catch (Exception e) {
+                networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
                 e.printStackTrace();
             }
-
+            networkLogServer.insertNetworkLog(networkLog);
 
         }
         return result;

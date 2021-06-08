@@ -38,7 +38,7 @@ public class GetCarInfoTask{
     UpdateCarAsync updateCarAsync;
 
     //每天凌晨4点  同步车辆信息0 0 4 * * ?
-
+    @Scheduled(cron = "0 0 4 * * ?  ")
     public void getCarInfo() throws Exception {
         logger.info("执行同步车辆信息");
         //网络请求获取全量车辆信息

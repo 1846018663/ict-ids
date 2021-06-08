@@ -14,6 +14,7 @@ public enum NetworkEnum {
     ALGORITHM_PLANNING("4004","路劲规划与距离算法接口"),
     ALGORITHM_SCHEDULE("4005","包车算法接口"),
     ALGORITHM_SEAT("4006","新增行程座位分配-标准"),
+    ALGORITHM_TRANSPORT ("4007","运力检测接口"),
     PASSENGRT_SERVICE_CALL_BACK("5001","乘客服务回调行程预约成功接口"),
     EALY_WARNING("6001","通知乘客服务系统预警通知");
 
