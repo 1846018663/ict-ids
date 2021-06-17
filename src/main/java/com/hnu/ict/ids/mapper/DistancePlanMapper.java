@@ -11,6 +11,6 @@ import org.apache.ibatis.annotations.Select;
 public interface DistancePlanMapper extends BaseMapper<DistancePlan> {
 
 
-    @Select("SELECT * from distance_plan d where d.start_id =#{startId} and d.end_id = #{endId} ")
+    @Select("SELECT * from distance_plan where start_id =#{startId} and end_id = #{endId} ")
     DistancePlan findStartEnd(@Param("startId") Integer startId,@Param("endId") Integer endId);
 }

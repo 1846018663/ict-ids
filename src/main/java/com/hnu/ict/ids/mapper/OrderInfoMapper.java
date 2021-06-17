@@ -62,13 +62,13 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
      * 查询所未同步通过数据
      * @return
      */
-    @Select("SELECT * from order_info o where o.status=2 and o.travel_id is not null")
+    @Select("SELECT * from order_info  where status=2 and travel_id is not null")
     List<OrderInfo> findCompensatesOrderIinfo();
 
-    @Select("SELECT * from order_info o where o.push_status=2 and o.status=2  and o.push_number<=4 ")
+    @Select("SELECT * from order_info o where push_status=2 and status=2  and push_number<=4 ")
     List<OrderInfo> findPushFailedOrderIinfo();
 
-    @Select("SELECT * from order_info o where o.order_no=#{orderNo} ")
+    @Select("SELECT * from order_info where order_no=#{orderNo} ")
     OrderInfo findOrderNo(@Param("orderNo")String orderNo);
 
 }

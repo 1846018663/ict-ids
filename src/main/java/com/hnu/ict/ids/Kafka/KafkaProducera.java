@@ -59,8 +59,8 @@ public class KafkaProducera {
             value.put("vehicleId",1);
             value.put("plateNo","沪BR7072");
         }else{
-            value.put("vehicleId",1);
-            value.put("plateNo","沪BR7072");
+            value.put("vehicleId",5);
+            value.put("plateNo","沪BG3974");
         }
         boo++;
 //        value.put("vehicleId",carInfo.getCId());

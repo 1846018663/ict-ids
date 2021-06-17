@@ -18,14 +18,14 @@ public interface TravelTicketInfoMapper extends BaseMapper<TravelTicketInfo> {
      * @param traveId
      * @return
      */
-    @Select("SELECT * from travel_ticket_info o where o.travel_id=#{traveId}  ")
+    @Select("SELECT * from travel_ticket_info  where travel_id=#{traveId}  ")
     List<TravelTicketInfo> findPassengerSeating(@Param("traveId") String traveId);
 
-    @Select("SELECT * from travel_ticket_info o where o.travel_id=#{traveId} and o.user_id=#{userId}")
+    @Select("SELECT * from travel_ticket_info where travel_id=#{traveId} and user_id=#{userId}")
     TravelTicketInfo findTraveIdSeat(@Param("traveId")String traveId,@Param("userId")Integer userId);
 
 
-    @Delete("DELETE FROM travel_ticket_info t where t.travel_id=#{traveId} and t.user_id=#{userId}")
+    @Delete("DELETE FROM travel_ticket_info where travel_id=#{traveId} and user_id=#{userId}")
     void delTraveIdSeat(@Param("traveId")String traveId,@Param("userId")Integer userId);
 
 
