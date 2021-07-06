@@ -14,6 +14,7 @@ import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -74,17 +75,22 @@ public class DispatchTask {
     @Autowired
     IvsAppPlatformInfoService ivsAppPlatformInfoService;
 
+    @Autowired
+    OrderInfoHistotryService orderInfoHistotryService;
 
     @Autowired
     KafkaProducera kafkaProducera;
+
+    @Autowired
+    TravelInfoLogService travelInfoLogService;
 
 
     /**
      * 每隔5分钟执行一次（按照 corn 表达式规则执行）0 0/5 * * * ?    0/10 * * * * ?
      */
-    @Scheduled(cron = "0 0/1 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     public PojoBaseResponse findNotTrave() {
-        logger.info("三分钟执行一次新增行程");
+        logger.info("五分钟执行一次新增行程");
         PojoBaseResponse result = new PojoBaseResponse();
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
         Date stateDate = new Date();
@@ -115,8 +121,23 @@ public class DispatchTask {
                 if (bool) {
                     //数据操作成功回调乘客服务系统
                     String str = successfulTrip(mapResult, travelInfoList, listOrder);
-                    logger.info("回调乘客服务系统接收参数" + str);
+                    logger.info("发送数系统接收参数" + str);
                 }
+            }else{
+                //新增行程失败
+                for (OrderInfo order: listOrder){
+                    OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                    BeanUtils.copyProperties(order,orderInfoHistotry);
+                    orderInfoHistotry.setId(null);
+                    orderInfoHistotry.setCreateTime(new Date());
+                    orderInfoHistotry.setOrderStatus(7);
+                    orderInfoHistotry.setOrderStatusName("新增行程失败");
+                    orderInfoHistotryService.insert(orderInfoHistotry);
+
+                    order.setOrderStatus(7);
+                    orderInfoService.updateById(order);
+                }
+
             }
 
         }
@@ -146,6 +167,7 @@ public class DispatchTask {
             String taskerId = null;
             info.setEndStationId(Integer.parseInt(taskResult.getToId()));
             info.setTravelStatus(1);//预约成功
+            info.setPushStatus(0);//未推送
             info.setItNumber(taskResult.getItNumber());
             info.setStartTime(DateUtil.strToDate(taskResult.getStartTime()));
             info.setDistance(new BigDecimal(taskResult.getDistance()));
@@ -175,6 +197,16 @@ public class DispatchTask {
                 mapResult.put(orderInfo.getSourceOrderId(), taskerId);
             }
             travelInfoList.add(info);
+
+            //历史轨迹节点保存
+            TravelInfoLog travelInfoLog=new TravelInfoLog();
+            BeanUtils.copyProperties(info,travelInfoLog);
+            travelInfoLog.setId(null);
+            travelInfoLog.setCreateTime(new Date());
+            travelInfoLog.setTravelStatusName("预约成功");
+
+            travelInfoLogService.insert(travelInfoLog);
+
         }
         //解析数据封装后   service批量处理
         boolean bool = travelInfoService.addTravelInfoList(travelInfoList, map);
@@ -415,27 +447,30 @@ public class DispatchTask {
                                  List<OrderInfo> orderInfoList) {
         List<String> travelIdList = new ArrayList<>();
         List<CustomerTravelRequset> customerHttpAPIBeanList = intoCustomerTravel(travelInfoList, map, orderInfoList, travelIdList);
-
-        String json = JSON.toJSONString(customerHttpAPIBeanList);
-        //接口访问日志操作
-        NetworkLog networkLog = intoNetworkLog(callback_URL, NetworkEnum.PASSENGRT_SERVICE_CALL_BACK.getValue(), json);
-        String body = "";
-        try {
-            logger.info("行程预约成功传参内容" + json);
-            body = HttpClientUtil.doPostJson(callback_URL, json);
-            networkLog.setResponseResult(body);
-            networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
-            logger.info("行程预约成功返回结果:" + body);
-            updateTravel(body, travelInfoList, travelIdList);
-        } catch (Exception e) {
-            //失败   数据信息做修改  失败status 为2
-            orderInfoService.updateByIdList(orderInfoList, 2);
-            networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
-            e.printStackTrace();
+        for (String id : travelIdList) {
+            TravelInfo info = travelInfoService.findTravelId(id);
+            kafkaProducera.getTripInfo(info, 1);
         }
-
-        networkLogServer.insertNetworkLog(networkLog);
-        return body;
+//        String json = JSON.toJSONString(customerHttpAPIBeanList);
+//        //接口访问日志操作
+//        NetworkLog networkLog = intoNetworkLog(callback_URL, NetworkEnum.PASSENGRT_SERVICE_CALL_BACK.getValue(), json);
+//        String body = "";
+//        try {
+//            logger.info("行程预约成功传参内容" + json);
+//            body = HttpClientUtil.doPostJson(callback_URL, json);
+//            networkLog.setResponseResult(body);
+//            networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
+//            logger.info("行程预约成功返回结果:" + body);
+//            updateTravel(body, travelInfoList, travelIdList);
+//        } catch (Exception e) {
+//            //失败   数据信息做修改  失败status 为2
+//            orderInfoService.updateByIdList(orderInfoList, 2);
+//            networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
+//            e.printStackTrace();
+//        }
+//
+//        networkLogServer.insertNetworkLog(networkLog);
+        return "完成";
     }
 
     /**

@@ -36,11 +36,12 @@ public class GetPlatformInfoTask {
 
     //站台信息每天凌晨三点
     @Scheduled(cron = "0 0 3 * * ?  ")
+//    @Scheduled(cron = "0 0/1 * * * ?")
     public void getPlatformInfo() throws Exception {
         //网络请求获取全量站点信息
         StringBuffer urlInfo=new StringBuffer(URL).append("?paging=false");
         String body= HttpClientUtil.doGet(urlInfo.toString());
-
+        logger.info("同步站台大数据信息"+body);
         //解析站点信息集合并做逻辑处理
         JSONObject object=JSONObject.parseObject(body);
         if(object.getBoolean("success")==true){
@@ -50,7 +51,7 @@ public class GetPlatformInfoTask {
             JSONArray carJson= dataJson.getJSONArray("result");
 
             List<TravePlatfromRequset> platfromList=new ArrayList<>();
-
+            List<TravePlatfromRequset> szPlatfromList=new ArrayList<>();
             for (int i=0;i<carJson.size();i++){
                 JSONObject json=carJson.getJSONObject(i);
                 //根据站台id获取站台信息
@@ -62,11 +63,16 @@ public class GetPlatformInfoTask {
                     platfromList.add(intoTravePlatfromRequset(json));
                 }
 
+                if(code.equals("1001")) {
+                    szPlatfromList.add(intoTravePlatfromRequset(json));
+                }
+
                 updateData(platformInfo ,json);
             }
 
             if(platfromList!=null && platfromList.size()>0){
                 updatePlatformAsync.updatePlatformAlgorithm(platfromList);
+                updatePlatformAsync.szUpdatePlatformAlgorithm(platfromList);
             }
         }
     }

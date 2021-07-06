@@ -63,6 +63,9 @@ public class OrderInfoControl {
     @Autowired
     KafkaProducera kafkaProducera;
 
+    @Autowired
+    OrderInfoHistotryService orderInfoHistotryService;
+
 
 
 
@@ -120,6 +123,7 @@ public class OrderInfoControl {
         order.setOrderNo(UtilConf.getUUID());
         order.setOrderSource("乘客服务系统");
         order.setStatus(0);//初始化
+        order.setOrderStatus(1);
         order.setTravelSource(null);
         JSONArray jsonArray=new JSONArray();
         if(json.getJSONArray("seat_preferences")!=null){
@@ -135,6 +139,13 @@ public class OrderInfoControl {
 
             }
         }
+        OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+        BeanUtils.copyProperties(order,orderInfoHistotry);
+        orderInfoHistotry.setId(null);
+        orderInfoHistotry.setCreateTime(new Date());
+        orderInfoHistotry.setOrderStatusName("创建订单");
+
+        orderInfoHistotryService.insert(orderInfoHistotry);
         orderInfoService.insertOrder(order,jsonArray.toString());
     }
 

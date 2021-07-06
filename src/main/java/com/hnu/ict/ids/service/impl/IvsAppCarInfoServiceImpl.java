@@ -7,6 +7,7 @@ import com.hnu.ict.ids.service.IvsAppCarInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -59,5 +60,11 @@ public class IvsAppCarInfoServiceImpl implements IvsAppCarInfoService {
     @Override
     public int update(IvsAppCarInfo ivsAppCarInfo){
         return ivsAppCarInfoMapper.updateById(ivsAppCarInfo);
+    }
+
+    @Override
+    public void updateStatus(Date update){
+        ivsAppCarInfoMapper.updateStatus(update);
+
     }
 }

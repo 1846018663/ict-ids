@@ -6,7 +6,9 @@ import com.hnu.ict.ids.entity.IvsAppCarInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -59,5 +61,9 @@ public interface IvsAppCarInfoMapper extends BaseMapper<IvsAppCarInfo> {
 
     @Select("select car_type as type ,COUNT(c_id) as total,c_status as status,car_seat_number as onIdlerStatusCount from ivs_app_car_info where c_code=#{cityCode}  GROUP by car_type ,c_status")
     List<CarTypeTotal> getCarTypeTotal(@Param("cityCode") String cityCode);
+
+
+    @Update("update ivs_app_car_info set c_status=0 ,c_isuse=2 ")
+    void updateStatus(@Param("update") Date update);
 
 }

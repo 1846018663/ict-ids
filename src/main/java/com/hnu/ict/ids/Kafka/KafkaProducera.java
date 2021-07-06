@@ -3,10 +3,7 @@ package com.hnu.ict.ids.Kafka;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.entity.*;
-import com.hnu.ict.ids.service.IvsAppCarInfoService;
-import com.hnu.ict.ids.service.IvsAppPlatformInfoService;
-import com.hnu.ict.ids.service.IvsAppUserInfoService;
-import com.hnu.ict.ids.service.OrderInfoService;
+import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -14,6 +11,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -39,6 +37,9 @@ public class KafkaProducera {
     IvsAppPlatformInfoService ivsAppPlatformInfoService;
     @Autowired
     OrderInfoService orderInfoService;
+    @Autowired
+    OrderInfoHistotryService orderInfoHistotryService;
+
 
     static  int boo=0;
 
@@ -55,16 +56,8 @@ public class KafkaProducera {
         value.put("tripType",tripType);//行程类别，1-车列，2-包车，3-其他
         //车辆信息封装
         IvsAppCarInfo carInfo=ivsAppCarInfoService.getByCarId(travelInfo.getCarId());
-        if(boo%2==1){
-            value.put("vehicleId",1);
-            value.put("plateNo","沪BR7072");
-        }else{
-            value.put("vehicleId",5);
-            value.put("plateNo","沪BG3974");
-        }
-        boo++;
-//        value.put("vehicleId",carInfo.getCId());
-//        value.put("plateNo",carInfo.getLicenseNumber());
+        value.put("vehicleId",carInfo.getCId());
+        value.put("plateNo",carInfo.getLicenseNumber());
         //司机信息封装
         IvsAppUserInfo userInfo=ivsAppUserInfoService.getById(travelInfo.getDriverId());
         value.put("driverId",userInfo.getUId());
@@ -82,6 +75,18 @@ public class KafkaProducera {
         value.put("tripMileage",travelInfo.getDistance().intValue());
         value.put("passengerNum",travelInfo.getItNumber());
         value.put("dspTime",DateUtil.getCurrentTime(travelInfo.getCreateTime()));
+
+        List<OrderInfo> listOrder=orderInfoService.findOrderTravelId(travelInfo.getTravelId());
+        for (OrderInfo orderInfo : listOrder) {
+            OrderInfoHistotry orderInfoHistotry = new OrderInfoHistotry();
+            BeanUtils.copyProperties(orderInfo, orderInfoHistotry);
+            orderInfoHistotry.setId(null);
+            orderInfoHistotry.setCreateTime(new Date());
+            orderInfoHistotry.setOrderStatus(8);
+            orderInfoHistotry.setOrderStatusName("上报大数据");
+
+            orderInfoHistotryService.insert(orderInfoHistotry);
+        }
 
         //封装站点信息列表
         JSONArray stationList=new JSONArray();

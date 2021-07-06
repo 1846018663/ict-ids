@@ -2,13 +2,16 @@ package com.hnu.ict.ids.service.impl;
 
 import com.hnu.ict.ids.bean.TraveTrendBean;
 import com.hnu.ict.ids.entity.OrderInfo;
+import com.hnu.ict.ids.entity.OrderInfoHistotry;
 import com.hnu.ict.ids.entity.TravelInfo;
 import com.hnu.ict.ids.mapper.OrderInfoMapper;
 import com.hnu.ict.ids.mapper.TravelInfoMapper;
+import com.hnu.ict.ids.service.OrderInfoHistotryService;
 import com.hnu.ict.ids.service.TravelInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,8 @@ public class TravelInfoServiceImpl implements TravelInfoService {
     TravelInfoMapper travelInfoMapper;
     @Autowired
     OrderInfoMapper orderInfoMapper;
+    @Autowired
+    OrderInfoHistotryService orderInfoHistotryService;
 
     @Override
     public TravelInfo getCarTime(int carId,Date timeDate){
@@ -59,7 +64,17 @@ public class TravelInfoServiceImpl implements TravelInfoService {
                 OrderInfo order= orderInfoMapper.getBySourceOrderId(entry.getKey());
                 order.setTravelId(entry.getValue());
                 order.setTravelSource(0);//默认算法来源  0
+                order.setOrderStatus(6);
+
+                OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                BeanUtils.copyProperties(order,orderInfoHistotry);
+                orderInfoHistotry.setId(null);
+                orderInfoHistotry.setCreateTime(new Date());
+                orderInfoHistotry.setOrderStatus(6);
+                orderInfoHistotry.setOrderStatusName("新增行程成功");
+
                 orderInfoMapper.updateById(order);
+                orderInfoHistotryService.insert(orderInfoHistotry);
             }
             return true;
         } catch (Exception e) {
@@ -78,6 +93,27 @@ public class TravelInfoServiceImpl implements TravelInfoService {
         for (int i=0;i<list.size();i++){
             TravelInfo info=list.get(i);
             TravelInfo travelInfo=travelInfoMapper.findTravelId(info.getTravelId());
+
+            List<OrderInfo> orderList=orderInfoMapper.findOrderTravelId(travelInfo.getTravelId());
+            for (OrderInfo order: orderList){
+                OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                BeanUtils.copyProperties(order,orderInfoHistotry);
+                orderInfoHistotry.setId(null);
+                orderInfoHistotry.setCreateTime(new Date());
+                if(status==1){//成功
+                    orderInfoHistotry.setOrderStatus(13);
+                    orderInfoHistotry.setOrderStatusName("乘客服务系统接收成功");
+
+                    order.setOrderStatus(13);
+                }else{//失败
+                    orderInfoHistotry.setOrderStatus(14);
+                    orderInfoHistotry.setOrderStatusName("乘客服务系统接收失败");
+                    order.setOrderStatus(14);
+                }
+
+                orderInfoMapper.updateById(order);
+                orderInfoHistotryService.insert(orderInfoHistotry);
+            }
             travelInfo.setPushStatus(status);
             travelInfo.setUpdateTime(new Date());
             travelInfoMapper.updateById(travelInfo);

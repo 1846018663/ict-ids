@@ -117,6 +117,24 @@ public class OrderInfo {
     private String charteredBus;
 
 
+    /**
+     * 订单状态
+     * 1、创建订单
+     * 2、运力检测预约成功
+     * 3、运力检测预约失败
+     * 4、新增行程成功
+     * 5、上报大数据
+     * 6、下发车载终端成功
+     * 7、下发车载终端失败
+     * 8、变更指派车辆上报大数据
+     * 9、上报乘客服务系统
+     * 10、乘客服务系统接收成功
+     * 11、乘客服务系统接收失败
+     * 12、取消订单
+     */
+    private int orderStatus;
+
+
 
     @Override
     public String toString() {

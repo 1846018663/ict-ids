@@ -15,11 +15,13 @@ import com.hnu.ict.ids.mapper.OrderUserLinkMapper;
 import com.hnu.ict.ids.mapper.TravelInfoMapper;
 import com.hnu.ict.ids.service.NetworkLogService;
 import com.hnu.ict.ids.service.OrderInfoService;
+import com.hnu.ict.ids.service.TravelInfoLogService;
 import com.hnu.ict.ids.service.TravelTicketInfoService;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -57,6 +59,8 @@ public class OrderInfoServiceImpl implements OrderInfoService {
     NetworkLogService networkLogServer;
     @Autowired
     TravelTicketInfoService travelTicketInfoService;
+    @Autowired
+    TravelInfoLogService travelInfoLogService;
 
     @Autowired
     KafkaProducera kafkaProducera;
@@ -116,16 +120,6 @@ public class OrderInfoServiceImpl implements OrderInfoService {
 
         //修改订单表座位数
         orderMapper.updateOrderNumber(ids.length,order.getId());
-        OrderInfoHistotry orderInfoHistotryRes= orderInfoHistotryMapper.getBySourceOrderId(order.getSourceOrderId());
-
-
-        //如果订单历史表未创建  新增操作
-        if(orderInfoHistotryRes==null){
-            orderInfoHistotryMapper.insert(orderInfoHistotry);
-        }
-
-
-
 
         //追加条件如果是包车取消走新业务流程
         if(order.getCharteredBus()!=null || (order.getTravelId()==null && order.getStatus()==1)){
@@ -200,8 +194,32 @@ public class OrderInfoServiceImpl implements OrderInfoService {
         int count=orderUserLinkMapper.findRemove(order.getOrderNo());
 
         if(count==0){
-            orderMapper.deleteBySourceOrderId(order.getSourceOrderId());
-            travelInfoMapper.updateTravlInfoStatus(order.getTravelId());
+//            orderMapper.deleteBySourceOrderId(order.getSourceOrderId());
+            orderInfoHistotry.setOrderStatus(15);
+            orderInfoHistotry.setOrderStatusName("取消订单");
+            orderInfoHistotry.setCreateTime(new Date());
+            orderInfoHistotryMapper.insert(orderInfoHistotry);
+
+            order.setOrderStatus(15);
+            orderMapper.updateById(order);
+
+            TravelInfo travelInfo=travelInfoMapper.findTravelId(order.getTravelId());
+            if(travelInfo!=null){
+                travelInfo.setTravelStatus(9);//取消
+                travelInfo.setUpdateTime(new Date());
+                //历史轨迹节点保存
+                TravelInfoLog travelInfoLog=new TravelInfoLog();
+                BeanUtils.copyProperties(travelInfo,travelInfoLog);
+                travelInfoLog.setId(null);
+                travelInfoLog.setCreateTime(new Date());
+                travelInfoLog.setTravelStatus(9);
+                travelInfoLog.setTravelStatusName("行程取消");
+
+                travelInfoLogService.insert(travelInfoLog);
+                travelInfoMapper.updateById(travelInfo);
+            }
+
+
         }
 
         //通知大数据删除

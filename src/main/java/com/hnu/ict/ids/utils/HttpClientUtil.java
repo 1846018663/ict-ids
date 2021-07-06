@@ -252,6 +252,8 @@ public class HttpClientUtil {
     }
 
 
+
+
     public String generateRequestParameters(String Url, Map<String, String> params) {
         StringBuilder sb = new StringBuilder(Url);
             sb.append("?");

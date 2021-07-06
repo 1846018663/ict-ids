@@ -24,19 +24,41 @@ public class UpdateCarAsync {
 
     @Value("${travel.algorithm.carInfo.update.url}")
     private String updateCarUrl;
+    @Value("${sz.travel.algorithm.carInfo.update.url}")
+    private String SZupdateCarUrl;
 
     @Async
     public void updateCar(List<TraveCarRequest> list){
-        logger.info("异步完成算法数据同步----车辆信息"+JSON.toJSONString(list));
+        logger.info("异步完成算法数据同步----上海车辆信息"+JSON.toJSONString(list));
         try {
            String result= HttpClientUtil.doPostJson(updateCarUrl, JSON.toJSONString(list));
+           logger.info("异步完成上海同步车辆信息结果"+result);
            JSONObject json=JSONObject.parseObject(result);
-            logger.info("异步完成同步车辆信息结果"+result);
+
            if(json.getInteger("status")==1){
-               logger.info("异步完成算法数据同步----站台信息完成");
+               logger.info("异步完成算法数据同步----上海车辆信息完成");
            }else{
-               logger.info("异步完成算法数据同步----站台信息失败");
+               logger.info("异步完成算法数据同步----上海车辆信息失败");
            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    @Async
+    public void szUpdateCar(List<TraveCarRequest> list){
+        logger.info("异步完成算法数据同步----深圳车辆信息"+JSON.toJSONString(list));
+        try {
+            String result= HttpClientUtil.doPostJson(SZupdateCarUrl, JSON.toJSONString(list));
+            logger.info("异步完成深圳同步车辆信息结果"+result);
+            JSONObject json=JSONObject.parseObject(result);
+            if(json.getInteger("status")==1){
+                logger.info("异步完成算法数据同步----深圳站台信息完成");
+            }else{
+                logger.info("异步完成算法数据同步----深圳站台信息失败");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

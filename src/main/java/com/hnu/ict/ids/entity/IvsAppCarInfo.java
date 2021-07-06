@@ -51,7 +51,18 @@ public class IvsAppCarInfo {
 
     private Date lastAnnualInspection;
 
+    //是否在线(1在线 2离线)
     private String cIsuse;
 
+    //修改时间
     private Date cIsuseDate;
+
+    //司机ID
+    Long driverId;
+    //司机工号
+    String driverEmpNo;
+    //类型，1-登入   2-登出
+    Integer checkType;
+    //时间，登入时间
+    String time;
 }

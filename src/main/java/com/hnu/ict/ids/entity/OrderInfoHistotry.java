@@ -39,13 +39,13 @@ public class OrderInfoHistotry {
     /**
      * 出发站id
      */
-    private int beginStationId;
+    private Integer beginStationId;
 
 
     /**
      * 终点站id
      */
-    private int endStationId;
+    private Integer endStationId;
 
 
     /**
@@ -102,8 +102,39 @@ public class OrderInfoHistotry {
      */
     private Integer pushStatus;
 
+    /**
+     * 运力检测说明
+     */
+    private String message;
 
 
+    /**
+     * 包车类型
+     * 1：车辆5座，
+     * 2：车辆15座，3：车辆23座
+     */
+    private String charteredBus;
+
+
+    /**
+     * 订单状态
+     * 1、创建订单
+     * 2、运力检测预约成功
+     * 3、运力检测预约失败
+     * 4、新增行程成功
+     * 5、上报大数据
+     * 6、下发车载终端成功
+     * 7、下发车载终端失败
+     * 8、变更指派车辆上报大数据
+     * 9、上报乘客服务系统
+     * 10、乘客服务系统接收成功
+     * 11、乘客服务系统接收失败
+     * 12、取消订单
+     */
+    private int orderStatus;
+
+
+    private String orderStatusName;
 
     @Override
     public String toString() {

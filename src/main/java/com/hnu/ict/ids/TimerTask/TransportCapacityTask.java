@@ -66,17 +66,22 @@ public class TransportCapacityTask {
     OrderInfoHistotryService  orderInfoHistotryService;
 
     @Autowired
+    TdCarryingLogEndService tdCarryingLogEndService;
+
+    @Autowired
     NetworkLogService networkLogServer;
 
 
-    @Scheduled(cron = "3/10 * * * * ?  ")
+    @Scheduled(cron = "0/8 * * * * ? ")
     public void transportCapacity() throws Exception{
+        logger.info("运力是否满足开始");
         Date stateDate=new Date();
         long time=1000*60*30*24*7+stateDate.getTime();//一周时间
         Date endDate= DateUtil.millisecondToDate(time);
         List<OrderInfo>  orderList= orderInfoService.findNotTransportCapacity(DateUtil.getCurrentTime(stateDate),DateUtil.getCurrentTime(endDate));
 
         for (OrderInfo order:orderList){
+            TdCarryingLog carryingLog=new TdCarryingLog();
             JSONObject jsonObject=new JSONObject();
             jsonObject.put("oId",order.getSourceOrderId());
             jsonObject.put("fromId",order.getBeginStationId()+"");
@@ -85,60 +90,108 @@ public class TransportCapacityTask {
             jsonObject.put("ticketNumber",order.getTicketNumber());
             logger.info("快速响应算法发送请求"+jsonObject.toJSONString());
             String body=HttpClientUtil.doPostJson(response_URL,jsonObject.toJSONString());
+
+            carryingLog.setSourceOrderId(order.getSourceOrderId());
+            carryingLog.setAlgorithmRequset(jsonObject.toJSONString());
+
             logger.info("====快速响应算法接收返回======"+body);
             if(StringUtils.hasText(body)){
                 JSONObject json=JSON.parseObject(body);
                 Integer status= json.getInteger("status");
 
+
                 Map<String,String> map=new HashMap<>();
                 map.put("o_id",order.getSourceOrderId());
                 String message=json.getString("suggest");
                 map.put("message",message);
+
+                carryingLog.setAlgorithmCode(status.toString());
+                carryingLog.setAlgorithmMessage(message);
+                carryingLog.setAlgorithmTime(DateUtil.getCurrentTime(new Date()));
+
                 if(status!=201) {
                     map.put("code", "301");
                 }else{
                     map.put("code", "201");
                 }
 
+                OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                BeanUtils.copyProperties(order,orderInfoHistotry);
+                orderInfoHistotry.setId(null);
+                orderInfoHistotry.setCreateTime(new Date());
                 //更新订单数据
                 if(status==201){
                     order.setStatus(PushStatusEnum.SUCCESS.getValue());//运力检测  预约成功
+                    order.setOrderStatus(2);
+
+                    orderInfoHistotry.setOrderStatus(2);
+                    orderInfoHistotry.setOrderStatusName("运力检测预约成功 ");
                 }
                 if(status!=201){
                     order.setStatus(PushStatusEnum.FAIL.getValue());//运力检测  预约失败
+                    order.setOrderStatus(3);
+
+                    orderInfoHistotry.setOrderStatus(3);
+                    orderInfoHistotry.setOrderStatusName("运力检测预约失败");
                 }
                 order.setMessage(message);
                 orderInfoService.updateById(order);
+                logger.info("运力检测流程节点保存"+orderInfoHistotry.toString());
+                orderInfoHistotryService.insert(orderInfoHistotry);
+
 
                 String jsonString=JSON.toJSONString(map);
                 logger.info("==== 运力检测乘客服务系统发送参数======"+jsonString);
 
+                carryingLog.setConsumerRequset(jsonString);
+
                 //获取最新order数据内容
                 OrderInfo orderInfo= orderInfoService.getById(order.getId().intValue());
+                orderInfo.setPushNumber(order.getPushNumber()+1);
                 try {
                     String resultBody= HttpClientUtil.doPostJson(capacity_URL,jsonString);
                     logger.info("运力检测乘客服务系统返回结果"+resultBody);
                     JSONObject resulJson=JSON.parseObject(resultBody);
+
                     String code= resulJson.getString("code");
+                    carryingLog.setConsumerResult(resultBody);
+                    carryingLog.setConsumerCode(code);
+                    carryingLog.setCreateTime(DateUtil.getCurrentTime(new Date()));
+                    tdCarryingLogEndService.insert(carryingLog);
+
+
+
 
                     if(status!=201){
                         if(code.equals("00007")){
-                            logger.info("订单通知乘客服务失败 累加推送次数"+PushStatusEnum.FAIL.getValue()+"alkngkjsdjaigdjhnais");
-                            orderInfo.setPushNumber(order.getPushNumber()+1);
-                            orderInfo.setPushStatus(PushStatusEnum.FAIL.getValue());
-                            orderInfoService.updateById(orderInfo);
-                        }
+                            logger.info("订单运力通知乘客服务失败 累加推送次数"+PushStatusEnum.FAIL.getValue()+"alkngkjsdjaigdjhnais");
 
+                            orderInfo.setPushStatus(PushStatusEnum.FAIL.getValue());
+                            order.setOrderStatus(5);
+
+                            BeanUtils.copyProperties(order,orderInfoHistotry);
+                            orderInfoHistotry.setId(null);
+                            orderInfoHistotry.setCreateTime(new Date());
+                            orderInfoHistotry.setOrderStatus(5);
+                            orderInfoHistotry.setOrderStatusName("运力乘客服务系统接收失败");
+                            orderInfoService.updateById(orderInfo);
+                            orderInfoHistotryService.insert(orderInfoHistotry);
+                        }
 
 
                         if(code.equals("00008")){
-                            logger.info("订单取消成功  移除信息，保存订单日志");
-                            OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
-                            BeanUtils.copyProperties(orderInfo,orderInfoHistotry);
-                            //运力不足取消订单
+                            logger.info("订单取消预约失败流程结束  添加流程节点日志");
+                            order.setOrderStatus(5);
+
+                            BeanUtils.copyProperties(order,orderInfoHistotry);
+                            orderInfoHistotry.setId(null);
+                            orderInfoHistotry.setCreateTime(new Date());
+                            orderInfoHistotry.setOrderStatus(4);
+                            orderInfoHistotry.setOrderStatusName("运力乘客服务系统接收成功");
+                            orderInfoService.updateById(orderInfo);
                             orderInfoHistotryService.insert(orderInfoHistotry);
-                            orderInfoService.deleteBySourceOrderId(orderInfo.getSourceOrderId());
                         }
+                        logger.info("运力检测发送成功客服系统  运力预约失败 流程节点保存"+orderInfoHistotry.toString());
 
                     }
 
@@ -146,16 +199,32 @@ public class TransportCapacityTask {
                         //代表运力检测成功  修改
                         orderInfo.setPushNumber(order.getPushNumber()+1);
                         if(code.equals("00007")){
-                            logger.info("订单通知乘客服务失败");
+                            logger.info("订单运力通知乘客服务失败");
                             //设置推送失败
-                            orderInfo.setPushNumber(order.getPushNumber()+1);
+
                             orderInfo.setPushStatus(PushStatusEnum.FAIL.getValue());
+                            order.setOrderStatus(5);
+
+                            BeanUtils.copyProperties(order,orderInfoHistotry);
+                            orderInfoHistotry.setId(null);
+                            orderInfoHistotry.setCreateTime(new Date());
+                            orderInfoHistotry.setOrderStatus(5);
+                            orderInfoHistotry.setOrderStatusName("运力乘客服务系统接收失败");
                         }
+
                         if(code.equals("00008")){
                             //设置推送成功
+                            order.setOrderStatus(4);
+
                             orderInfo.setPushStatus(PushStatusEnum.SUCCESS.getValue());
+                            BeanUtils.copyProperties(order,orderInfoHistotry);
+                            orderInfoHistotry.setId(null);
+                            orderInfoHistotry.setCreateTime(new Date());
+                            orderInfoHistotry.setOrderStatus(4);
+                            orderInfoHistotry.setOrderStatusName("运力乘客服务系统接收成功");
                         }
                         orderInfoService.updateById(orderInfo);
+                        orderInfoHistotryService.insert(orderInfoHistotry);
                     }
 
                 } catch (Exception e) {
@@ -211,6 +280,7 @@ public class TransportCapacityTask {
             }
 
         }
+        logger.info("运力是否满足结束");
     }
 
 

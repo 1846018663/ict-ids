@@ -3,19 +3,27 @@ package com.hnu.ict.ids.Kafka;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.hnu.ict.ids.WebSocket.WebSocketServer;
+import com.hnu.ict.ids.bean.CarStatusUpRequset;
+import com.hnu.ict.ids.bean.TdDriverAttendance;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.service.*;
+import com.hnu.ict.ids.utils.DateUtil;
+import com.hnu.ict.ids.utils.HttpClientUtil;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class KafkaConsumer {
@@ -41,6 +49,10 @@ public class KafkaConsumer {
     private String carState;
 
 
+    @Value("${travel.algorithm.carInfo.statusUp.url}")
+    private String carStatusUpUrl;
+
+
     @Autowired
     private RedisTemplate redisTemplate;
 
@@ -60,6 +72,14 @@ public class KafkaConsumer {
     TdCarFaultInfoService tdCarFaultInfoService;
     @Autowired
     TdCarStateInfoService tdCarStateInfoService;
+    @Autowired
+    IvsAppCarInfoService ivsAppCarInfoService;
+    @Autowired
+    TdDriverAttendanceLogService tdDriverAttendanceLogService;
+    @Autowired
+    TravelInfoService travelInfoService;
+    @Autowired
+    TravelInfoLogService travelInfoLogService;
 
     /**
      * 1 、获取车辆定位信息
@@ -70,11 +90,8 @@ public class KafkaConsumer {
         JSONObject jsonObject= JSON.parseObject( record.key().toString());
         JSONObject json=JSON.parseObject(record.value().toString());
         String carId=jsonObject.getLong("vehicleId").toString();
-        redisTemplate.opsForValue().set(carPositioning+carId,json);
+        redisTemplate.opsForValue().set(carPositioning+carId,record.value().toString());
 
-        //并且推送
-        webSocketServer.sendMessageAll(jsonObject.toString());
-        JSONObject value= (JSONObject)redisTemplate.opsForValue().get(carPositioning+carId);
     }
 
 
@@ -95,9 +112,34 @@ public class KafkaConsumer {
         tdCarTravelInfo.setCreateTime(new Date());
         tdCarTravelInfoService.insert(tdCarTravelInfo);
 
+        TravelInfo  info=travelInfoService.findTravelId(tdCarTravelInfo.getTripNo());
+        if(info!=null){
+            info.setUpdateTime(new Date());
+            //历史轨迹节点保存
+            TravelInfoLog travelInfoLog=new TravelInfoLog();
+            BeanUtils.copyProperties(info,travelInfoLog);
+            travelInfoLog.setId(null);
+            travelInfoLog.setCreateTime(new Date());
+            if(tdCarTravelInfo.getStatus()==1){//行程开始
+                travelInfoLog.setTravelStatus(2);
+                travelInfoLog.setTravelStatusName("进行中");
+                info.setTravelStatus(2);
+            }
+
+            if(tdCarTravelInfo.getStatus()==2){//行程开始
+                travelInfoLog.setTravelStatus(3);
+                travelInfoLog.setTravelStatusName("已完成");
+                info.setTravelStatus(3);
+            }
+
+            travelInfoService.updateById(info);
+            travelInfoLogService.insert(travelInfoLog);
+
+        }
+
         //保存redis一份数据
         String travelId=jsonObject.getString("tripNo");
-        redisTemplate.opsForValue().set(carTravelStatus+travelId,jsonObject);
+        redisTemplate.opsForValue().set(carTravelStatus+travelId,record.value().toString());
 
         //接口调用通知算法
     }
@@ -120,7 +162,7 @@ public class KafkaConsumer {
         //保存redis一份数据
         String travelId=jsonObject.getString("tripNo");
         String stationNo=jsonObject.getString("stationNo");
-        redisTemplate.opsForValue().set(carTravelStatus+"_"+stationNo,jsonObject);
+        redisTemplate.opsForValue().set(carTravelStatus+"_"+stationNo,record.value().toString());
 
 
         //通知同济算法  接口调用逻辑
@@ -143,7 +185,7 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String vehicleId=jsonObject.getString("vehicleId");
-        redisTemplate.opsForValue().set(carSuspend+vehicleId,jsonObject);
+        redisTemplate.opsForValue().set(carSuspend+vehicleId,record.value().toString());
 
         //通知算法  调用接口
 
@@ -167,7 +209,7 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String vehicleId=jsonObject.getString("vehicleId");
-        redisTemplate.opsForValue().set(carSuspendEnd+vehicleId,jsonObject);
+        redisTemplate.opsForValue().set(carSuspendEnd+vehicleId,record.value().toString());
 
         //通知算法  调用接口
     }
@@ -188,7 +230,7 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String vehicleId=jsonObject.getString("vehicleId");
-        redisTemplate.opsForValue().set(carFault+vehicleId,jsonObject);
+        redisTemplate.opsForValue().set(carFault+vehicleId,record.value().toString());
 
         //通知算法  调用接口
 
@@ -210,7 +252,7 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String vehicleId=jsonObject.getString("vehicleId");
-        redisTemplate.opsForValue().set(carState+vehicleId,jsonObject);
+        redisTemplate.opsForValue().set(carState+vehicleId,record.value().toString());
 
         //通知算法  调用接口
 
@@ -218,14 +260,103 @@ public class KafkaConsumer {
 
 
     /**
-     * 7、 行程数据
+     * 8、 司机登陆数据
      */
-  //  @KafkaListener(topics = "dms_trip_dispatching")
-    public void getTripInfo(ConsumerRecord<?, ?> record) throws Exception {
-        logger.info("消费---dms_trip_dispatching---行程数据，预留");
-        logger.info("++++++++++++++++++topic = %s, offset = %d, value = %s \n", record.topic(), record.offset(), record.value());
-        logger.info("dms_trip_dispatching=====key===="+record.key());
-        logger.info("dms_trip_dispatching====value====="+record.value());
+    @KafkaListener(topics = "vms_driver_attendance")
+    public void driverAttendance(ConsumerRecord<?, ?> record) throws Exception {
+        logger.info("消费---vms_driver_attendance---司机登入登出"+record.value().toString());
+        String regEx="[\n`~!@#$%^&*()+=|';'\\[\\].<>/?~！@#￥%……&*（）——+|【】‘；：”“’。， 、？]";
+        //可以在中括号内加上任何想要替换的字符，实际上是一个正则表达式
+        String aa = " ";//这里是将特殊字符换为aa字符串," "代表直接去掉
+        String str=record.value().toString().replaceAll(regEx,aa);
+        JSONObject jsonObject= JSONObject.parseObject(str);
+        TdDriverAttendance tdDriverAttendance = new TdDriverAttendance();
+        TdDriverAttendanceLog tdDriverAttendanceLog=new TdDriverAttendanceLog();
+
+        tdDriverAttendance.setDriverId(jsonObject.getLong("driverId"));
+        tdDriverAttendanceLog.setDriverId(jsonObject.getLong("driverId").toString());
+
+        tdDriverAttendance.setDriverEmpNo(jsonObject.getString("driverEmpNo"));
+        tdDriverAttendanceLog.setDriverEmpNo(jsonObject.getString("driverEmpNo"));
+
+        tdDriverAttendance.setPlateNo(jsonObject.getString("plateNo"));
+        tdDriverAttendanceLog.setPlateNo(jsonObject.getString("plateNo"));
+
+        tdDriverAttendance.setVehicleId(jsonObject.getLong("vehicleId"));
+        tdDriverAttendanceLog.setVehicleId(jsonObject.getLong("vehicleId").toString());
+
+        tdDriverAttendance.setTime(jsonObject.getString("time"));
+        tdDriverAttendanceLog.setAttTime(jsonObject.getString("time"));
+
+        tdDriverAttendance.setCheckType(jsonObject.getInteger("checkType"));
+        tdDriverAttendanceLog.setCheckType(jsonObject.getInteger("checkType").toString());
+
+        tdDriverAttendanceLog.setCreateTime(DateUtil.getCurrentTime(new Date()));
+
+        tdDriverAttendanceLogService.insert(tdDriverAttendanceLog);
+
+        //更新数据
+        IvsAppCarInfo carInfo=ivsAppCarInfoService.getByCarId(tdDriverAttendance.getVehicleId().intValue());
+        //该车存在修改  车辆数据表   发送至算法  小于等于6是生产   大于6是测试
+        if(carInfo.getCId()<6){
+
+            if(tdDriverAttendance.getCheckType()==1){//登入
+                carInfo.setDriverId(tdDriverAttendance.getDriverId());
+                carInfo.setDriverEmpNo(tdDriverAttendance.getDriverEmpNo());
+                carInfo.setCheckType(tdDriverAttendance.getCheckType());
+                carInfo.setTime(tdDriverAttendance.getTime());
+                //登入代表车辆上线   修改状态
+                carInfo.setCIsuse("1");//在线
+            }else{//登出  离线
+                carInfo.setDriverId(null);
+                carInfo.setDriverEmpNo(null);
+                carInfo.setCheckType(null);
+                carInfo.setTime(null);
+                //登出代表车辆离线   修改状态
+                carInfo.setCIsuse("2");//离线
+            }
+            ivsAppCarInfoService.update(carInfo);
+
+        }
+            //发送数据给算法
+            List<CarStatusUpRequset> list=new ArrayList<>();
+            CarStatusUpRequset carStatusUpRequset=new CarStatusUpRequset();
+//            String value=redisTemplate.opsForValue().get(carPositioning+carInfo.getCId(),0L,9999999L);
+//
+//            if(value!=null && value.length()>0){
+//                String str_value=value.replaceAll(regEx,aa);
+//                logger.info("Redis数据"+str_value);
+//                JSONObject jsonredis= JSON.parseObject(value);
+//                BigDecimal lng=jsonredis.getBigDecimal("lng");//经度
+//                BigDecimal lat=jsonredis.getBigDecimal("lat");//纬度
+//                carStatusUpRequset.setCarLoc(lng+","+lat);
+//            }else {
+                carStatusUpRequset.setCarLoc("121.261028,31.364997");
+//            }
+            carStatusUpRequset.setCarType(Integer.parseInt(carInfo.getCCode()));
+            carStatusUpRequset.setCarId(carInfo.getCId()+"");
+            if(carInfo.getCIsuse().equals("1")){
+                carStatusUpRequset.setCarStatus(1);//可用
+                carStatusUpRequset.setDriverId(carInfo.getDriverId().toString());
+            }else{
+                carStatusUpRequset.setCarStatus(0);//不可用
+                carStatusUpRequset.setDriverId(" ");
+            }
+            carStatusUpRequset.setCarSeatNumber(carInfo.getCarSeatNumber());
+            carStatusUpRequset.setCityType(carInfo.getCarType()+"");
+            list.add(carStatusUpRequset);
+            String json = JSON.toJSONString(list);
+            logger.info("登入登出状态修改"+json);
+            //网络请求
+           String result= HttpClientUtil.doPostJson(carStatusUpUrl,json);
+           JSONObject resultJson=JSONObject.parseObject(result);
+           if(resultJson!=null){
+               if (resultJson.getInteger("status")==1){
+                   logger.info("发送数据通知算法车辆状态修改成功");
+               }else{
+                   logger.info("发送数据通知算法车辆状态修改失败");
+               }
+           }
     }
 
 }

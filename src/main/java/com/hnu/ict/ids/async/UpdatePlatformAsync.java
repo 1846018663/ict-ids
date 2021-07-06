@@ -25,19 +25,42 @@ public class UpdatePlatformAsync {
     @Value("${travel.algorithm.update.platform.url}")
     private String updatePlatformUrl;
 
+    @Value("${sz.travel.algorithm.update.platform.url}")
+    private String sz_updatePlatformUrl;
+
     @Async
     public void updatePlatformAlgorithm(List<TravePlatfromRequset> list){
         //异步完成算法数据同步----站台信息
-        logger.info("异步完成算法数据同步----站台信息"+JSON.toJSONString(list));
+        logger.info("异步完成算法数据同步----上海站台信息"+JSON.toJSONString(list));
         try {
            String result= HttpClientUtil.doPostJson(updatePlatformUrl, JSON.toJSONString(list));
            JSONObject json=JSONObject.parseObject(result);
-            logger.info("异步完成算法数据同步结果"+result);
+            logger.info("异步完成算法数据同步上海结果"+result);
            if(json.getInteger("status")==1){
-               logger.info("异步完成算法数据同步----站台信息完成");
+               logger.info("异步完成算法数据同步----上海站台信息完成");
            }else{
-               logger.info("异步完成算法数据同步----站台信息失败");
+               logger.info("异步完成算法数据同步----上海站台信息失败");
            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    @Async
+    public void szUpdatePlatformAlgorithm(List<TravePlatfromRequset> list){
+        //异步完成算法数据同步----站台信息
+        logger.info("异步完成算法数据同步----深圳站台信息"+JSON.toJSONString(list));
+        try {
+            String result= HttpClientUtil.doPostJson(sz_updatePlatformUrl, JSON.toJSONString(list));
+            JSONObject json=JSONObject.parseObject(result);
+            logger.info("异步完成算法数据同步深圳结果"+result);
+            if(json.getInteger("status")==1){
+                logger.info("异步完成算法数据同步----深圳站台信息完成");
+            }else{
+                logger.info("异步完成算法数据同步----深圳站台信息失败");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

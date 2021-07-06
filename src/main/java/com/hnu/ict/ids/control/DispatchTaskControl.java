@@ -10,19 +10,23 @@ import com.hnu.ict.ids.bean.*;
 import com.hnu.ict.ids.entity.*;
 import com.hnu.ict.ids.exception.ConfigEnum;
 import com.hnu.ict.ids.exception.NetworkEnum;
+import com.hnu.ict.ids.exception.ResultEntity;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.HttpClientUtil;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import sun.security.krb5.internal.tools.Klist;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -50,6 +54,8 @@ public class DispatchTaskControl {
     @Value("${travel.algorithm.seat.url}")
     private String seat_url;
 
+    @Value("${travel.algorithm.carInfo.EditSchedule.url}")
+    private String editSchedule_url;
 
     @Autowired
     TravelInfoService travelInfoService;
@@ -75,9 +81,17 @@ public class DispatchTaskControl {
     @Autowired
     IvsAppPlatformInfoService ivsAppPlatformInfoService;
 
+    @Autowired
+    TravelInfoLogService travelInfoLogService;
+
 
     @Autowired
     KafkaProducera kafkaProducera;
+
+    @Autowired
+    DataCallBackResultService dataCallBackResultService;
+    @Autowired
+    OrderInfoHistotryService orderInfoHistotryService;
 
     /**
      * 调用新增行程算法接口
@@ -421,7 +435,7 @@ public class DispatchTaskControl {
             networkLog.setResponseResult(body);
             networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
             logger.info("行程预约成功返回结果:" + body);
-            updateTravel(body,travelInfoList,travelIdList);
+            updateTravel(body,travelInfoList);
         } catch (Exception e) {
             //失败   数据信息做修改  失败status 为2
             orderInfoService.updateByIdList(orderInfoList, 2);
@@ -437,22 +451,15 @@ public class DispatchTaskControl {
      * 保存修改  乘客服务系统行程预约成功回调结果
      * @param result
      * @param travelInfoList
-     * @param travelIdList
      */
-    public void  updateTravel(String result,List<TravelInfo> travelInfoList,List<String> travelIdList){
+    public void  updateTravel(String result,List<TravelInfo> travelInfoList){
         JSONObject resultJson = JSONObject.parseObject(result);
         String code = resultJson.getString("code");
-
         if (!code.equals("00008")) {
             //失败   数据信息做修改  失败status 为2
             travelInfoService.updateByIdList(travelInfoList, 2);
         } else {
             //成功   数据信息做修改  成功status 为1
-            logger.info("kafka准备发消息");
-            for (String id : travelIdList) {
-                TravelInfo info = travelInfoService.findTravelId(id);
-                kafkaProducera.getTripInfo(info, 1);
-            }
             travelInfoService.updateByIdList(travelInfoList, 1);
         }
     }
@@ -601,6 +608,202 @@ public class DispatchTaskControl {
 
 
     }
+
+    /**
+     * 大数据下发车载终端回调下发结果
+     *
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/callback", method = RequestMethod.POST)
+    public ResultEntity callback(@RequestBody String body) {
+        logger.info("大数据回调下发结果"+body);
+        ResultEntity result=new ResultEntity();
+        Map<String,String > map=new HashMap<>();
+        JSONObject json=JSONObject.parseObject(body);
+        DataCallBackResult callBackResult=JSON.toJavaObject(json, DataCallBackResult.class);
+        callBackResult.setTime(new Date());
+        dataCallBackResultService.insert(callBackResult);
+
+        List<CustomerTravelRequset> customerHttpAPIBeanList = new ArrayList<>();
+        TravelInfo info=travelInfoService.findTravelId(callBackResult.getTripNo());
+        if(info==null){
+            result.setCode("400");
+            result.setMessage("接收失败，没有查到该行程信息");
+            return result;
+        }
+        //根据下发结果保存节点数据   对订单操作
+        List<OrderInfo> listOrder=orderInfoService.findOrderTravelId(info.getTravelId());
+        for (OrderInfo order: listOrder){
+            OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+            BeanUtils.copyProperties(order,orderInfoHistotry);
+            orderInfoHistotry.setId(null);
+            orderInfoHistotry.setCreateTime(new Date());
+            if(callBackResult.getStatus()==-1){
+                orderInfoHistotry.setOrderStatus(10);
+                orderInfoHistotry.setOrderStatusName("下发车载终端失败");
+                order.setOrderStatus(10);
+
+            }else{
+                order.setOrderStatus(9);
+                orderInfoHistotry.setOrderStatus(9);
+                orderInfoHistotry.setOrderStatusName("下发车载终端成功");
+            }
+            orderInfoHistotryService.insert(orderInfoHistotry);
+            orderInfoService.updateById(order);
+        }
+
+
+
+
+        if(callBackResult.getStatus()==-1){
+            logger.info("车载终端下发失败");
+            //通知算法修改车辆信息
+            EditScheduleRequset editScheduleRequset=new EditScheduleRequset();
+            editScheduleRequset.setTravelId(info.getTravelId());
+            editScheduleRequset.setInNumber(info.getItNumber());
+            editScheduleRequset.setCarId(info.getCarId().toString());
+            editScheduleRequset.setFromId(info.getBeginStationId().toString());
+            editScheduleRequset.setToId(info.getEndStationId().toString());
+            editScheduleRequset.setStartTime(DateUtil.getCurrentTime(info.getStartTime()));
+
+            //发送数据给算法  修改车辆数据
+            String requsetJson=JSON.toJSONString(editScheduleRequset);
+            logger.info("行程订单修改车辆"+requsetJson);
+            try {
+               String resultUpdate= HttpClientUtil.doPostJson(editSchedule_url,requsetJson);
+               JSONObject object= JSONObject.parseObject(resultUpdate);
+               logger.info(object.getIntValue("status")+"行程修改结果"+object);
+               if(object.getIntValue("status")==1){
+                   logger.info("修改车辆"+object.getString("carId"));
+                   info.setCarId(Integer.parseInt(object.getString("carId")));
+                   travelInfoService.updateById(info);
+
+                   for (OrderInfo order: listOrder){
+                       OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                       BeanUtils.copyProperties(order,orderInfoHistotry);
+                       orderInfoHistotry.setId(null);
+                       orderInfoHistotry.setCreateTime(new Date());
+                       orderInfoHistotry.setOrderStatus(11);
+                       orderInfoHistotry.setOrderStatusName("变更指派车辆上报大数据");
+                       orderInfoHistotryService.insert(orderInfoHistotry);
+
+                       order.setOrderStatus(11);
+                       orderInfoService.updateById(order);
+                   }
+
+                   //发送行程
+                   kafkaProducera.getTripInfo(info, 1);
+               }else{
+                   logger.info("修改行程车辆结果失败"+object.getIntValue("status"));
+                   for (OrderInfo order: listOrder){
+                       OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                       BeanUtils.copyProperties(order,orderInfoHistotry);
+                       orderInfoHistotry.setId(null);
+                       orderInfoHistotry.setCreateTime(new Date());
+                       orderInfoHistotry.setOrderStatus(16);
+                       orderInfoHistotry.setOrderStatusName("指派重新分配无车可用");
+                       orderInfoHistotryService.insert(orderInfoHistotry);
+
+                       order.setOrderStatus(16);
+                       orderInfoService.updateById(order);
+
+                   }
+                   //行程数据为异常状态
+                   info.setTravelStatus(4);
+
+                   //历史轨迹节点保存
+                   TravelInfoLog travelInfoLog=new TravelInfoLog();
+                   BeanUtils.copyProperties(info,travelInfoLog);
+                   travelInfoLog.setId(null);
+                   travelInfoLog.setCreateTime(new Date());
+                   travelInfoLog.setTravelStatus(4);
+                   travelInfoLog.setTravelStatusName("异常行程");
+
+                   travelInfoLogService.insert(travelInfoLog);
+                   travelInfoService.updateById(info);
+               }
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else{
+            //成功通知乘客服务系统
+                CustomerTravelRequset customerHttpAPIBean = new CustomerTravelRequset();
+                customerHttpAPIBean.setDistance(info.getDistance().doubleValue());
+
+                List<TravelInfo> travelInfoList=new ArrayList<>();
+                List<OrderInfo> orderInfoList=orderInfoService.findOrderTravelId(info.getTravelId());
+            for (OrderInfo order: orderInfoList){
+                OrderInfoHistotry orderInfoHistotry=new OrderInfoHistotry();
+                BeanUtils.copyProperties(order,orderInfoHistotry);
+                orderInfoHistotry.setId(null);
+                orderInfoHistotry.setCreateTime(new Date());
+                orderInfoHistotry.setOrderStatus(12);
+                orderInfoHistotry.setOrderStatusName("上报乘客服务系统");
+                orderInfoHistotryService.insert(orderInfoHistotry);
+
+                order.setOrderStatus(12);
+                orderInfoService.updateById(order);
+            }
+                travelInfoList.add(info);
+//                String oIds = "";
+//                for (Map.Entry<String, String> entry : map.entrySet()) {
+//                    String mapKey = entry.getKey();
+//                    oIds = oIds + mapKey + ",";
+//                }
+//                oIds = oIds.substring(0, oIds.length() - 1);
+//                customerHttpAPIBean.setO_ids(oIds);
+                customerHttpAPIBean.setTravel_id(info.getTravelId());
+                customerHttpAPIBean.setExpected_time(Integer.parseInt(info.getExpectedTime()));
+                customerHttpAPIBean.setAll_travel_plat(info.getAllTravelPlat());
+                customerHttpAPIBean.setDriver_content(info.getDriverContent());
+                customerHttpAPIBean.setC_id(info.getCarId());
+                if (info.getDriverId() == null) {
+                    customerHttpAPIBean.setDriver_id(0);
+                } else {
+                    customerHttpAPIBean.setDriver_id(info.getDriverId());
+                }
+
+                customerHttpAPIBean.setReservation_status(info.getTravelStatus());
+                customerHttpAPIBean.setIt_number(info.getItNumber());
+                customerHttpAPIBean.setRet_status(1);
+                customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));
+
+
+                //乘客座位信息获取封装
+                List<CustomerTicketInfoRequset> ticketInfoList =getCustomerTicketInfo(orderInfoList,info.getTravelId());
+                customerHttpAPIBean.setTicket_info(ticketInfoList);
+                customerHttpAPIBeanList.add(customerHttpAPIBean);
+
+            String jsonComber = JSON.toJSONString(customerHttpAPIBeanList);
+            //接口访问日志操作
+            NetworkLog networkLog=intoNetworkLog(callback_URL,NetworkEnum.PASSENGRT_SERVICE_CALL_BACK.getValue(),jsonComber);
+            String bodyComber = "";
+            try {
+                logger.info("行程预约成功传参内容" + jsonComber);
+                body = HttpClientUtil.doPostJson(callback_URL, jsonComber);
+                networkLog.setResponseResult(body);
+                networkLog.setStatus(NetworkEnum.STATUS_SUCCEED.getValue());
+                logger.info("行程预约成功返回结果:" + body);
+                updateTravel(body,travelInfoList);
+            } catch (Exception e) {
+                //失败   数据信息做修改  失败status 为2
+                orderInfoService.updateByIdList(orderInfoList, 2);
+                networkLog.setStatus(NetworkEnum.STATUS_FAILED.getValue());
+                e.printStackTrace();
+            }
+
+            networkLogServer.insertNetworkLog(networkLog);
+            }
+
+        result.setCode("200");
+        result.setMessage("接收成功");
+
+        return result;
+    }
+
 
 
 }
