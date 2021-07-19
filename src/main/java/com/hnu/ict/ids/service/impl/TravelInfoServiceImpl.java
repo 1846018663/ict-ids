@@ -33,7 +33,6 @@ public class TravelInfoServiceImpl implements TravelInfoService {
 
     @Override
     public TravelInfo getCarTime(int carId,Date timeDate){
-        logger.info("carId"+carId+"time"+timeDate);
         return travelInfoMapper.getCarTime(carId,timeDate);
     }
 

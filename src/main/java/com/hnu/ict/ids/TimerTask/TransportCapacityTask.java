@@ -71,15 +71,24 @@ public class TransportCapacityTask {
     @Autowired
     NetworkLogService networkLogServer;
 
+    static  boolean bool=true;
 
-    @Scheduled(cron = "0/8 * * * * ? ")
+
+    @Scheduled(cron = "0/5 * * * * ? ")
     public void transportCapacity() throws Exception{
-        logger.info("运力是否满足开始");
+
+        if(bool==false){
+            logger.info("运力检测尚未完成，这轮循作废");
+            return;
+        }
+        //定时机制锁定   不执行下一轮
+        bool=false;
+        logger.info(bool+"运力是否满足开始");
         Date stateDate=new Date();
         long time=1000*60*30*24*7+stateDate.getTime();//一周时间
         Date endDate= DateUtil.millisecondToDate(time);
         List<OrderInfo>  orderList= orderInfoService.findNotTransportCapacity(DateUtil.getCurrentTime(stateDate),DateUtil.getCurrentTime(endDate));
-
+        logger.info("快速响应算法发送请求数量"+orderList.size());
         for (OrderInfo order:orderList){
             TdCarryingLog carryingLog=new TdCarryingLog();
             JSONObject jsonObject=new JSONObject();
@@ -98,7 +107,13 @@ public class TransportCapacityTask {
             if(StringUtils.hasText(body)){
                 JSONObject json=JSON.parseObject(body);
                 Integer status= json.getInteger("status");
-
+                //添加逆向还是正向
+                Integer direction=json.getInteger("direction");
+                order.setDirection(direction);
+                Long times=new Date().getTime()-order.getCreateTime().getTime();
+                Integer timeNumber=times.intValue()/1000;
+                logger.info("时============================间"+timeNumber);
+                order.setTimeNumber(timeNumber);
 
                 Map<String,String> map=new HashMap<>();
                 map.put("o_id",order.getSourceOrderId());
@@ -274,13 +289,13 @@ public class TransportCapacityTask {
                     //保存接口日志
                     networkLogServer.insertNetworkLog(networkLog);
                 }
-
-
-
             }
 
         }
-        logger.info("运力是否满足结束");
+        //定时机制锁定解除   不执行下一轮
+        bool=true;
+        logger.info(bool+"运力是否满足结束");
+
     }
 
 

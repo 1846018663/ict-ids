@@ -765,8 +765,8 @@ public class DispatchTaskControl {
                 } else {
                     customerHttpAPIBean.setDriver_id(info.getDriverId());
                 }
-
-                customerHttpAPIBean.setReservation_status(info.getTravelStatus());
+                //发送默认1   预约成功
+                customerHttpAPIBean.setReservation_status(1);
                 customerHttpAPIBean.setIt_number(info.getItNumber());
                 customerHttpAPIBean.setRet_status(1);
                 customerHttpAPIBean.setOper_time(DateUtil.strToDayDate(new Date()));

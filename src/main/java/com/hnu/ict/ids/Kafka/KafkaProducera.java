@@ -65,6 +65,7 @@ public class KafkaProducera {
         value.put("driverName",userInfo.getUName());
 
         value.put("tripStartTimeEst", DateUtil.getCurrentTime(travelInfo.getStartTime()));
+        value.put("tripDuraEst",Integer.parseInt(travelInfo.getExpectedTime()));
         //基础站台行程数据封装
         IvsAppPlatformInfo platformInfo=ivsAppPlatformInfoService.getByPlatformId(travelInfo.getBeginStationId().toString());
         String[] platform=travelInfo.getAllTravelPlat().split(",");

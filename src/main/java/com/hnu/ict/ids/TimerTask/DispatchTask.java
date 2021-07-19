@@ -84,17 +84,25 @@ public class DispatchTask {
     @Autowired
     TravelInfoLogService travelInfoLogService;
 
+    static boolean bool=true;
 
     /**
      * 每隔5分钟执行一次（按照 corn 表达式规则执行）0 0/5 * * * ?    0/10 * * * * ?
      */
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/1 * * * ?")
     public PojoBaseResponse findNotTrave() {
-        logger.info("五分钟执行一次新增行程");
+
+        if (bool==false){
+            logger.info("新增执行任务为完成  本轮循作废");
+            return null;
+
+        }
+        bool=false;
+        logger.info(bool+"一分钟执行一次新增行程");
         PojoBaseResponse result = new PojoBaseResponse();
         //第一步查询订单  查询没有行程id  且当前 开始时间大约30分钟内的订单
         Date stateDate = new Date();
-        long time = 1000 * 60 * 30 + stateDate.getTime();
+        long time = 1000 * 60 * 29 + stateDate.getTime();
         Date endDate = DateUtil.millisecondToDate(time);
         List<OrderInfo> listOrder = orderInfoService.findNotTrave(DateUtil.getCurrentTime(stateDate), DateUtil.getCurrentTime(endDate));
         //redis获取有效机制时间
@@ -141,8 +149,8 @@ public class DispatchTask {
             }
 
         }
-        logger.info("执行任务完毕：" + new Date());
-
+        bool=true;
+        logger.info(bool+"执行任务完毕：" + new Date());
         return result;
     }
 

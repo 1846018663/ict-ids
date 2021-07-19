@@ -6,10 +6,10 @@
         where
               travel_id is null
           and  chartered_bus is null
-          and status <![CDATA[ <= ]]> 1
           and start_time <![CDATA[ >= ]]> #{statDate}
           and start_time <![CDATA[ <= ]]> #{endDate}
           and status= 1
+          and order_status <![CDATA[ <> ]]> 15
           for update
     </select>
 

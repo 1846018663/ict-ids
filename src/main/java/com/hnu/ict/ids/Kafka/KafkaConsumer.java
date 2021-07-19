@@ -90,8 +90,8 @@ public class KafkaConsumer {
         JSONObject jsonObject= JSON.parseObject( record.key().toString());
         JSONObject json=JSON.parseObject(record.value().toString());
         String carId=jsonObject.getLong("vehicleId").toString();
-        redisTemplate.opsForValue().set(carPositioning+carId,record.value().toString());
-
+        redisTemplate.opsForValue().set(carPositioning+carId,json);
+        JSONObject res= (JSONObject) redisTemplate.opsForValue().get(carPositioning+carId);
     }
 
 
@@ -139,9 +139,10 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String travelId=jsonObject.getString("tripNo");
-        redisTemplate.opsForValue().set(carTravelStatus+travelId,record.value().toString());
+        redisTemplate.opsForValue().set(carTravelStatus+travelId,jsonObject);
 
         //接口调用通知算法
+
     }
 
 
@@ -162,7 +163,7 @@ public class KafkaConsumer {
         //保存redis一份数据
         String travelId=jsonObject.getString("tripNo");
         String stationNo=jsonObject.getString("stationNo");
-        redisTemplate.opsForValue().set(carTravelStatus+"_"+stationNo,record.value().toString());
+        redisTemplate.opsForValue().set(carTravelStatus+"_"+stationNo,jsonObject);
 
 
         //通知同济算法  接口调用逻辑
@@ -185,7 +186,7 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String vehicleId=jsonObject.getString("vehicleId");
-        redisTemplate.opsForValue().set(carSuspend+vehicleId,record.value().toString());
+        redisTemplate.opsForValue().set(carSuspend+vehicleId,jsonObject);
 
         //通知算法  调用接口
 
@@ -209,7 +210,7 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String vehicleId=jsonObject.getString("vehicleId");
-        redisTemplate.opsForValue().set(carSuspendEnd+vehicleId,record.value().toString());
+        redisTemplate.opsForValue().set(carSuspendEnd+vehicleId,jsonObject);
 
         //通知算法  调用接口
     }
@@ -230,7 +231,7 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String vehicleId=jsonObject.getString("vehicleId");
-        redisTemplate.opsForValue().set(carFault+vehicleId,record.value().toString());
+        redisTemplate.opsForValue().set(carFault+vehicleId,jsonObject);
 
         //通知算法  调用接口
 
@@ -252,7 +253,7 @@ public class KafkaConsumer {
 
         //保存redis一份数据
         String vehicleId=jsonObject.getString("vehicleId");
-        redisTemplate.opsForValue().set(carState+vehicleId,record.value().toString());
+        redisTemplate.opsForValue().set(carState+vehicleId,jsonObject);
 
         //通知算法  调用接口
 
@@ -298,7 +299,7 @@ public class KafkaConsumer {
         //更新数据
         IvsAppCarInfo carInfo=ivsAppCarInfoService.getByCarId(tdDriverAttendance.getVehicleId().intValue());
         //该车存在修改  车辆数据表   发送至算法  小于等于6是生产   大于6是测试
-        if(carInfo.getCId()<6){
+        if(carInfo.getCId()>6){
 
             if(tdDriverAttendance.getCheckType()==1){//登入
                 carInfo.setDriverId(tdDriverAttendance.getDriverId());
@@ -321,18 +322,17 @@ public class KafkaConsumer {
             //发送数据给算法
             List<CarStatusUpRequset> list=new ArrayList<>();
             CarStatusUpRequset carStatusUpRequset=new CarStatusUpRequset();
-//            String value=redisTemplate.opsForValue().get(carPositioning+carInfo.getCId(),0L,9999999L);
-//
-//            if(value!=null && value.length()>0){
-//                String str_value=value.replaceAll(regEx,aa);
-//                logger.info("Redis数据"+str_value);
-//                JSONObject jsonredis= JSON.parseObject(value);
-//                BigDecimal lng=jsonredis.getBigDecimal("lng");//经度
-//                BigDecimal lat=jsonredis.getBigDecimal("lat");//纬度
-//                carStatusUpRequset.setCarLoc(lng+","+lat);
-//            }else {
+
+            JSONObject res= (JSONObject) redisTemplate.opsForValue().get(carPositioning+carInfo.getCId());
+            if(res!=null){
+                logger.info("Redis数据"+res);
+                BigDecimal lng=res.getBigDecimal("lng");//经度
+                BigDecimal lat=res.getBigDecimal("lat");//纬度
+                carStatusUpRequset.setCarLoc(lng+","+lat);
+                logger.info("该车上下线经纬度"+carStatusUpRequset.getCarLoc());
+            }else {
                 carStatusUpRequset.setCarLoc("121.261028,31.364997");
-//            }
+            }
             carStatusUpRequset.setCarType(Integer.parseInt(carInfo.getCCode()));
             carStatusUpRequset.setCarId(carInfo.getCId()+"");
             if(carInfo.getCIsuse().equals("1")){

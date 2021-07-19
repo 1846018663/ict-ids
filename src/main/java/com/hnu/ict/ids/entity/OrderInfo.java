@@ -135,6 +135,9 @@ public class OrderInfo {
     private int orderStatus;
 
 
+    private  Integer direction;
+
+    private Integer timeNumber;
 
     @Override
     public String toString() {
