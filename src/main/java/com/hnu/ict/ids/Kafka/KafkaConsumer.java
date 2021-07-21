@@ -6,6 +6,7 @@ import com.hnu.ict.ids.WebSocket.WebSocketServer;
 import com.hnu.ict.ids.bean.CarStatusUpRequset;
 import com.hnu.ict.ids.bean.TdDriverAttendance;
 import com.hnu.ict.ids.entity.*;
+import com.hnu.ict.ids.exception.CarTypeEnum;
 import com.hnu.ict.ids.service.*;
 import com.hnu.ict.ids.utils.DateUtil;
 import com.hnu.ict.ids.utils.HttpClientUtil;
@@ -51,6 +52,9 @@ public class KafkaConsumer {
 
     @Value("${travel.algorithm.carInfo.statusUp.url}")
     private String carStatusUpUrl;
+
+    @Value("${sz.travel.algorithm.carInfo.statusUp.url}")
+    private String szcarStatusUpUrl;
 
 
     @Autowired
@@ -318,6 +322,9 @@ public class KafkaConsumer {
             }
             ivsAppCarInfoService.update(carInfo);
 
+        }else{
+            logger.info("发布在该环境处理中"+carInfo.getCId());
+            return;
         }
             //发送数据给算法
             List<CarStatusUpRequset> list=new ArrayList<>();
@@ -348,7 +355,13 @@ public class KafkaConsumer {
             String json = JSON.toJSONString(list);
             logger.info("登入登出状态修改"+json);
             //网络请求
-           String result= HttpClientUtil.doPostJson(carStatusUpUrl,json);
+            String result=null;
+            if(carInfo.getCarType()== CarTypeEnum.SZ.getValue()){
+                result= HttpClientUtil.doPostJson(szcarStatusUpUrl,json);
+            }
+            if(carInfo.getCarType()== CarTypeEnum.SH.getValue()){
+                result= HttpClientUtil.doPostJson(carStatusUpUrl,json);
+            }
            JSONObject resultJson=JSONObject.parseObject(result);
            if(resultJson!=null){
                if (resultJson.getInteger("status")==1){

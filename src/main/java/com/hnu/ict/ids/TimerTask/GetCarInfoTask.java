@@ -86,7 +86,7 @@ public class GetCarInfoTask{
            //异步同步数据
            if(carList!=null && carList.size()>0){
                updateCarAsync.updateCar(carList);
-//               updateCarAsync.szUpdateCar(szCarList);
+               updateCarAsync.szUpdateCar(szCarList);
            }
         }
 

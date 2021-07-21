@@ -72,7 +72,7 @@ public class GetPlatformInfoTask {
 
             if(platfromList!=null && platfromList.size()>0){
                 updatePlatformAsync.updatePlatformAlgorithm(platfromList);
-//                updatePlatformAsync.szUpdatePlatformAlgorithm(platfromList);
+                updatePlatformAsync.szUpdatePlatformAlgorithm(szPlatfromList);
             }
         }
     }
